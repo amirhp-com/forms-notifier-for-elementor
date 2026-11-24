@@ -268,7 +268,8 @@ final class SubmissionRepository extends Repository {
 			);
 			foreach ( (array) $rows as $row ) {
 				$last = (int) $row['id'];
-				if ( ! preg_match( $pattern, (string) $row['fields'] ) ) {
+				$values = implode( "\n", array_column( self::decode( $row['fields'] ), 'value' ) );
+				if ( ! preg_match( $pattern, $values ) ) {
 					continue;
 				}
 				if ( $skip > 0 ) {

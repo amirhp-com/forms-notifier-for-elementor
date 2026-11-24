@@ -42,6 +42,32 @@ final class FieldSanitizer {
 	}
 
 	/**
+	 * Sanitise a map of settings against the schema. Unknown and non-value keys are errors.
+	 *
+	 * @param array $values Absolute path => untrusted value.
+	 * @return array{0:array<string,mixed>,1:array<string,string>} [ clean values, errors by path ]
+	 */
+	public static function settings( array $values ): array {
+		$clean  = [];
+		$errors = [];
+		foreach ( $values as $path => $value ) {
+			$path  = (string) $path;
+			$field = Schema::field( $path );
+			if ( ! $field || $field['type'] === 'secret' ) {
+				$errors[ $path ] = __( 'Unknown setting.', 'forms-notifier-for-elementor' );
+				continue;
+			}
+			list( $item, $error ) = self::sanitize( $field, $value );
+			if ( $error === '' ) {
+				$clean[ $path ] = $item;
+			} else {
+				$errors[ $path ] = $error;
+			}
+		}
+		return [ $clean, $errors ];
+	}
+
+	/**
 	 * Localized text: [ '_' => default, lang => text ].
 	 *
 	 * @param mixed  $value Untrusted string or array.

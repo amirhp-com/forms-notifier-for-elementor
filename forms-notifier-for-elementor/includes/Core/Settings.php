@@ -155,6 +155,33 @@ final class Settings {
 	}
 
 	/**
+	 * Save values that were sanitised against the schema: moves receiver secrets, removes orphaned secrets.
+	 *
+	 * @param array $clean Absolute path => clean value.
+	 */
+	public static function save( array $clean ): void {
+		$prune = [];
+		foreach ( $clean as $path => $value ) {
+			$field = Schema::field( (string) $path );
+			$type  = $field['type'] ?? '';
+			if ( $type === 'receivers' && $field['channel'] !== '' ) {
+				$clean[ $path ]            = self::store_receiver_secrets( $field['channel'], (array) $value );
+				$prune[ $field['channel'] ] = true;
+			}
+		}
+		self::set_many( $clean );
+		foreach ( $clean as $path => $value ) {
+			$field = Schema::field( (string) $path );
+			if ( $field && $field['type'] === 'repeater' ) {
+				self::prune_row_secrets( (string) $path, (array) $value );
+			}
+		}
+		foreach ( array_keys( $prune ) as $channel ) {
+			self::prune_receiver_secrets( (string) $channel );
+		}
+	}
+
+	/**
 	 * Back to the default.
 	 *
 	 * @param string $path Dot path.

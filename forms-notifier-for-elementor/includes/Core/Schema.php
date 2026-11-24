@@ -233,7 +233,7 @@ final class Schema {
 			$field
 		);
 
-		$field['key']       = self::absolute( (string) $field['key'], $prefix );
+		$field['key']       = self::absolute( (string) $field['key'], $prefix, [ 'channels' ] );
 		$field['type']      = (string) $field['type'];
 		$field['required']  = (bool) $field['required'];
 		$field['localized'] = (bool) $field['localized'] && in_array( $field['type'], [ 'text', 'textarea', 'template' ], true );
@@ -354,16 +354,16 @@ final class Schema {
 	/**
 	 * Absolute dot path of a key.
 	 *
-	 * @param string $key    Key.
-	 * @param string $prefix Prefix.
+	 * @param string   $key    Key.
+	 * @param string   $prefix Prefix.
+	 * @param string[] $roots  First segments that mark a key as absolute already.
 	 */
-	private static function absolute( string $key, string $prefix ): string {
+	private static function absolute( string $key, string $prefix, array $roots = self::ROOTS ): string {
 		if ( $key === '' || $prefix === '' || strncmp( $key, $prefix, strlen( $prefix ) ) === 0 ) {
 			return $key;
 		}
-		// A dotted key that starts with a settings root is absolute already.
 		$dot = strpos( $key, '.' );
-		if ( $dot !== false && in_array( substr( $key, 0, $dot ), self::ROOTS, true ) ) {
+		if ( $dot !== false && in_array( substr( $key, 0, $dot ), $roots, true ) ) {
 			return $key;
 		}
 		return $prefix . $key;
