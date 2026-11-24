@@ -1,0 +1,32 @@
+<!doctype html>
+<!--
+	Manual harness of the mini app. Serve the repository root with any static file server and open this page.
+
+	?run=bridge            runs the bridge checks for every transport, prints them and sets window.harness = { passed, failed, done }
+	?run=app               runs the app against canned answers
+	   &platform=bale      platform (telegram)
+	   &dir=rtl            right to left
+	   &dark=1             dark host theme; &theme=0 sends no theme at all
+	   &start=sub_12       start parameter
+	   &state=...          empty | error | denied | expired | disabled | slow | readonly
+	   &transport=none     no host: the app draws its own back button
+	   &launch=0           opened outside of the messenger
+
+	Checklist (headless or by hand): home, all forms, submissions with every filter, one submission, problems, retry, status
+	change with undo, back button of the host, start parameters, every state above, 320 px width, right to left, both themes.
+-->
+<html lang="en" dir="ltr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<title>Mini app harness</title>
+	<link rel="stylesheet" href="../../forms-notifier-for-elementor/assets/css/tokens.css">
+	<link rel="stylesheet" href="../../forms-notifier-for-elementor/assets/css/miniapp.css">
+	<style>pre { margin: 0; padding: 16px; font: 13px/1.5 monospace; white-space: pre-wrap; }</style>
+</head>
+<body class="fnfe-root fnfe-miniapp" data-theme="auto">
+	<div id="fnfe-miniapp"></div>
+	<pre id="log"></pre>
+	<script src="miniapp-harness.js"></script>
+</body>
+</html>
