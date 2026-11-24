@@ -1,0 +1,66 @@
+/*
+ * Additions to the Elementor editor panel.
+ */
+.fnfe-intro .fnfe-open-form {
+	display: inline-block;
+	margin-block-start: 6px;
+}
+
+.fnfe-chip {
+	display: inline-block;
+	margin-block: 2px;
+	margin-inline-end: 2px;
+	padding: 1px 6px;
+	border: 1px solid currentColor;
+	border-radius: 4px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 11px;
+	font-style: normal;
+	line-height: 1.6;
+	direction: ltr;
+	unicode-bidi: isolate;
+	cursor: copy;
+	opacity: .85;
+}
+
+.fnfe-chip:hover,
+.fnfe-chip:focus-visible {
+	opacity: 1;
+	outline: 2px solid currentColor;
+	outline-offset: 1px;
+}
+
+.fnfe-editor-copy {
+	position: fixed;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	inline-size: 1px;
+	block-size: 1px;
+	opacity: 0;
+}
+
+#fnfe-editor-toast {
+	position: fixed;
+	z-index: 100100;
+	inset-block-end: 24px;
+	inset-inline-start: 24px;
+	padding: 8px 14px;
+	border-radius: 6px;
+	background: #18202b;
+	color: #fff;
+	font-size: 12px;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity .15s;
+}
+
+#fnfe-editor-toast.is-visible {
+	opacity: 1;
+	visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#fnfe-editor-toast {
+		transition: none;
+	}
+}
