@@ -163,7 +163,8 @@ trait CustomRequest {
 		foreach ( (array) $this->setting( 'headers', [] ) as $name => $value ) {
 			$name = (string) preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $name );
 			if ( $name !== '' && is_scalar( $value ) ) {
-				$headers[ $name ] = $this->fill( (string) $value, $values, 'header' );
+				// Line breaks would start another header.
+				$headers[ $name ] = trim( (string) preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $this->fill( (string) $value, $values, 'header' ) ) );
 			}
 		}
 
@@ -241,7 +242,7 @@ trait CustomRequest {
 				if ( $target === 'json' ) {
 					return substr( (string) wp_json_encode( $value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), 1, -1 );
 				}
-				return trim( (string) preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $value ) );
+				return $value;
 			},
 			$template
 		);
