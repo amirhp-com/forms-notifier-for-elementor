@@ -80,7 +80,7 @@ final class Dispatcher {
 	}
 
 	/**
-	 * Render and queue one delivery; not-ready channels and broken renderings become finished rows.
+	 * Render and queue one delivery; not-ready channels become skipped rows, broken renderings failed ones.
 	 *
 	 * @param Delivery   $d     Delivery.
 	 * @param Submission $s     Submission.
@@ -99,7 +99,13 @@ final class Dispatcher {
 		} catch ( \Throwable $e ) {
 			Logger::error( 'queue', $e->getMessage(), [ 'channel' => $d->channel ] );
 			/* translators: %1$s: technical error message */
-			return self::skip( $d, $s, sprintf( __( 'The message could not be prepared: %1$s', 'forms-notifier-for-elementor' ), $e->getMessage() ) );
+			$error = sprintf( __( 'The message could not be prepared: %1$s', 'forms-notifier-for-elementor' ), Logger::clean( $e->getMessage() ) );
+			$id    = self::skip( $d, $s, $error, 'failed' );
+			$row   = MessageRepository::find( $id );
+			if ( $row ) {
+				Alerts::on_failure( $row, SendResult::failure( $d->channel, $error, true ), true );
+			}
+			return $id;
 		}
 		$message->meta = array_merge( $message->meta, $meta );
 		return Queue::push( $message, $delay );
@@ -172,69 +178,6 @@ final class Dispatcher {
 		return $problems ? implode( ' ', $problems ) : __( 'This channel is not set up yet.', 'forms-notifier-for-elementor' );
 	}
 
-	/**
-	 * Structured data for channels of format 'json'.
-	 *
-	 * @param Submission $s       Submission.
-	 * @param Message    $message Message; links and plain text are read from it.
-	 */
-	public static function data( Submission $s, Message $message ): array {
-		$fields = [];
-		$meta   = [];
-		foreach ( $s->fields as $id => $field ) {
-			$values        = array_values( (array) ( $field['values'] ?? [] ) );
-			$fields[ $id ] = count( $values ) > 1 ? $values : (string) ( $field['value'] ?? '' );
-			$meta[]        = [
-				'id'    => (string) $id,
-				'label' => (string) ( $field['label'] ?? $id ),
-				'type'  => (string) ( $field['type'] ?? '' ),
-				'value' => (string) ( $field['value'] ?? '' ),
-			];
-		}
-
-		$links = [];
-		foreach ( $message->links as $link ) {
-			$links[ (string) ( $link['name'] ?? '' ) ] = (string) ( $link['url'] ?? '' );
-		}
-		$files = [];
-		foreach ( $s->files as $file ) {
-			$files[] = [
-				'field' => $file->field_id,
-				'name'  => $file->name,
-				'size'  => $file->size,
-				'mime'  => $file->mime,
-				'url'   => $links[ $file->name ] ?? '',
-			];
-		}
-
-		return [
-			'event'       => self::is_test( $s ) ? 'test' : 'submission.created',
-			'site'        => self::site(),
-			'form'        => [
-				'id'     => $s->form_id,
-				'key'    => $s->form_key,
-				'name'   => $s->form_name,
-				'source' => $s->source,
-			],
-			'submission'  => [
-				'id'         => $s->id,
-				'uuid'       => $s->uuid,
-				'status'     => $s->status,
-				'lang'       => $s->lang,
-				'created_at' => $s->created_gmt === '' ? '' : str_replace( ' ', 'T', $s->created_gmt ) . 'Z',
-				'page_url'   => (string) ( $s->meta['page_url'] ?? '' ),
-				'page_title' => (string) ( $s->meta['page_title'] ?? '' ),
-				'user_id'    => (int) ( $s->meta['user_id'] ?? 0 ),
-				'user_ip'    => (string) ( $s->meta['user_ip'] ?? '' ),
-				'admin_url'  => $s->id ? Urls::submission_admin( $s->id ) : '',
-			],
-			'fields'      => $fields,
-			'fields_meta' => $meta,
-			'files'       => $files,
-			'text'        => $message->plain,
-		];
-	}
-
 	/** Site block of structured data. */
 	public static function site(): array {
 		return [
@@ -296,12 +239,15 @@ final class Dispatcher {
 		if ( $channel && $s->files && ( $d->attachment_policy['mode'] ?? 'off' ) !== 'off' ) {
 			self::attach( $message, $d, $s, $channel );
 		}
-		if ( $message->format === 'json' ) {
-			$message->data = self::data( $s, $message );
-		}
 		$message->buttons = self::buttons( $d, $message, $s, $context, (array) ( $capabilities['buttons'] ?? [] ) );
 
-		$filtered = apply_filters( 'fnfe_message', $message, $d, $s );
+		try {
+			$filtered = apply_filters( 'fnfe_message', $message, $d, $s );
+		} catch ( \Throwable $e ) {
+			// A broken listener must not cost the owner a submission.
+			Logger::error( 'queue', $e->getMessage(), [ 'channel' => $d->channel ] );
+			$filtered = null;
+		}
 		return $filtered instanceof Message ? $filtered : $message;
 	}
 
@@ -391,8 +337,7 @@ final class Dispatcher {
 	private static function button( array $button, Delivery $d, Submission $s, Context $context, array $supported ): ?array {
 		$type  = (string) ( $button['type'] ?? '' );
 		$value = (string) ( $button['value'] ?? '' );
-		$name  = 'setting:channels.' . $d->channel . '.buttons.' . (string) ( $button['id'] ?? '' ) . '.text';
-		$text  = Engine::render_inline( Settings::localize( $button['text'] ?? '', $d->lang, $name ), $context );
+		$text  = Engine::render_inline( $button['text'] ?? '', $context );
 
 		if ( $type === 'submission' ) {
 			if ( ! $s->id ) {
@@ -476,14 +421,15 @@ final class Dispatcher {
 	}
 
 	/**
-	 * Log a delivery that is not sent on purpose.
+	 * Log a delivery that is not sent.
 	 *
 	 * @param Delivery   $d      Delivery.
 	 * @param Submission $s      Submission.
 	 * @param string     $reason Reason.
+	 * @param string     $status skipped | failed.
 	 * @return int row id
 	 */
-	private static function skip( Delivery $d, Submission $s, string $reason ): int {
+	private static function skip( Delivery $d, Submission $s, string $reason, string $status = 'skipped' ): int {
 		return MessageRepository::insert(
 			[
 				'submission_id'   => $s->id,
@@ -493,7 +439,7 @@ final class Dispatcher {
 				'recipient'       => Queue::shown_address( $d->channel, $d->recipient->address ),
 				'recipient_label' => $d->recipient->name,
 				'lang'            => $d->lang,
-				'status'          => 'skipped',
+				'status'          => $status,
 				'max_attempts'    => Settings::int( 'queue.max_attempts', 5 ),
 				'error'           => $reason,
 			]
