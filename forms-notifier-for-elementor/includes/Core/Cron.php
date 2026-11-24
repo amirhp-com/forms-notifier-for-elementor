@@ -29,7 +29,7 @@ final class Cron {
 
 	/** Add the one minute schedule. Recurring events are ensured on init. */
 	public static function register(): void {
-		add_filter( 'cron_schedules', [ self::class, 'schedules' ] ); // phpcs:ignore WordPress.WP.CronInterval.ChangeDetected -- One minute is needed by the queue.
+		add_filter( 'cron_schedules', [ self::class, 'schedules' ] ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- The queue needs one minute.
 	}
 
 	/**

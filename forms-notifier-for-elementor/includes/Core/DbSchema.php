@@ -138,7 +138,7 @@ final class DbSchema {
   mime varchar(100) NOT NULL DEFAULT '',
   ext varchar(20) NOT NULL DEFAULT '',
   size bigint(20) unsigned NOT NULL DEFAULT 0,
-  stored tinyint(1) NOT NULL DEFAULT 0,
+  is_stored tinyint(1) NOT NULL DEFAULT 0,
   token char(32) NOT NULL DEFAULT '',
   created_gmt datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   PRIMARY KEY  (id),

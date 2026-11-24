@@ -35,7 +35,7 @@ final class Http {
 			$args['user-agent'] = 'FormsNotifier/' . FNFE_VERSION;
 		}
 		if ( array_key_exists( 'json', $args ) ) {
-			$args['body'] = $args['json'] === [] ? '{}' : (string) wp_json_encode( $args['json'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+			$args['body']    = $args['json'] === [] ? '{}' : (string) wp_json_encode( $args['json'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 			$args['headers'] = self::with_header( $args['headers'], 'Content-Type', 'application/json; charset=utf-8' );
 		}
 		unset( $args['json'], $args['safe'], $args['scrub'] );

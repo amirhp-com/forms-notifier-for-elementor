@@ -39,7 +39,7 @@ final class FileRepository extends Repository {
 				'mime'          => self::clip( $file->mime, 100 ),
 				'ext'           => self::clip( $file->ext, 20 ),
 				'size'          => $file->size,
-				'stored'        => $file->stored ? 1 : 0,
+				'is_stored'     => $file->stored ? 1 : 0,
 				'token'         => Crypto::token( 16 ),
 				'created_gmt'   => self::now(),
 			]
@@ -54,7 +54,7 @@ final class FileRepository extends Repository {
 	 */
 	public static function find( int $id ): ?Attachment {
 		$row = self::row( $id );
-		return $row ? Attachment::from_array( $row ) : null;
+		return $row ? self::hydrate( $row ) : null;
 	}
 
 	/**
@@ -66,7 +66,7 @@ final class FileRepository extends Repository {
 	public static function for_submission( int $submission_id ): array {
 		$db   = self::db();
 		$rows = $db->get_results( $db->prepare( 'SELECT * FROM %i WHERE submission_id = %d ORDER BY id ASC', self::table(), $submission_id ), ARRAY_A );
-		return array_map( [ Attachment::class, 'from_array' ], (array) $rows );
+		return array_map( [ self::class, 'hydrate' ], (array) $rows );
 	}
 
 	/**
@@ -98,8 +98,8 @@ final class FileRepository extends Repository {
 		return self::update_row(
 			$id,
 			[
-				'path'   => '',
-				'stored' => 0,
+				'path'      => '',
+				'is_stored' => 0,
 			]
 		);
 	}
@@ -127,13 +127,23 @@ final class FileRepository extends Repository {
 		$db   = self::db();
 		$rows = $db->get_results(
 			$db->prepare(
-				'SELECT * FROM %i WHERE stored = 1 AND created_gmt < %s ORDER BY id ASC LIMIT %d',
+				'SELECT * FROM %i WHERE is_stored = 1 AND created_gmt < %s ORDER BY id ASC LIMIT %d',
 				self::table(),
 				self::now_plus( -$days * DAY_IN_SECONDS ),
 				$limit
 			),
 			ARRAY_A
 		);
-		return array_map( [ Attachment::class, 'from_array' ], (array) $rows );
+		return array_map( [ self::class, 'hydrate' ], (array) $rows );
+	}
+
+	/**
+	 * Row to value object. The column is not called "stored" because MySQL reserves that word.
+	 *
+	 * @param array $row Row.
+	 */
+	private static function hydrate( array $row ): Attachment {
+		$row['stored'] = (bool) (int) $row['is_stored'];
+		return Attachment::from_array( $row );
 	}
 }

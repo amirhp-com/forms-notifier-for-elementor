@@ -262,12 +262,12 @@ final class SubmissionRepository extends Repository {
 
 		// LIKE also finds longer addresses that end with this one; only whole addresses count.
 		do {
-			$rows = $db->get_results(
+			$rows = (array) $db->get_results(
 				$db->prepare( 'SELECT id, fields FROM %i WHERE id > %d AND fields LIKE %s ORDER BY id ASC LIMIT 200', self::table(), $last, $like ),
 				ARRAY_A
 			);
-			foreach ( (array) $rows as $row ) {
-				$last = (int) $row['id'];
+			foreach ( $rows as $row ) {
+				$last   = (int) $row['id'];
 				$values = implode( "\n", array_column( self::decode( $row['fields'] ), 'value' ) );
 				if ( ! preg_match( $pattern, $values ) ) {
 					continue;
@@ -281,7 +281,7 @@ final class SubmissionRepository extends Repository {
 					return $out;
 				}
 			}
-		} while ( $rows && count( $rows ) === 200 );
+		} while ( isset( $rows[199] ) );
 
 		return $out;
 	}

@@ -165,7 +165,7 @@ final class Settings {
 			$field = Schema::field( (string) $path );
 			$type  = $field['type'] ?? '';
 			if ( $type === 'receivers' && $field['channel'] !== '' ) {
-				$clean[ $path ]            = self::store_receiver_secrets( $field['channel'], (array) $value );
+				$clean[ $path ]             = self::store_receiver_secrets( $field['channel'], (array) $value );
 				$prune[ $field['channel'] ] = true;
 			}
 		}
@@ -535,7 +535,7 @@ final class Settings {
 	 */
 	public static function merge( array $base, array $over ): array {
 		foreach ( $over as $key => $value ) {
-			$mergeable = is_array( $value ) && isset( $base[ $key ] ) && is_array( $base[ $key ] )
+			$mergeable    = is_array( $value ) && isset( $base[ $key ] ) && is_array( $base[ $key ] )
 				&& ! self::is_list( $value ) && ! self::is_list( $base[ $key ] )
 				&& ! array_key_exists( '_', $value ) && ! array_key_exists( '_', $base[ $key ] );
 			$base[ $key ] = $mergeable ? self::merge( $base[ $key ], $value ) : $value;

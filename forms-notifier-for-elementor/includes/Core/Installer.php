@@ -56,7 +56,10 @@ final class Installer {
 		if ( get_option( 'fnfe_db_version', '' ) === '' ) {
 			self::seed();
 		}
-		update_option( 'fnfe_db_version', FNFE_DB_VERSION, true );
+		// A failed install is tried again later (see Upgrades).
+		if ( DbSchema::exists() ) {
+			update_option( 'fnfe_db_version', FNFE_DB_VERSION, true );
+		}
 		update_option( 'fnfe_version', FNFE_VERSION, true );
 
 		// Rewrite rules of the mini app are flushed on the next init.

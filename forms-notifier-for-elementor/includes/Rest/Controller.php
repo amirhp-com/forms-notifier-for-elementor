@@ -582,8 +582,9 @@ abstract class Controller {
 		$jy         += 4 * intdiv( $days, 1461 );
 		$days       %= 1461;
 		if ( $days > 365 ) {
-			$jy  += intdiv( $days - 1, 365 );
-			$days = ( $days - 1 ) % 365;
+			--$days;
+			$jy   += intdiv( $days, 365 );
+			$days %= 365;
 		}
 		return $days < 186
 			? [ $jy, 1 + intdiv( $days, 31 ), 1 + $days % 31 ]

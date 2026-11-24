@@ -399,7 +399,7 @@ final class FieldSanitizer {
 		if ( strpos( $value, '<' ) !== false ) {
 			$value = wp_strip_all_tags( $value );
 		}
-		return trim( preg_replace( '/[\x00-\x1F\x7F]+/', ' ', $value ) );
+		return trim( preg_replace( '/[\x00-\x20\x7F]+/', ' ', $value ) );
 	}
 
 	/**
@@ -487,8 +487,8 @@ final class FieldSanitizer {
 	 */
 	private static function url( $value, string &$error ): string {
 		$raw   = is_scalar( $value ) ? trim( (string) $value ) : '';
-		$clean = $raw === '' ? '' : esc_url_raw( $raw, [ 'http', 'https' ] );
-		if ( $raw !== '' && ( $clean === '' || ! preg_match( '~^https?://[^/\s]+~i', $clean ) ) ) {
+		$clean = preg_match( '~^https?://[^/\s]+~i', $raw ) ? esc_url_raw( $raw, [ 'http', 'https' ] ) : '';
+		if ( $raw !== '' && $clean === '' ) {
 			$error = __( 'Enter a full address that starts with http:// or https://.', 'forms-notifier-for-elementor' );
 			return '';
 		}
