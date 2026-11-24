@@ -33,6 +33,7 @@ final class Plugin {
 		\AmirhpCom\FormsNotifier\Channels\Sms\SmsModule::class,
 		\AmirhpCom\FormsNotifier\Channels\WhatsApp\WhatsAppModule::class,
 		\AmirhpCom\FormsNotifier\MiniApp\Module::class,
+		\AmirhpCom\FormsNotifier\Admin\HelpContent::class,
 	];
 
 	/** @var bool */
