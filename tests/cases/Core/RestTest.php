@@ -97,6 +97,7 @@ final class RestTest extends TestCase {
 		foreach ( $d['sections'] as $section ) {
 			$this->assertSame( 'queue', $section['tab'] );
 			$this->assertKeys( [ 'id', 'tab', 'title', 'desc', 'priority', 'collapsed', 'fields' ], $section );
+			$this->assertNotSame( 0, $section['fields'][0]['default'] );
 		}
 		$this->assertTrue( count( $this->data( $this->call( 'GET', '/schema' ) )['sections'] ) > count( $d['sections'] ) );
 	}

@@ -10,6 +10,7 @@ namespace AmirhpCom\FormsNotifier\Rest;
 use AmirhpCom\FormsNotifier\Attachments\Storage;
 use AmirhpCom\FormsNotifier\Contracts\ChannelInterface;
 use AmirhpCom\FormsNotifier\Core\Capabilities;
+use AmirhpCom\FormsNotifier\Core\Defaults;
 use AmirhpCom\FormsNotifier\Core\FieldSanitizer;
 use AmirhpCom\FormsNotifier\Core\Registry;
 use AmirhpCom\FormsNotifier\Core\Schema;
@@ -439,8 +440,15 @@ abstract class Controller {
 	 * @param array $sections Normalised sections.
 	 */
 	protected static function client_sections( array $sections ): array {
+		$defaults = Defaults::all();
 		foreach ( $sections as $i => $section ) {
-			$sections[ $i ]['fields'] = array_map( [ self::class, 'client_field' ], $section['fields'] );
+			foreach ( $section['fields'] as $j => $field ) {
+				$default = Settings::path_get( $defaults, $field['key'], $found );
+				if ( $found && $field['type'] !== 'secret' ) {
+					$field['default'] = $default;
+				}
+				$sections[ $i ]['fields'][ $j ] = self::client_field( $field );
+			}
 		}
 		return array_values( $sections );
 	}
