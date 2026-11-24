@@ -2,7 +2,7 @@
 /**
  * NetGSM.
  *
- * Field names from the SDK of the vendor (https://unpkg.com/@netgsm/sms/README.md); the answer was seen for errors only.
+ * Field names from the SDK of the vendor (npm package @netgsm/sms); the answer was seen for errors only.
  *
  * @package FormsNotifier
  */
