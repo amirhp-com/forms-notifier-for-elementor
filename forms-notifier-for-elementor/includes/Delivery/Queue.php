@@ -41,6 +41,9 @@ final class Queue {
 	/** @var bool */
 	private static $kicked = false;
 
+	/** @var int[] rows of this request that are due at once */
+	private static $fresh = [];
+
 	/** @var array<string,float> chat => time of the last message of this process */
 	private static $last_sent = [];
 
@@ -52,12 +55,16 @@ final class Queue {
 	 * @return int row id
 	 */
 	public static function push( Message $m, int $delay = 0 ): int {
-		return MessageRepository::insert(
+		$id = MessageRepository::insert(
 			array_merge(
 				self::row( $m, 'queued' ),
 				[ 'next_attempt_gmt' => self::gmt( max( 0, $delay ) ) ]
 			)
 		);
+		if ( $id && $delay <= 0 ) {
+			self::$fresh[] = $id;
+		}
+		return $id;
 	}
 
 	/**
@@ -238,10 +245,18 @@ final class Queue {
 
 	/** Shutdown callback: let the visitor go, then work. */
 	public static function on_shutdown(): void {
+		$ids          = self::$fresh;
+		$deadline     = microtime( true ) + self::budget( 0 );
 		self::$kicked = false;
+		self::$fresh  = [];
 		try {
 			self::finish_request();
-			self::run();
+			// Rows of this request first: they must not wait behind a backlog or a run that is busy elsewhere.
+			self::run_ids( $ids );
+			$left = (int) floor( $deadline - microtime( true ) );
+			if ( $left > 0 && ! self::$kicked ) {
+				self::run( 0, $left );
+			}
 		} catch ( \Throwable $e ) {
 			Logger::error( 'queue', $e->getMessage() );
 		}
@@ -344,6 +359,7 @@ final class Queue {
 	/** Forget the state of this process (tests). */
 	public static function reset(): void {
 		self::$kicked    = false;
+		self::$fresh     = [];
 		self::$last_sent = [];
 		remove_action( 'shutdown', [ self::class, 'on_shutdown' ], 100 );
 	}
@@ -356,6 +372,7 @@ final class Queue {
 	 */
 	private static function work( array $row, array &$totals ): void {
 		++$totals['processed'];
+		self::$fresh = array_diff( self::$fresh, [ (int) $row['id'] ] );
 		try {
 			$ok = Worker::process( $row )->ok;
 		} catch ( \Throwable $e ) {

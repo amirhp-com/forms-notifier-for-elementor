@@ -130,6 +130,19 @@ final class DispatcherTest extends TestCase {
 		$this->assertFalse( Queue::is_kicked() );
 	}
 
+	public function test_shutdown_sends_new_messages_before_a_backlog() {
+		Settings::set( 'queue.batch', 2 );
+		for ( $i = 0; $i < 5; $i++ ) {
+			MessageRepository::insert( Queue::row( Fixtures::message( 'fake', 'old' ), 'queued' ) );
+		}
+		$s = $this->saved();
+		Dispatcher::dispatch( $s, FormRepository::config( $s->form_id ) );
+		Queue::on_shutdown();
+		$this->assertSame( [ 'desk', 'old', 'old' ], array_map( function ( Message $m ) {
+			return $m->recipient->address;
+		}, FakeChannel::$sent ) );
+	}
+
 	public function test_captured_hook_is_wired() {
 		$s = $this->saved();
 		do_action( 'fnfe_submission_captured', $s, FormRepository::config( $s->form_id ) );
