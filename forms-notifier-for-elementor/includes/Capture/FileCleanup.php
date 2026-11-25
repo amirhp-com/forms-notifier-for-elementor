@@ -37,14 +37,15 @@ final class FileCleanup {
 
 		$days = Settings::int( 'privacy.retention_submissions_days', 0 );
 		do {
-			$ids = SubmissionRepository::older_than( $days, 50 );
+			$ids  = SubmissionRepository::older_than( $days, 50 );
+			$done = 0;
 			foreach ( $ids as $id ) {
-				self::delete_submission( $id );
+				$done += self::delete_submission( $id ) ? 1 : 0;
 				if ( microtime( true ) >= $deadline ) {
 					return;
 				}
 			}
-		} while ( $ids );
+		} while ( $done );
 
 		$days = Settings::int( 'privacy.retention_files_days', 0 );
 		do {

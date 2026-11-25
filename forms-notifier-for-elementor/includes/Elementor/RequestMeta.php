@@ -34,7 +34,8 @@ final class RequestMeta {
 	 * @param int    $queried_id Post the visitor was on.
 	 */
 	public static function build( string $referrer, string $title, int $queried_id ): array {
-		$url  = remove_query_arg( [ 'preview_id', 'preview_nonce', 'preview' ], esc_url_raw( $referrer, [ 'http', 'https' ] ) );
+		$url  = esc_url_raw( $referrer, [ 'http', 'https' ] );
+		$url  = strpos( $url, 'preview' ) === false ? $url : remove_query_arg( [ 'preview_id', 'preview_nonce', 'preview' ], $url );
 		$user = wp_get_current_user();
 		if ( $title === '' && $queried_id > 0 && get_post( $queried_id ) ) {
 			$title = get_the_title( $queried_id );

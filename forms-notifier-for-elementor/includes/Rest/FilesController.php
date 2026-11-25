@@ -95,9 +95,7 @@ final class FilesController extends Controller {
 				if ( $served || $served_request !== $request || ! $result instanceof \WP_REST_Response || $result->get_headers() !== $response->get_headers() ) {
 					return $served;
 				}
-				while ( ob_get_level() > 0 && ob_end_clean() ) {
-					continue;
-				}
+				FilesController::drop_buffers();
 				if ( $request->get_method() !== 'HEAD' ) {
 					readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streams a file that may be large.
 				}
@@ -107,6 +105,16 @@ final class FilesController extends Controller {
 			3
 		);
 		return $response;
+	}
+
+	/** Drop what was printed before a download. Buffers that may not be removed stay. */
+	public static function drop_buffers(): void {
+		while ( ob_get_level() > 0 ) {
+			$status = ob_get_status();
+			if ( ! ( (int) ( $status['flags'] ?? 0 ) & PHP_OUTPUT_HANDLER_REMOVABLE ) || ! ob_end_clean() ) {
+				return;
+			}
+		}
 	}
 
 	/**

@@ -287,9 +287,7 @@ final class SubmissionsController extends Controller {
 				if ( $served || $served_request !== $request ) {
 					return $served;
 				}
-				while ( ob_get_level() > 0 && ob_end_clean() ) {
-					continue;
-				}
+				FilesController::drop_buffers();
 				rewind( $handle );
 				fpassthru( $handle );
 				fclose( $handle );
