@@ -18,7 +18,7 @@ use AmirhpCom\FormsNotifier\Model\SendResult;
 defined( 'ABSPATH' ) || exit;
 
 /** Official Cloud API: text inside the 24 hour window, approved templates, uploaded media. */
-final class MetaCloudApi extends AbstractWhatsAppProvider {
+class MetaCloudApi extends AbstractWhatsAppProvider {
 
 	/** Id. */
 	public function id(): string {
@@ -37,7 +37,7 @@ final class MetaCloudApi extends AbstractWhatsAppProvider {
 
 	/** Fields. */
 	public function fields(): array {
-		return [
+		$fields = [
 			$this->field( 'phone_number_id', 'text', __( 'Phone number ID', 'forms-notifier-for-elementor' ), [ 'attrs' => [ 'dir' => 'ltr' ] ] ),
 			$this->field( 'token', 'secret', __( 'Permanent access token', 'forms-notifier-for-elementor' ) ),
 			$this->field(
@@ -50,6 +50,13 @@ final class MetaCloudApi extends AbstractWhatsAppProvider {
 					'attrs'   => [ 'dir' => 'ltr' ],
 				]
 			),
+		];
+		return array_merge( $fields, $this->template_fields() );
+	}
+
+	/** Fields of template messages. */
+	protected function template_fields(): array {
+		return [
 			$this->field(
 				'template_lang',
 				'text',
@@ -199,7 +206,7 @@ final class MetaCloudApi extends AbstractWhatsAppProvider {
 	}
 
 	/** Headers. */
-	private function headers(): array {
+	protected function headers(): array {
 		return [
 			'Authorization' => 'Bearer ' . $this->secret( 'token' ),
 			'Accept'        => 'application/json',
@@ -211,7 +218,7 @@ final class MetaCloudApi extends AbstractWhatsAppProvider {
 	 *
 	 * @param string $path Path below the phone number.
 	 */
-	private function url( string $path ): string {
+	protected function url( string $path ): string {
 		$version = $this->option( 'graph_version' );
 		return 'https://graph.facebook.com/' . ( preg_match( '/^v\d+\.\d+$/', $version ) ? $version : 'v27.0' ) . '/' . rawurlencode( $this->option( 'phone_number_id' ) ) . $path;
 	}
@@ -244,7 +251,7 @@ final class MetaCloudApi extends AbstractWhatsAppProvider {
 	private function result( array $r ): SendResult {
 		$id    = $this->text_at( $r['json'], 'messages.0.id' );
 		$code  = (int) $this->dig( $r['json'], 'error.code' );
-		$error = $this->first_text( $r['json'], [ 'error.error_data.details', 'error.message' ] );
+		$error = $this->first_text( $r['json'], [ 'error.error_data.details', 'error.message', 'error' ] );
 		if ( $code ) {
 			$error = trim( '#' . $code . ' ' . $error );
 		}

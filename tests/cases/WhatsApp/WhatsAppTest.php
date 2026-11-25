@@ -320,6 +320,57 @@ final class WhatsAppTest extends ProviderTestCase {
 		$this->assertSame( [ 'phone' => self::INTL, 'media' => [ 'url' => 'https://site.example.com/uploads/doc.pdf' ] ], HttpMock::last()['json'] );
 	}
 
+	public function test_dialog360(): void {
+		$url  = 'https://waba-v2.360dialog.io/messages';
+		$auth = [ 'D360-API-KEY' => self::KEY ];
+		$head = [ 'messaging_product' => 'whatsapp', 'recipient_type' => 'individual', 'to' => self::INTL ];
+		$ok   = [ 'messages' => [ [ 'id' => 'wamid.9', 'message_status' => 'accepted' ] ] ];
+		$this->golden( [
+			'id'       => 'dialog360',
+			'to'       => self::INTL,
+			'settings' => [ 'token' => self::KEY, 'template_lang' => 'fa' ],
+			'optional' => [ 'template_lang' ],
+			'secrets'  => [ self::KEY ],
+			'text'     => [ 'Hello', 'POST', $url, $auth, $head + [ 'type' => 'text', 'text' => [ 'preview_url' => true, 'body' => 'Hello' ] ], $ok, 'wamid.9' ],
+			'pattern'  => [ $this->pattern( 'order', [ 'a' ] ), 'POST', $url, $auth, $head + [ 'type' => 'template', 'template' => [ 'name' => 'order', 'language' => [ 'code' => 'fa' ], 'components' => [ [ 'type' => 'body', 'parameters' => [ [ 'type' => 'text', 'text' => 'a' ] ] ] ] ] ], $ok, 'wamid.9' ],
+			'failures' => [
+				[ [ 'error' => 'Invalid api token.' ], 401, true, 'Invalid api token.' ],
+				[ [ 'error' => [ 'message' => 'x', 'code' => 131047 ] ], 400, true, '#131047' ],
+				[ [ 'error' => 'Invalid request' ], 200, true, 'Invalid request' ],
+			],
+		] );
+		$provider = $this->provider( 'dialog360', [ 'token' => self::KEY ] );
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~^https://waba-v2\.360dialog\.io/media$~', [ 'id' => 'M1' ] );
+		HttpMock::expect( 'POST', '~/messages$~', $ok );
+		$message              = $this->message( '' );
+		$message->attachments = [ $this->file( 'doc.pdf', 'application/pdf', 'PDF' ) ];
+		$this->assertTrue( $provider->send( self::INTL, $message )->ok );
+		$this->assertSame( self::KEY, HttpMock::requests( '~/media$~' )[0]['headers']['d360-api-key'] );
+		$this->assertSame( [ 'id' => 'M1', 'filename' => 'doc.pdf' ], HttpMock::last()['json']['document'] );
+	}
+
+	public function test_whapi(): void {
+		$this->golden( [
+			'id'       => 'whapi',
+			'to'       => self::INTL,
+			'settings' => [ 'token' => self::KEY ],
+			'secrets'  => [ self::KEY ],
+			'text'     => [ 'Hello', 'POST', 'https://gate.whapi.cloud/messages/text', [ 'Authorization' => 'Bearer ' . self::KEY ], [ 'to' => '15550100000', 'body' => 'Hello' ], [ 'sent' => true, 'message' => [ 'id' => 'H1' ] ], 'H1' ],
+			'failures' => [
+				[ [ 'error' => [ 'code' => 401, 'message' => 'Need channel authorization' ] ], 401, true, 'Need channel' ],
+				[ [ 'sent' => false, 'error' => 'no such number' ], 200, true, 'no such number' ],
+			],
+		] );
+		$provider = $this->provider( 'whapi', [ 'token' => self::KEY ] );
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~.~', [ 'sent' => true, 'message' => [ 'id' => 'H2' ] ] );
+		$message              = $this->message( 'Hello' );
+		$message->attachments = [ $this->file( 'doc.pdf', 'application/pdf' ) ];
+		$this->assertTrue( $provider->send( self::INTL, $message )->ok );
+		$this->assertSame( "Hello\ndoc.pdf: https://site.example.com/uploads/doc.pdf", HttpMock::last()['json']['body'] );
+	}
+
 	public function test_custom(): void {
 		$provider = $this->provider( 'custom', [ 'url' => 'https://wa.example.com/send', 'token' => self::KEY, 'body' => '{"k":"{token}","n":"{to_digits}","t":"{text}"}' ] );
 		$this->assertFalse( $provider->supports_media() );
@@ -456,10 +507,10 @@ final class WhatsAppTest extends ProviderTestCase {
 			$this->assertInstanceOf( $class, $provider );
 			$this->assertArrayHasKey( 'test_' . $id, $actions );
 			$this->assertArrayHasKey( 'status_' . $id, $actions );
-			$risky = in_array( $id, [ 'ultramsg', 'greenapi', 'waha', 'evolution', 'wassenger' ], true );
+			$risky = in_array( $id, [ 'ultramsg', 'greenapi', 'waha', 'evolution', 'wassenger', 'whapi' ], true );
 			$this->assertSame( $risky, in_array( 'note_account', array_column( $provider->fields(), 'key' ), true ), $id );
-			$this->assertSame( in_array( $id, [ 'meta', 'twilio' ], true ), $provider->supports_template(), $id );
-			$this->assertSame( $id !== 'custom', $provider->supports_media(), $id );
+			$this->assertSame( in_array( $id, [ 'meta', 'dialog360', 'twilio' ], true ), $provider->supports_template(), $id );
+			$this->assertSame( ! in_array( $id, [ 'custom', 'whapi' ], true ), $provider->supports_media(), $id );
 		}
 	}
 

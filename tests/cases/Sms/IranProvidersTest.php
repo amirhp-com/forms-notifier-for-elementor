@@ -300,13 +300,88 @@ final class IranProvidersTest extends ProviderTestCase {
 		$this->needs_sender( 'payamresan', [ 'api_key' => self::KEY ] );
 	}
 
+	public function test_parsgreen(): void {
+		$base = 'https://sms.parsgreen.ir/Apiv2/Message/';
+		$auth = [ 'Authorization' => 'BASIC APIKEY:' . self::KEY ];
+		$ok   = [ 'R_Success' => true, 'R_Code' => 0, 'R_Message' => 'ok' ];
+		$this->golden( [
+			'id'       => 'parsgreen',
+			'settings' => [ 'api_key' => self::KEY, 'sender' => '10001' ],
+			'optional' => [ 'sender' ],
+			'secrets'  => [ self::KEY ],
+			'text'     => [ 'سلام', 'POST', $base . 'SendSms', $auth, [ 'SmsBody' => 'سلام', 'Mobiles' => [ '09120000000' ], 'SmsNumber' => '10001' ], $ok, '' ],
+			'pattern'  => [
+				[ $this->pattern( '12', [ 'x' => 'a', 'code' => '5555' ] ), 'POST', $base . 'SendOtp', $auth, [ 'Mobile' => '09120000000', 'SmsCode' => '5555', 'TemplateId' => 12, 'AddName' => false ], $ok, '' ],
+				[ $this->pattern( '12', [ 1 => 'b', 0 => 'a' ] ), 'POST', $base . 'SendOtp', $auth, [ 'Mobile' => '09120000000', 'SmsCode' => 'a', 'TemplateId' => 12, 'AddName' => false ], $ok, '' ],
+			],
+			'failures' => [
+				[ 'Authorization Failed', 403, true, 'Authorization Failed' ],
+				[ [ 'R_Success' => false, 'R_Code' => 7, 'R_Error' => 'x', 'R_Message' => 'bad line' ], 200, false, '7 bad line' ],
+				[ [ 'R_Success' => false, 'R_Code' => 3, 'R_Error' => 'denied' ], 403, true, '3 denied' ],
+			],
+		] );
+		$provider = $this->provider( 'parsgreen', [ 'api_key' => self::KEY ] );
+		HttpMock::reset();
+		$this->assertTrue( $provider->send( self::IR, $this->message( '', $this->pattern( '12', [] ) ) )->permanent );
+		HttpMock::assertNoRequests();
+	}
+
+	public function test_farazlegacy(): void {
+		$login = [ 'uname' => 'fakeuser', 'pass' => 'fake-password' ];
+		$get   = 'https://ippanel.com/patterns/pattern?username=fakeuser&password=fake-password&from=3000505&to=' . rawurlencode( '["09120000000"]' ) . '&input_data=';
+		$this->golden( [
+			'id'       => 'farazlegacy',
+			'settings' => [ 'username' => 'fakeuser', 'password' => 'fake-password', 'sender' => '3000505' ],
+			'secrets'  => [ 'fake-password' ],
+			'text'     => [ 'سلام', 'POST', 'https://ippanel.com/services.jspd', [], [ 'form' => $login + [ 'from' => '3000505', 'message' => 'سلام', 'to' => '["09120000000"]', 'op' => 'send' ] ], '[0,"123456"]', '123456' ],
+			'pattern'  => [
+				[ $this->pattern( 'abc', [ 'code' => 'a&b' ] ), 'GET', $get . rawurlencode( '{"code":"a&b"}' ) . '&pattern_code=abc', [], null, '987654', '987654' ],
+				[ $this->pattern( 'abc', [] ), 'GET', $get . rawurlencode( '{}' ) . '&pattern_code=abc', [], null, '["sent","55"]', '55' ],
+				[ $this->pattern( 'abc', [] ), 'GET', $get . rawurlencode( '{}' ) . '&pattern_code=abc', [], null, '"987654"', '987654' ],
+			],
+			'failures' => [
+				[ '["962","the username or password is incorrect"]', 200, true, '962 the username' ],
+				[ '[101,"x"]', 200, true, '101' ],
+				[ '[5,"credit"]', 200, false, '5' ],
+				[ '[]', 200, true, '' ],
+			],
+			'status'   => [ 'POST', '~/services\.jspd$~', '[0,"4500"]', '4' ],
+		] );
+		$provider = $this->provider( 'farazlegacy', [ 'username' => 'fakeuser', 'password' => 'fake-password', 'sender' => '3000505' ] );
+		foreach ( [ [ '["962","bad login"]', true ], [ '-1', false ], [ '0', false ], [ '["x"]', true ], [ '<html></html>', true ] ] as $case ) {
+			HttpMock::reset();
+			HttpMock::expect( 'GET', '~.~', $case[0] );
+			$result = $provider->send( self::IR, $this->message( '', $this->pattern( 'abc', [] ) ) );
+			$this->assertFalse( $result->ok, $case[0] );
+			$this->assertSame( $case[1], $result->permanent, $case[0] );
+			$this->assert_scrubbed( $result, [ 'fake-password' ] );
+		}
+	}
+
+	public function test_raygansms(): void {
+		$this->golden( [
+			'id'       => 'raygansms',
+			'settings' => [ 'username' => 'fakeuser', 'password' => 'fake-password', 'sender' => '5000' ],
+			'secrets'  => [ 'fake-password' ],
+			'text'     => [ 'سلام', 'POST', 'https://raygansms.com/SendMessageWithPost.ashx', [], [ 'form' => [ 'Username' => 'fakeuser', 'Password' => 'fake-password', 'PhoneNumber' => '5000', 'MessageBody' => 'سلام', 'RecNumber' => '09120000000', 'Smsclass' => '1' ] ], " 812345\r\n", '812345' ],
+			'failures' => [
+				[ '8', 200, true, '8' ],
+				[ '2000', 200, true, '2000' ],
+				[ '0', 200, true, '0' ],
+				[ 'Object reference not set to an instance of an object.', 200, true, 'Object reference' ],
+			],
+		] );
+		$provider = $this->provider( 'raygansms', [ 'username' => 'fakeuser', 'password' => 'fake-password', 'sender' => '5000' ] );
+		$this->assertFalse( $provider->supports_pattern() );
+	}
+
 	public function test_foreign_numbers_are_refused(): void {
 		foreach ( Registry::providers( 'sms' ) as $id => $provider ) {
 			if ( $provider->region() !== 'iran' ) {
 				continue;
 			}
 			$this->assertSame( [ 'IR' ], $provider->countries(), $id );
-			$this->assertTrue( $provider->supports_pattern(), $id );
+			$this->assertSame( $id !== 'raygansms', $provider->supports_pattern(), $id );
 			$this->provider( $id, [ 'api_key' => self::KEY, 'sender' => '1000', 'username' => 'fakeuser', 'password' => 'fake-password' ] );
 			$result = $provider->send( self::INTL, $this->message() );
 			$this->assertFalse( $result->ok );
