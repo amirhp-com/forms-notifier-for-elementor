@@ -50,6 +50,14 @@ final class SimpleMessengersTest extends TestCase {
 		$this->assertSame( 'my_channel', HttpMock::last()['parts']['chat_id']['value'] );
 	}
 
+	public function test_links_of_the_template_are_not_repeated(): void {
+		HttpMock::expect( 'POST', '~/sendMessage$~', [ 'ok' => true, 'result' => [ 'message_id' => 1 ] ] );
+		$m        = Fixtures::message( 'eitaa', '@my_channel', 'Files: https://example.com/?rest_route=%2Ffnfe%2Fv1%2Ffile%2F7&t=aa&e=100' );
+		$m->links = [ [ 'name' => 'cv.pdf', 'url' => 'https://example.com/?rest_route=%2Ffnfe%2Fv1%2Ffile%2F7&t=bb&e=101', 'size' => 5 ] ];
+		Registry::channel( 'eitaa' )->send( $m );
+		$this->assertSame( 1, substr_count( HttpMock::last()['form']['text'], 'file%2F7' ) );
+	}
+
 	public function test_eitaa_errors(): void {
 		$cases = [
 			[ [ 'ok' => false, 'error_code' => 401, 'description' => 'Unauthorized ' . self::TOKEN ], 401, true ],

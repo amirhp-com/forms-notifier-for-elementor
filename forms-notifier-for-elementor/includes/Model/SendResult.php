@@ -8,6 +8,7 @@
 namespace AmirhpCom\FormsNotifier\Model;
 
 use AmirhpCom\FormsNotifier\Core\Logger;
+use AmirhpCom\FormsNotifier\Core\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -106,6 +107,6 @@ final class SendResult {
 	 * @param string $text Text to store.
 	 */
 	private static function clip( string $text ): string {
-		return mb_substr( Logger::clean( $text ), 0, self::MAX_RESPONSE );
+		return mb_substr( Text::scrub( Logger::clean( $text ) ), 0, self::MAX_RESPONSE );
 	}
 }

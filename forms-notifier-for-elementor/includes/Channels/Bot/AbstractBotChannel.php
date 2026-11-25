@@ -20,6 +20,7 @@ use AmirhpCom\FormsNotifier\Model\Attachment;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Repository\FormRepository;
+use AmirhpCom\FormsNotifier\Template\Extras;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -589,13 +590,13 @@ abstract class AbstractBotChannel extends AbstractChannel {
 	}
 
 	/**
-	 * "Files:" block appended to the text.
+	 * "Files:" block appended to the text: the links the template did not show.
 	 *
 	 * @param Message $message Message.
 	 */
 	private function links_block( Message $message ): string {
 		$lines = [];
-		foreach ( $message->links as $link ) {
+		foreach ( Extras::missing_links( $message->body, $message->links ) as $link ) {
 			$url = is_array( $link ) ? esc_url_raw( (string) ( $link['url'] ?? '' ), [ 'http', 'https' ] ) : '';
 			if ( $url !== '' ) {
 				$lines[] = self::link_line( (string) ( $link['name'] ?? '' ), $url, (int) ( $link['size'] ?? 0 ) );

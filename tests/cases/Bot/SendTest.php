@@ -328,6 +328,21 @@ final class SendTest extends TestCase {
 		$this->assertSame( [ 'sendMessage' ], $this->methods() );
 	}
 
+	/** A link the template already shows is not repeated, even when it was signed at another second. */
+	public function test_links_of_the_template_are_not_repeated(): void {
+		$base = 'https://example.com/wp-json/fnfe/v1/file/';
+		foreach ( [ 'telegram', 'bale', 'soroush' ] as $channel ) {
+			HttpMock::reset();
+			$this->answer();
+			$m        = $this->message( 'Files: ' . $base . '7?t=aa&amp;e=100', $channel );
+			$m->links = [ [ 'name' => 'cv.pdf', 'url' => $base . '7?t=bb&e=101', 'size' => 1 ], [ 'name' => 'id.pdf', 'url' => $base . '70?t=cc&e=101', 'size' => 1 ] ];
+			$this->assertTrue( $this->send( $m )->ok );
+			$text = rawurldecode( implode( '', array_column( HttpMock::requests(), 'body' ) ) );
+			$this->assertSame( 1, preg_match_all( '~v1\\\\?/file\\\\?/7\?~', $text ), $channel );
+			$this->assertSame( 1, preg_match_all( '~v1\\\\?/file\\\\?/70\?~', $text ), $channel );
+		}
+	}
+
 	public function test_links_block(): void {
 		$this->answer();
 		$m        = $this->message( 'Body' );

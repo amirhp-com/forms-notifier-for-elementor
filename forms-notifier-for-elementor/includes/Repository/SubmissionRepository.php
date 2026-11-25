@@ -10,6 +10,7 @@ namespace AmirhpCom\FormsNotifier\Repository;
 use AmirhpCom\FormsNotifier\Attachments\Storage;
 use AmirhpCom\FormsNotifier\Core\Crypto;
 use AmirhpCom\FormsNotifier\Core\DbSchema;
+use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Model\Submission;
 
 defined( 'ABSPATH' ) || exit;
@@ -311,7 +312,7 @@ final class SubmissionRepository extends Repository {
 				$parts[] = (string) ( $field['value'] ?? '' );
 			}
 		}
-		return mb_strtolower( implode( "\n", array_filter( $parts, 'strlen' ) ) );
+		return Text::lower( implode( "\n", array_filter( $parts, 'strlen' ) ) );
 	}
 
 	/**
@@ -333,7 +334,7 @@ final class SubmissionRepository extends Repository {
 		if ( $sql !== '' ) {
 			$where[] = $sql;
 		}
-		$like = self::like( is_scalar( $args['search'] ?? '' ) ? mb_strtolower( (string) ( $args['search'] ?? '' ) ) : '' );
+		$like = self::like( is_scalar( $args['search'] ?? '' ) ? Text::lower( (string) ( $args['search'] ?? '' ) ) : '' );
 		if ( $like !== '' ) {
 			$where[]  = 'search_text LIKE %s';
 			$params[] = $like;

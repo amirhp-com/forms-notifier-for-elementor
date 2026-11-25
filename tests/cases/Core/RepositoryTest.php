@@ -7,6 +7,8 @@
 
 namespace AmirhpCom\FormsNotifier\Tests\Core;
 
+use AmirhpCom\FormsNotifier\Core\Text;
+use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Model\Submission;
 use AmirhpCom\FormsNotifier\Repository\ChatRepository;
 use AmirhpCom\FormsNotifier\Repository\FileRepository;
@@ -412,5 +414,38 @@ final class RepositoryTest extends TestCase {
 		LogRepository::insert( 'info', 'x', 'y', [] );
 		LogRepository::truncate();
 		$this->assertSame( 0, LogRepository::query()['total'] );
+	}
+	/* Text the database refuses */
+
+	public function test_invalid_utf8_never_reaches_the_database(): void {
+		$id = MessageRepository::insert( [ 'channel' => 'webhook', 'status' => 'sending', 'recipient' => "a\xE7" ] );
+		$this->assertTrue( MessageRepository::update( $id, [ 'status' => 'sent', 'response' => "OK re\xE7u", 'error' => "\xC7\xD3", 'body' => "b\xFF", 'subject' => "s\xFF", 'remote_id' => "r\xFF" ] ) );
+		$row = MessageRepository::find( $id );
+		$this->assertSame( 'OK re?u', $row['response'] );
+		foreach ( [ 'recipient', 'response', 'error', 'body', 'subject', 'remote_id' ] as $column ) {
+			$this->assertTrue( Text::is_utf8( $row[ $column ] ), $column );
+		}
+		LogRepository::insert( 'error', 'x', "m\xE7", [ 'a' => "\xE7" ] );
+		$this->assertSame( 'm?', LogRepository::query()['items'][0]['message'] );
+		$this->assertTrue( Text::is_utf8( (string) SendResult::success( 'webhook', "OK re\xE7u" )->response ) );
+	}
+
+	public function test_long_invalid_text_is_cut_inside_the_limit(): void {
+		$id = MessageRepository::insert( [ 'channel' => 'webhook', 'response' => str_repeat( "س\xE7", 3000 ) ] );
+		$this->assertSame( 2000, mb_strlen( MessageRepository::find( $id )['response'] ) );
+	}
+
+	/** A database that is utf8, not utf8mb4: wpdb refuses rows with emoji. */
+	public function test_three_byte_databases(): void {
+		$this->filter( 'pre_get_col_charset', static function () { return 'utf8'; } );
+		$s = $this->submission( [ 'form_name' => 'فرم 🙂' ] );
+		$this->assertTrue( $s->id > 0 );
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', SubmissionRepository::table(), $s->id ), ARRAY_A );
+		foreach ( [ 'form_name', 'fields', 'search_text' ] as $column ) {
+			$this->assertSame( 0, preg_match( '/[\xF0-\xF4]/', $row[ $column ] ), $column );
+		}
+		$this->assertSame( $s->fields, SubmissionRepository::find( $s->id )->fields, 'nothing is lost in JSON' );
+		$this->assertContains( '🙂', wp_json_encode( $s->fields, JSON_UNESCAPED_UNICODE ) );
 	}
 }

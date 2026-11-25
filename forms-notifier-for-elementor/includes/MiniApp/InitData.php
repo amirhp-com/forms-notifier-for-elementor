@@ -8,6 +8,7 @@
 namespace AmirhpCom\FormsNotifier\MiniApp;
 
 use AmirhpCom\FormsNotifier\Core\Settings;
+use AmirhpCom\FormsNotifier\Core\Text;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -123,7 +124,7 @@ final class InitData {
 			}
 			$key   = rawurldecode( $split[0] );
 			$value = rawurldecode( $split[1] );
-			if ( ! preg_match( '/^[A-Za-z0-9_]{1,64}$/', $key ) || isset( $pairs[ $key ] ) || ! mb_check_encoding( $value, 'UTF-8' ) ) {
+			if ( ! preg_match( '/^[A-Za-z0-9_]{1,64}$/', $key ) || isset( $pairs[ $key ] ) || ! Text::is_utf8( $value ) ) {
 				return null;
 			}
 			$pairs[ $key ] = $value;

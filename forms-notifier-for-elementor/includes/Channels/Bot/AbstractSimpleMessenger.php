@@ -15,6 +15,7 @@ use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Model\Attachment;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
+use AmirhpCom\FormsNotifier\Template\Extras;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -124,7 +125,7 @@ abstract class AbstractSimpleMessenger extends AbstractChannel {
 			}
 		}
 		$files = [];
-		foreach ( $message->links as $link ) {
+		foreach ( Extras::missing_links( $message->body, $message->links ) as $link ) {
 			$url = is_array( $link ) ? esc_url_raw( (string) ( $link['url'] ?? '' ), [ 'http', 'https' ] ) : '';
 			if ( $url !== '' ) {
 				$files[] = trim( (string) ( $link['name'] ?? '' ) ) . ': ' . $url;

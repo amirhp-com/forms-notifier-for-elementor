@@ -7,6 +7,8 @@
 
 namespace AmirhpCom\FormsNotifier\Repository;
 
+use AmirhpCom\FormsNotifier\Core\Text;
+
 defined( 'ABSPATH' ) || exit;
 
 /** Table access shared by the repositories. Dates are UTC, JSON columns hold readable JSON. */
@@ -120,7 +122,7 @@ abstract class Repository {
 	 */
 	protected static function insert_row( array $data ): int {
 		$db = static::db();
-		return $db->insert( static::table(), $data ) ? (int) $db->insert_id : 0;
+		return $db->insert( static::table(), self::storable( $data ) ) ? (int) $db->insert_id : 0;
 	}
 
 	/**
@@ -130,7 +132,43 @@ abstract class Repository {
 	 * @param array $data Column => value.
 	 */
 	protected static function update_row( int $id, array $data ): bool {
-		return $id > 0 && $data && static::db()->update( static::table(), $data, [ 'id' => $id ] ) !== false;
+		return $id > 0 && $data && static::db()->update( static::table(), self::storable( $data ), [ 'id' => $id ] ) !== false;
+	}
+
+	/**
+	 * Values the database accepts. wpdb refuses a whole row when one text is not valid UTF-8, or holds four-byte
+	 * characters (emoji) and the column is not utf8mb4.
+	 *
+	 * @param array $data Column => value.
+	 */
+	private static function storable( array $data ): array {
+		foreach ( $data as $column => $value ) {
+			if ( ! is_string( $value ) ) {
+				continue;
+			}
+			$value = Text::scrub( $value );
+			if ( preg_match( '/[\xF0-\xF4]/', $value ) && in_array( static::db()->get_col_charset( static::table(), $column ), [ 'utf8', 'utf8mb3' ], true ) ) {
+				$value = self::three_bytes( $value );
+			}
+			$data[ $column ] = $value;
+		}
+		return $data;
+	}
+
+	/**
+	 * Text without four-byte characters: escaped in JSON, where nothing is lost, replaced elsewhere.
+	 *
+	 * @param string $value Valid UTF-8.
+	 */
+	private static function three_bytes( string $value ): string {
+		$json = $value !== '' && strpos( '{["', $value[0] ) !== false && json_decode( $value ) !== null;
+		return (string) preg_replace_callback(
+			'/[\x{10000}-\x{10FFFF}]/u',
+			static function ( array $m ) use ( $json ): string {
+				return $json ? substr( (string) wp_json_encode( $m[0] ), 1, -1 ) : "\u{FFFD}";
+			},
+			$value
+		);
 	}
 
 	/**
@@ -187,7 +225,7 @@ abstract class Repository {
 	 * @param int   $length Characters.
 	 */
 	protected static function clip( $value, int $length ): string {
-		return mb_substr( is_scalar( $value ) ? (string) $value : '', 0, $length );
+		return mb_substr( is_scalar( $value ) ? Text::scrub( (string) $value ) : '', 0, $length );
 	}
 
 	/**
