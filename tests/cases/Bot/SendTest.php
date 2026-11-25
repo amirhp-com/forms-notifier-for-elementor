@@ -197,6 +197,23 @@ final class SendTest extends TestCase {
 		$this->assertSame( 'Sales', ChatRepository::find_chat( 'telegram', '-1005' )['title'] );
 	}
 
+	/** Queue rows, alerts and digests carry meta.message_id; they migrate here as well, for every kind of receiver. */
+	public function test_migration_of_logged_messages(): void {
+		foreach ( [ 'alerts', 'digest' ] as $root ) {
+			Settings::set( "$root.channels", [ 'telegram' => [ 'enabled' => true, 'receivers' => [ Fixtures::receiver( '-500/7' ) ] ] ] );
+		}
+		Settings::set( 'channels.telegram.receivers', [ Fixtures::receiver( '-500' ) ] );
+		HttpMock::expect( 'POST', '~~', [ 'ok' => false, 'error_code' => 400, 'description' => 'upgraded', 'parameters' => [ 'migrate_to_chat_id' => -1005 ] ], 400 );
+		$message                     = $this->message( 'x', 'telegram', '-500/7' );
+		$message->meta['message_id'] = 12;
+		Settings::overlay( [ 'channels.telegram.receivers' => [ Fixtures::receiver( '-500' ), Fixtures::receiver( '99' ) ] ] );
+		$this->assertSame( '-1005', $this->send( $message )->meta['migrate_to'] );
+		Settings::clear_overlay();
+		$this->assertSame( '-1005/7', Settings::get( 'alerts.channels.telegram.receivers' )[0]['address'] );
+		$this->assertSame( '-1005/7', Settings::get( 'digest.channels.telegram.receivers' )[0]['address'] );
+		$this->assertSame( [ '-1005' ], array_column( Settings::arr( 'channels.telegram.receivers' ), 'address' ), 'unsaved values are not saved' );
+	}
+
 	private function files( int $count, string $ext = 'pdf' ): array {
 		$out = [];
 		for ( $i = 0; $i < $count; $i++ ) {

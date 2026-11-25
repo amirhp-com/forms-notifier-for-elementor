@@ -7,6 +7,7 @@
 
 namespace AmirhpCom\FormsNotifier\Channels\Bot;
 
+use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\State;
 use AmirhpCom\FormsNotifier\Repository\ChatRepository;
@@ -48,7 +49,8 @@ final class ChatDiscovery {
 	}
 
 	/**
-	 * A group became a supergroup: move its rows and rewrite every stored receiver.
+	 * A group became a supergroup: move its rows and rewrite every stored receiver (site-wide, forms, rules, alerts and
+	 * digest). The only implementation; calling it again for the same chat changes nothing.
 	 *
 	 * @param string $platform Platform.
 	 * @param string $old      Old chat id.
@@ -62,7 +64,9 @@ final class ChatDiscovery {
 
 		$changes = [];
 		foreach ( [ "channels.$platform.receivers", "alerts.channels.$platform.receivers", "digest.channels.$platform.receivers" ] as $path ) {
-			$receivers = Settings::arr( $path );
+			// The stored value: a test with unsaved settings must not save them.
+			$receivers = Settings::stored_value( $path );
+			$receivers = is_array( $receivers ) ? $receivers : [];
 			$rewritten = self::rewrite( $receivers, $old, $new );
 			if ( $rewritten !== $receivers ) {
 				$changes[ $path ] = $rewritten;
@@ -71,6 +75,15 @@ final class ChatDiscovery {
 		if ( $changes ) {
 			Settings::set_many( $changes );
 		}
+		Logger::info(
+			'bot',
+			'A chat moved to a new id; stored receivers were updated.',
+			[
+				'platform' => $platform,
+				'old'      => $old,
+				'new'      => $new,
+			]
+		);
 
 		if ( strpos( FormRepository::raw_configs_containing( $old ), $old ) === false ) {
 			return;

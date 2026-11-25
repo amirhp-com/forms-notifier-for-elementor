@@ -284,8 +284,9 @@ abstract class Controller {
 	 *
 	 * @param Submission $s           Submission.
 	 * @param bool       $signed_urls File URLs carry a signature (callers without a WordPress session).
+	 * @param int        $link_ttl    Seconds a signed URL is valid.
 	 */
-	public static function submission_full( Submission $s, bool $signed_urls = false ): array {
+	public static function submission_full( Submission $s, bool $signed_urls = false, int $link_ttl = DAY_IN_SECONDS ): array {
 		$fields = [];
 		foreach ( $s->fields as $id => $field ) {
 			$fields[] = [
@@ -302,7 +303,7 @@ abstract class Controller {
 		$files = [];
 		foreach ( $s->files as $file ) {
 			if ( $signed_urls ) {
-				$url = Storage::link( $file, 1 );
+				$url = Storage::link( $file, 0, max( 1, $link_ttl ) );
 			} else {
 				$url = $file->id ? add_query_arg( '_wpnonce', wp_create_nonce( 'wp_rest' ), Urls::rest( 'file/' . $file->id ) ) : '';
 			}

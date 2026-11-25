@@ -92,7 +92,12 @@ final class Session {
 
 	/** Invalidate every token. */
 	public static function revoke_all(): void {
-		State::set( 'token_version', self::version() + 1 );
+		State::update(
+			'token_version',
+			static function ( $version ): int {
+				return is_numeric( $version ) ? (int) $version + 1 : 1;
+			}
+		);
 	}
 
 	/** Current token version. */

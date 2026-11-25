@@ -570,33 +570,36 @@ final class Updates {
 	 * @param int    $update_id Update id.
 	 */
 	private static function remember( string $platform, int $update_id ): bool {
-		// Another request may have written since this one read the option.
-		wp_cache_delete( State::OPTION, 'options' );
-		wp_cache_delete( 'notoptions', 'options' );
+		$fresh = false;
+		// One step: two requests that bring the same update must not both find it unseen.
+		State::update(
+			"bot.$platform",
+			static function ( $bot ) use ( $update_id, &$fresh ): array {
+				$bot  = is_array( $bot ) ? $bot : [];
+				$seen = array_map( 'intval', (array) ( $bot['seen'] ?? [] ) );
+				if ( in_array( $update_id, $seen, true ) ) {
+					return $bot;
+				}
+				$last = (int) ( $bot['last_update'] ?? 0 );
+				$idle = self::now() - (int) ( $bot['last_update_at'] ?? 0 );
+				if ( $last > 0 && $update_id <= $last ) {
+					if ( $idle > self::IDLE_RESET ) {
+						$seen = [];
+					} elseif ( count( $seen ) < 2 || $update_id < min( $seen ) ) {
+						return $bot;
+					}
+					// Otherwise: parallel requests that arrived in the wrong order.
+				}
+				$seen[] = $update_id;
+				$fresh  = true;
 
-		$bot  = State::get( "bot.$platform", [] );
-		$bot  = is_array( $bot ) ? $bot : [];
-		$seen = array_map( 'intval', (array) ( $bot['seen'] ?? [] ) );
-		if ( in_array( $update_id, $seen, true ) ) {
-			return false;
-		}
-		$last = (int) ( $bot['last_update'] ?? 0 );
-		$idle = self::now() - (int) ( $bot['last_update_at'] ?? 0 );
-		if ( $last > 0 && $update_id <= $last ) {
-			if ( $idle > self::IDLE_RESET ) {
-				$seen = [];
-			} elseif ( count( $seen ) < 2 || $update_id < min( $seen ) ) {
-				return false;
+				$bot['seen']           = array_slice( $seen, -self::SEEN );
+				$bot['last_update']    = $idle > self::IDLE_RESET ? $update_id : max( $last, $update_id );
+				$bot['last_update_at'] = self::now();
+				return $bot;
 			}
-			// Otherwise: parallel requests that arrived in the wrong order.
-		}
-		$seen[] = $update_id;
-
-		$bot['seen']           = array_slice( $seen, -self::SEEN );
-		$bot['last_update']    = $idle > self::IDLE_RESET ? $update_id : max( $last, $update_id );
-		$bot['last_update_at'] = self::now();
-		State::set( "bot.$platform", $bot );
-		return true;
+		);
+		return $fresh;
 	}
 
 	/**

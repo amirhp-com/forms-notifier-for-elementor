@@ -348,7 +348,7 @@ final class AppController extends Controller {
 		if ( ! $row || ! in_array( $row['purpose'], self::PURPOSES, true ) ) {
 			return $this->error( 'not_found', __( 'This message does not exist any more.', 'forms-notifier-for-elementor' ), 404 );
 		}
-		if ( ! in_array( $row['status'], [ 'failed', 'retry', 'cancelled', 'skipped' ], true ) || ! Queue::retry( $id ) ) {
+		if ( ! in_array( $row['status'], [ 'failed', 'retry' ], true ) || ! Queue::retry( $id ) ) {
 			return $this->error( 'not_retryable', __( 'This message cannot be sent again.', 'forms-notifier-for-elementor' ), 409 );
 		}
 		Queue::run_ids( [ $id ] );
@@ -383,16 +383,7 @@ final class AppController extends Controller {
 	 * @param Submission $submission Submission.
 	 */
 	public static function app_submission( Submission $submission ): array {
-		// Signed links are counted in days; here they are valid for one hour only.
-		$shift = static function ( $now ) {
-			return (int) $now - DAY_IN_SECONDS + HOUR_IN_SECONDS;
-		};
-		add_filter( 'fnfe_now', $shift, PHP_INT_MAX );
-		try {
-			$out = self::submission_full( $submission, true );
-		} finally {
-			remove_filter( 'fnfe_now', $shift, PHP_INT_MAX );
-		}
+		$out = self::submission_full( $submission, true, HOUR_IN_SECONDS );
 
 		$out['meta']['user_agent'] = '';
 		if ( ! Settings::bool( 'miniapp.show_ip' ) ) {

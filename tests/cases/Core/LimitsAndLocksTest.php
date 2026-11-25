@@ -11,8 +11,8 @@ use AmirhpCom\FormsNotifier\Core\Cron;
 use AmirhpCom\FormsNotifier\Core\Lock;
 use AmirhpCom\FormsNotifier\Core\RateLimit;
 use AmirhpCom\FormsNotifier\Core\Request;
-use AmirhpCom\FormsNotifier\Core\Settings;
-use AmirhpCom\FormsNotifier\Core\Urls;
+use AmirhpCom\FormsNotifier\Core\Settings; use AmirhpCom\FormsNotifier\Core\State;
+use AmirhpCom\FormsNotifier\Core\Urls; use AmirhpCom\FormsNotifier\MiniApp\Session;
 use AmirhpCom\FormsNotifier\Tests\Db;
 use AmirhpCom\FormsNotifier\Tests\TestCase;
 
@@ -52,6 +52,51 @@ final class LimitsAndLocksTest extends TestCase {
 		Lock::release( 'queue' );
 		$this->assertTrue( Lock::acquire( 'queue', 60 ) );
 		Lock::release( 'nothing' );
+	}
+
+	/** Another request that writes the option between two steps of this one. */
+	private function write_behind( array $state ): void {
+		global $wpdb;
+		$wpdb->update( $wpdb->options, [ 'option_value' => maybe_serialize( $state ) ], [ 'option_name' => State::OPTION ] );
+	}
+
+	public function test_state_keeps_writes_of_other_requests(): void {
+		State::set( 'bot.telegram.webhook_secret', 'old' );
+		State::set( 'token_version', 1 );
+		$this->assertSame( 'old', State::get( 'bot.telegram.webhook_secret' ) );
+		$this->write_behind( [ 'bot' => [ 'telegram' => [ 'webhook_secret' => 'new' ] ], 'token_version' => 2 ] );
+		State::set( 'bot.bale.last_poll', 5 );
+		$this->assertSame( 'new', State::get( 'bot.telegram.webhook_secret' ) );
+
+		$this->write_behind( [ 'bot' => [ 'telegram' => [ 'webhook_secret' => 'newer' ] ], 'scan_cursor' => [ 'a' => 1 ], 'token_version' => 3 ] );
+		State::delete( 'scan_cursor' );
+		$this->assertSame( 'newer', State::get( 'bot.telegram.webhook_secret' ) );
+		$this->assertSame( null, State::get( 'scan_cursor' ) );
+
+		$this->write_behind( [ 'token_version' => 7 ] );
+		Session::revoke_all();
+		$this->assertSame( 8, State::get( 'token_version' ) );
+	}
+
+	public function test_state_steps_are_serialised(): void {
+		$inside = null;
+		$new    = State::update(
+			'counter',
+			static function ( $value ) use ( &$inside ) {
+				$inside = Lock::acquire( 'state', 5 );
+				State::set( 'other', 1 ); // A nested write does not wait for itself.
+				return $value + 1;
+			},
+			41
+		);
+		$this->assertSame( 42, $new );
+		$this->assertFalse( $inside );
+		$this->assertTrue( Lock::acquire( 'state', 5 ), 'released afterwards' );
+		$start = microtime( true );
+		State::set( 'counter', 1 );
+		$this->assertTrue( microtime( true ) - $start > 1.5, 'waits for another request' );
+		$this->assertSame( 1, State::get( 'counter' ), 'but never drops the write' );
+		Lock::release( 'state' );
 	}
 
 	public function test_request(): void {

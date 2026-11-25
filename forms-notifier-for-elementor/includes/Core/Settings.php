@@ -130,7 +130,7 @@ final class Settings {
 	 * @param mixed  $value JSON-safe value.
 	 */
 	public static function set( string $path, $value ): void {
-		$old = self::plain_get( $path );
+		$old = self::stored_value( $path );
 		self::write( self::with_value( self::stored(), $path, $value ) );
 		do_action( 'fnfe_setting_updated', $path, $value, $old );
 	}
@@ -145,7 +145,7 @@ final class Settings {
 		$changed = [];
 		foreach ( $paths_to_values as $path => $value ) {
 			$path = (string) $path;
-			if ( self::plain_get( $path ) !== $value ) {
+			if ( self::stored_value( $path ) !== $value ) {
 				$changed[] = $path;
 			}
 			$stored = self::with_value( $stored, $path, $value );
@@ -187,14 +187,14 @@ final class Settings {
 	 * @param string $path Dot path.
 	 */
 	public static function delete( string $path ): void {
-		$old    = self::plain_get( $path );
+		$old    = self::stored_value( $path );
 		$stored = self::stored();
 		self::path_get( $stored, $path, $found );
 		if ( ! $found ) {
 			return;
 		}
 		self::write( self::path_delete( $stored, $path ) );
-		do_action( 'fnfe_setting_updated', $path, self::plain_get( $path ), $old );
+		do_action( 'fnfe_setting_updated', $path, self::stored_value( $path ), $old );
 	}
 
 	/**
@@ -558,7 +558,7 @@ final class Settings {
 	 * @param string $path Dot path.
 	 * @return mixed
 	 */
-	private static function plain_get( string $path ) {
+	public static function stored_value( string $path ) {
 		$overlay       = self::$overlay;
 		self::$overlay = [];
 		$value         = self::get( $path );

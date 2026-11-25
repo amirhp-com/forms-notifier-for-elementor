@@ -102,10 +102,11 @@ final class Storage {
 	/**
 	 * Signed, optionally expiring download URL for a stored file.
 	 *
-	 * @param Attachment $file     File.
-	 * @param int        $ttl_days Days, 0 = never expires.
+	 * @param Attachment $file        File.
+	 * @param int        $ttl_days    Days, 0 = never expires.
+	 * @param int        $ttl_seconds Seconds instead of days when greater than 0.
 	 */
-	public static function link( Attachment $file, int $ttl_days = 0 ): string {
+	public static function link( Attachment $file, int $ttl_days = 0, int $ttl_seconds = 0 ): string {
 		if ( ! $file->id ) {
 			return '';
 		}
@@ -113,7 +114,8 @@ final class Storage {
 		if ( $token === '' ) {
 			return '';
 		}
-		$expires = $ttl_days > 0 ? (int) apply_filters( 'fnfe_now', time() ) + $ttl_days * DAY_IN_SECONDS : 0;
+		$ttl     = $ttl_seconds > 0 ? $ttl_seconds : max( 0, $ttl_days ) * DAY_IN_SECONDS;
+		$expires = $ttl > 0 ? (int) apply_filters( 'fnfe_now', time() ) + $ttl : 0;
 		return add_query_arg(
 			[
 				't' => self::sign( $file->id, $expires, $token ),

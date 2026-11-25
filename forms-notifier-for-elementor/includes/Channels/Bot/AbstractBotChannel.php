@@ -739,8 +739,7 @@ abstract class AbstractBotChannel extends AbstractChannel {
 		} elseif ( $result->http_code === 403 && $parsed ) {
 			ChatDiscovery::mark_lost( $id, $parsed['chat'] );
 		}
-		// The queue worker moves the receivers itself; tests and alerts do not go through it.
-		if ( ! empty( $result->meta['migrate_to'] ) && $parsed && empty( $message->meta['message_id'] ) ) {
+		if ( ! empty( $result->meta['migrate_to'] ) && $parsed ) {
 			ChatDiscovery::migrate( $id, $parsed['chat'], (string) $result->meta['migrate_to'] );
 		}
 	}

@@ -287,6 +287,14 @@ final class AppRestTest extends TestCase {
 		$file = FileRepository::insert( $this->submission, Fixtures::file() );
 		global $wpdb;
 		$wpdb->update( SubmissionRepository::table(), [ 'files_count' => 1 ], [ 'id' => $this->submission ] );
+		$clock = [];
+		$this->filter(
+			'rest_url',
+			static function ( $url ) use ( &$clock ) {
+				$clock[] = (int) apply_filters( 'fnfe_now', time() );
+				return $url;
+			}
+		);
 		$d = $this->get( '/app/submissions/' . $this->submission );
 		$this->assertCount( 1, $d['submission']['files'] );
 		$this->assertKeys( [ 'id', 'field_id', 'name', 'size', 'mime', 'is_image', 'url' ], $d['submission']['files'][0] );
@@ -296,7 +304,8 @@ final class AppRestTest extends TestCase {
 		$this->assertSame( 1767261600 + HOUR_IN_SECONDS, (int) $query['e'] );
 		$this->assertTrue( Storage::verify( $file, $query['t'], (int) $query['e'] ) );
 		$this->assertFalse( Storage::verify( $file, $query['t'], (int) $query['e'] + 1 ) );
-		$this->assertSame( 1767261600, (int) apply_filters( 'fnfe_now', time() ), 'the clock is untouched afterwards' );
+		$this->assertTrue( count( $clock ) > 0 );
+		$this->assertSame( [ 1767261600 ], array_values( array_unique( $clock ) ), 'the clock is never shifted' );
 	}
 
 	public function test_status(): void {
