@@ -33,7 +33,7 @@ final class EditorValues {
 
 		$choices = [
 			'fnfe_enabled'        => [ 'yes', 'no' ],
-			'fnfe_receivers_mode' => [ 'append', 'replace' ],
+			'fnfe_receivers_mode' => [ 'replace' ],
 			'fnfe_attach'         => [ 'off', 'link', 'send', 'both' ],
 		];
 		foreach ( $choices as $key => $allowed ) {

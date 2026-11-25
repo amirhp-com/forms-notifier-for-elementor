@@ -47,6 +47,13 @@ final class SourcesTest extends TestCase {
 		$this->assertSame( 1, count( array_filter( $GLOBALS['wp_filter']['elementor_pro/forms/new_record']->callbacks[20] ?? [], static function ( $c ) { return is_array( $c['function'] ) && $c['function'][0] instanceof ProFormSource; } ) ), 'registered once' );
 	}
 
+	public function test_help_topics(): void {
+		$topics = apply_filters( 'fnfe_help_topics', [] );
+		foreach ( [ 'forms-found', 'uploaded-files' ] as $id ) {
+			$this->assertKeys( [ 'title', 'group', 'body' ], $topics[ $id ] );
+		}
+	}
+
 	public function test_action_is_registered_with_elementor(): void {
 		if ( ! class_exists( '\ElementorPro\Modules\Forms\Module' ) ) {
 			return;

@@ -28,6 +28,7 @@ final class Module implements ModuleInterface {
 
 		EditorAssets::register();
 		FileCleanup::register();
+		HelpTopics::register();
 
 		add_action( Cron::SCAN, [ self::class, 'scan' ] );
 		add_action( 'elementor/document/after_save', [ FormScanner::class, 'on_document_saved' ] );
