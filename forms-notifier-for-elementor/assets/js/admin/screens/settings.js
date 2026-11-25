@@ -27,7 +27,7 @@
 		}
 		let alive = true;
 		const body = h( 'div', null, ui.Skeleton( 'form', 5 ) );
-		shell.header( { title: tabs[ section ].label, crumbs: crumb || [ { label: __( 'Settings', 'forms-notifier-for-elementor' ), path: 'settings' }, { label: tabs[ section ].label } ], help: extra.help || 'settings-' + section } );
+		shell.header( { title: tabs[ section ].label, crumbs: crumb || [ { label: __( 'Settings', 'forms-notifier-for-elementor' ), path: 'settings' }, { label: tabs[ section ].label } ], help: extra.help || { attachments: 'uploaded-files', queue: 'log', privacy: 'submissions' }[ section ] || 'quick-start' } );
 		mount( container, crumb ? body : h( 'div', { class: 'fnfe-split' }, h( 'div', { class: 'fnfe-split__side' }, ui.settingsNav( section ) ), h( 'div', { class: 'fnfe-split__main' }, body ) ) );
 
 		function load() {

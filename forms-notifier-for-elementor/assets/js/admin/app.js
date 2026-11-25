@@ -19,7 +19,7 @@
 	/* Section of the rail and the submenu slug a path belongs to. */
 	const SECTION = { bots: 'channels', alerts: 'channels', digest: 'channels', tools: 'settings' };
 	const SLUG = { dashboard: 'fnfe', channels: 'fnfe-channels', forms: 'fnfe-forms', submissions: 'fnfe-submissions', log: 'fnfe-log', settings: 'fnfe-settings', help: 'fnfe-help' };
-	const HELP = { dashboard: 'quick-start', channels: 'channels', channel: 'channels', forms: 'forms', form: 'forms', submissions: 'submissions', log: 'log', settings: 'quick-start', tools: 'troubleshooting', bots: 'bots' };
+	const HELP = { dashboard: 'quick-start', channels: 'channels', channel: 'channels', forms: 'forms', form: 'forms', submissions: 'submissions', log: 'log', settings: 'quick-start', tools: 'troubleshooting', bots: 'bots-connect' };
 	const sectionOf = ( path ) => {
 		const first = String( path ).split( '/' )[ 0 ];
 		return SECTION[ first ] || first;

@@ -548,6 +548,21 @@ html.fnfe-locked {
 	padding: 2px;
 }
 
+.fnfe-split__main {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 20px;
+}
+
+.fnfe-split__main > :empty,
+.fnfe-split__main > div:not([class]):has(> div:empty:only-child) {
+	display: none;
+}
+
+.fnfe-root .fnfe-split__main > * {
+	margin-top: 0;
+}
+
 .fnfe-cols {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1623,7 +1638,9 @@ html.fnfe-locked {
 .fnfe-root .fnfe-check:checked::before {
 	content: "";
 	position: absolute;
-	inset: 1px 0 0 5.5px;
+	top: 1px;
+	right: auto;
+	left: 5.5px;
 	float: none;
 	width: 6px;
 	height: 11px;
@@ -1646,7 +1663,8 @@ html.fnfe-locked {
 }
 
 .fnfe-root .fnfe-check--radio:checked::before {
-	inset: 4.5px;
+	top: 4.5px;
+	left: 4.5px;
 	width: 8px;
 	height: 8px;
 	border: 0;
@@ -2979,6 +2997,7 @@ html.fnfe-locked {
 	position: absolute;
 	inset-block-start: 8px;
 	right: 8px;
+	background: var(--fnfe-board-2);
 	color: #b4bcc9;
 }
 
@@ -4264,6 +4283,12 @@ td .fnfe-rowactions {
 @media (max-width: 1280px) {
 	.fnfe-main {
 		padding-inline: 28px;
+	}
+}
+
+@media (min-width: 783px) and (max-width: 1240px) {
+	.fnfe-root .fnfe-table .fnfe-col-lg {
+		display: none;
 	}
 }
 

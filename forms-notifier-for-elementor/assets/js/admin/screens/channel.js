@@ -48,7 +48,7 @@
 			sub: ui.tx( meta.description ),
 			lead: ui.Tile( id, 'l' ),
 			crumbs: [ { label: __( 'Channels', 'forms-notifier-for-elementor' ), path: 'channels' }, { label: meta.label } ],
-			help: 'channel-' + id,
+			help: { telegram: 'bots-connect', bale: 'bots-connect', sms: 'sms_routing', whatsapp: 'whatsapp', webhook: 'webhooks' }[ id ] || 'channels',
 			actions: [
 				ui.channelPill( meta ),
 				toggle,
