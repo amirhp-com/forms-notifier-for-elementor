@@ -254,7 +254,7 @@ final class BotController extends Controller {
 				'name'     => $admin['name'],
 				'username' => $admin['username'],
 				'wp_user'  => $admin['wp_user'],
-				'wp_name'  => $user ? $user->display_name : '',
+				'wp_name'  => $user ? wp_specialchars_decode( $user->display_name, ENT_QUOTES ) : '',
 				'perms'    => $admin['perms'],
 			];
 		}

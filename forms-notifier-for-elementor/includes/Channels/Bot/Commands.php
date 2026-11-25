@@ -496,7 +496,7 @@ final class Commands {
 			/* translators: %1$s: site name, %2$s: user name */
 			__( 'Linked to %1$s as %2$s. Send /help to see the commands.', 'forms-notifier-for-elementor' ),
 			'<b>' . self::esc( self::site() ) . '</b>',
-			'<b>' . self::esc( $user->display_name ) . '</b>'
+			'<b>' . self::esc( wp_specialchars_decode( $user->display_name, ENT_QUOTES ) ) . '</b>'
 		);
 	}
 
