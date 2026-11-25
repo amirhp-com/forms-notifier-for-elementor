@@ -56,7 +56,9 @@ final class Module implements ModuleInterface {
 	public static function flush(): void {
 		if ( self::$dirty ) {
 			self::$dirty = false;
-			Strings::sync_all();
+			if ( I18n::provider() === 'wpml' ) {
+				Strings::sync_all();
+			}
 		}
 	}
 }
