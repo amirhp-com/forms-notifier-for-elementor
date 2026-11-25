@@ -1,0 +1,32 @@
+/*
+ * Dastkhat (SIL Open Font License 1.1). Loaded for Persian users only.
+ */
+@font-face {
+	font-family: "Dastkhat FaNum";
+	src: url("../fonts/dastkhat/DastkhatFaNum-Variable.woff2") format("woff2");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "Dastkhat";
+	src: url("../fonts/dastkhat/Dastkhat-Variable.woff2") format("woff2");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* Text uses Persian digits; codes, addresses and identifiers keep Latin digits. */
+.fnfe-root[data-font="fa"] {
+	--fnfe-font: "Dastkhat FaNum", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+	--fnfe-font-latin: "Dastkhat", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+	--fnfe-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Dastkhat", monospace;
+	--fnfe-text-xs: 12.5px;
+	--fnfe-text-s: 13.5px;
+	--fnfe-text-m: 15px;
+	--fnfe-text-l: 17px;
+	--fnfe-text-xl: 21px;
+	--fnfe-text-2xl: 28px;
+	--fnfe-leading: 1.75;
+}
