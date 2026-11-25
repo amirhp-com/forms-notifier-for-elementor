@@ -137,7 +137,7 @@ final class TemplateController extends Controller {
 			}
 		}
 		$lang = (string) $request['lang'];
-		$lang = array_key_exists( $lang, I18n::languages() ) ? $lang : '';
+		$lang = preg_match( '/^[a-z]{2,3}([_-][A-Za-z0-9]{2,8})*$/', $lang ) ? $lang : I18n::default_lang();
 
 		return I18n::with_language(
 			$lang,
