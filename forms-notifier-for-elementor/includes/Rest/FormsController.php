@@ -44,6 +44,9 @@ final class FormsController extends Controller {
 			],
 		];
 
+		// Without a default: a request that forgets the config must not reset the form.
+		$config = array_diff_key( array_merge( $this->object_arg(), [ 'required' => true ] ), [ 'default' => true ] );
+
 		register_rest_route(
 			self::NS,
 			'/forms',
@@ -99,7 +102,7 @@ final class FormsController extends Controller {
 					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => [ $this, 'update' ],
 					'permission_callback' => $forms,
-					'args'                => array_merge( $id, [ 'config' => array_merge( $this->object_arg(), [ 'required' => true ] ) ] ),
+					'args'                => array_merge( $id, [ 'config' => $config ] ),
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,

@@ -155,11 +155,15 @@ final class Privacy implements ModuleInterface {
 		];
 	}
 
-	/** Suggested text for the privacy policy. */
+	/** Offer the text for the privacy policy. */
 	public static function policy_content(): void {
-		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
-			return;
+		if ( function_exists( 'wp_add_privacy_policy_content' ) && ! wp_doing_ajax() ) {
+			wp_add_privacy_policy_content( 'Forms Notifier for Elementor', self::policy_text() );
 		}
+	}
+
+	/** Suggested text as HTML. */
+	public static function policy_text(): string {
 		$paragraphs = [];
 		if ( Settings::bool( 'general.store_submissions', true ) ) {
 			$stored = [
@@ -213,11 +217,8 @@ final class Privacy implements ModuleInterface {
 			);
 		}
 
-		wp_add_privacy_policy_content(
-			'Forms Notifier for Elementor',
-			'<p class="privacy-policy-tutorial">' . esc_html__( 'The text below follows the current settings of the plugin. Add the services you use and the reason you need the data.', 'forms-notifier-for-elementor' ) . '</p>'
-				. '<p>' . implode( '</p><p>', array_map( 'esc_html', $paragraphs ) ) . '</p>'
-		);
+		return '<p class="privacy-policy-tutorial">' . esc_html__( 'The text below follows the current settings of the plugin. Add the services you use and the reason you need the data.', 'forms-notifier-for-elementor' ) . '</p>'
+			. '<p>' . implode( '</p><p>', array_map( 'esc_html', $paragraphs ) ) . '</p>';
 	}
 
 	/**
