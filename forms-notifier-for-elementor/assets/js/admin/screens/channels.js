@@ -52,8 +52,8 @@
 					}, ui.fail );
 				},
 			} ) ),
-			h( 'h3', { class: 'fnfe-chan__name' }, h( 'a', { href: '#/channels/' + meta.id }, meta.label ) ),
-			h( 'p', { class: 'fnfe-chan__desc' }, meta.enabled && ! meta.ready && meta.problems[ 0 ] ? meta.problems[ 0 ] : meta.description ),
+			h( 'h3', { class: 'fnfe-chan__name' }, h( 'a', { href: '#/channels/' + meta.id }, ui.tx( meta.label ) ) ),
+			h( 'p', { class: 'fnfe-chan__desc' }, meta.enabled && ! meta.ready && meta.problems[ 0 ] ? ui.tx( meta.problems[ 0 ] ) : ui.tx( meta.description ) ),
 			h( 'div', { class: 'fnfe-chan__foot' }, ui.channelPill( meta ), meta.capabilities.receivers === 'none' ? null : h( 'span', { class: 'fnfe-muted' }, /* translators: %s: number of receivers */ sprintf( _n( '%s receiver', '%s receivers', meta.receivers_count, 'forms-notifier-for-elementor' ), fmt.number( meta.receivers_count ) ) ) )
 		);
 	}
@@ -74,7 +74,7 @@
 				channels.forEach( ( item ) => groups.indexOf( item.group ) === -1 && groups.push( item.group ) );
 				const nodes = groups.map( ( group ) => {
 					const own = channels.filter( ( item ) => item.group === group );
-					return own.length ? h( 'section', { class: 'fnfe-changroup' }, h( 'h2', null, ( boot.groups || {} )[ group ] || group ), h( 'div', { class: 'fnfe-changrid' }, own.map( tile ) ) ) : null;
+					return own.length ? h( 'section', { class: [ 'fnfe-changroup', own.length === 1 ? 'fnfe-changroup--one' : '' ] }, h( 'h2', null, ( boot.groups || {} )[ group ] || group ), h( 'div', { class: 'fnfe-changrid' }, own.map( tile ) ) ) : null;
 				} ).filter( Boolean );
 				if ( ! ( boot.channels || [] ).length ) {
 					nodes.push( ui.Empty( { icon: 'channels', title: __( 'No channels are available', 'forms-notifier-for-elementor' ), text: __( 'Reinstall the plugin if this stays empty.', 'forms-notifier-for-elementor' ) } ) );

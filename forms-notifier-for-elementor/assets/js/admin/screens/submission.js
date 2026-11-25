@@ -16,18 +16,18 @@
 		}
 		const text = field.value;
 		if ( field.values && field.values.length > 1 ) {
-			return h( 'span', { class: 'fnfe-badges' }, field.values.map( ( item ) => ui.Badge( h( 'bdi', null, item ) ) ) );
+			return h( 'span', { class: 'fnfe-badges' }, field.values.map( ( item ) => ui.Badge( ui.raw( item ) ) ) );
 		}
 		if ( field.type === 'email' ) {
-			return h( 'a', { href: 'mailto:' + text, dir: 'ltr' }, text );
+			return h( 'a', { class: 'fnfe-latin', href: 'mailto:' + text, dir: 'ltr' }, text );
 		}
 		if ( field.type === 'tel' ) {
 			return h( 'a', { class: 'fnfe-latin', href: 'tel:' + text.replace( /[^+\d]/g, '' ), dir: 'ltr' }, text );
 		}
 		if ( field.type === 'url' && /^https?:\/\//i.test( text ) ) {
-			return h( 'a', { href: text, target: '_blank', rel: 'noopener noreferrer', dir: 'ltr' }, text );
+			return h( 'a', { href: text, target: '_blank', rel: 'noopener noreferrer', class: 'fnfe-latin', dir: 'ltr' }, text );
 		}
-		return h( 'span', { class: 'fnfe-value', dir: 'auto' }, text );
+		return h( 'span', { class: 'fnfe-value fnfe-latin', dir: 'auto' }, text );
 	}
 
 	function render( container, params, shell ) {
@@ -90,7 +90,7 @@
 			mount( body, h( 'div', { class: 'fnfe-cols fnfe-cols--wide' },
 				h( 'div', null,
 					ui.Card( { title: __( 'What was sent', 'forms-notifier-for-elementor' ), flush: true }, h( 'dl', { class: 'fnfe-answers' }, s.fields.filter( ( field ) => ! field.is_file ).map( ( field ) => h( 'div', null, h( 'dt', { dir: 'auto' }, field.label || field.id ), h( 'dd', null, valueNode( field ), field.value && ! field.redacted ? ui.CopyButton( field.value ) : null ) ) ) ) ),
-					s.files.length ? ui.Card( { title: __( 'Files', 'forms-notifier-for-elementor' ), flush: true }, h( 'ul', { class: 'fnfe-feed fnfe-feed--plain' }, s.files.map( ( file ) => h( 'li', null, h( 'span', { class: 'fnfe-receiver__icon' }, icon( file.is_image ? 'image' : 'file', 18 ) ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, file.name ), h( 'small', null, fmt.bytes( file.size ) ) ), file.url ? ui.Button( { label: __( 'Download', 'forms-notifier-for-elementor' ), icon: 'download', size: 's', href: file.url } ) : h( 'span', { class: 'fnfe-muted' }, __( 'No longer on the server', 'forms-notifier-for-elementor' ) ) ) ) ) ) : null,
+					s.files.length ? ui.Card( { title: __( 'Files', 'forms-notifier-for-elementor' ), flush: true }, h( 'ul', { class: 'fnfe-feed fnfe-feed--plain' }, s.files.map( ( file ) => h( 'li', null, h( 'span', { class: 'fnfe-receiver__icon' }, icon( file.is_image ? 'image' : 'file', 18 ) ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, file.name ), h( 'small', null, fmt.bytes( file.size ) ) ), file.url ? ui.Button( { label: __( 'Download', 'forms-notifier-for-elementor' ), icon: 'download', size: 's', href: file.url } ) : h( 'span', { class: 'fnfe-muted' }, __( 'No longer on the server', 'forms-notifier-for-elementor' ) ) ) ) ) ) : null,
 					ui.Card( { title: __( 'Deliveries', 'forms-notifier-for-elementor' ), flush: true }, data.messages.length ? ui.deliveries( data.messages, load ) : ui.Empty( { icon: 'send', small: true, text: __( 'No message was made for this submission.', 'forms-notifier-for-elementor' ) } ) )
 				),
 				ui.Card( { title: __( 'Where it came from', 'forms-notifier-for-elementor' ) }, h( 'dl', { class: 'fnfe-dl fnfe-dl--stack' },
@@ -99,7 +99,7 @@
 					line( __( 'Language', 'forms-notifier-for-elementor' ), s.lang ? ui.mono( s.lang ) : '' ),
 					line( __( 'WordPress user', 'forms-notifier-for-elementor' ), meta.user_login ),
 					line( __( 'IP address', 'forms-notifier-for-elementor' ), meta.user_ip ? ui.mono( meta.user_ip ) : '' ),
-					line( __( 'Browser', 'forms-notifier-for-elementor' ), meta.user_agent ? h( 'span', { class: 'fnfe-ua', dir: 'ltr' }, meta.user_agent ) : '' ),
+					line( __( 'Browser', 'forms-notifier-for-elementor' ), meta.user_agent ? h( 'span', { class: 'fnfe-ua fnfe-latin', dir: 'ltr' }, meta.user_agent ) : '' ),
 					line( __( 'Id', 'forms-notifier-for-elementor' ), ui.mono( s.uuid ) )
 				) )
 			) );

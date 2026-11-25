@@ -237,7 +237,7 @@
 						}
 					}
 				}
-				const options = h( 'div', null );
+				const options = h( 'div', { class: 'fnfe-gap' } );
 				mount( el, frag(
 					meta.enabled ? null : ui.Callout( 'info', __( 'This channel is off on this site. Switching it on here makes it send for this form only.', 'forms-notifier-for-elementor' ), { actions: shell.can( 'manage' ) ? ui.Button( { label: __( 'Open the channel', 'forms-notifier-for-elementor' ), size: 's', href: '#/channels/' + meta.id } ) : null } ),
 					grid,

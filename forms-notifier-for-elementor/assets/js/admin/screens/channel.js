@@ -45,7 +45,7 @@
 		} );
 		shell.header( {
 			title: meta.label,
-			sub: meta.description,
+			sub: ui.tx( meta.description ),
 			lead: ui.Tile( id, 'l' ),
 			crumbs: [ { label: __( 'Channels', 'forms-notifier-for-elementor' ), path: 'channels' }, { label: meta.label } ],
 			help: 'channel-' + id,

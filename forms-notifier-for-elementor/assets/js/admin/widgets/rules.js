@@ -4,7 +4,7 @@
 ( function () {
 	'use strict';
 
-	const { __, _x, sprintf } = wp.i18n;
+	const { __, _x, _n, sprintf } = wp.i18n;
 	const { h, mount, frag, icon, boot, ui, uid, fmt, fields } = window.fnfe;
 
 	const OPS = () => ( {
@@ -62,7 +62,7 @@
 		function sentence( rule ) {
 			const when = rule.conditions.length
 				/* translators: %s: conditions such as: Plan is "vip" */
-				? sprintf( __( 'When %s', 'forms-notifier-for-elementor' ), and( rule.conditions.map( ( c ) => subjectLabel( c.field ) + ' ' + ( OPS()[ c.op ] || c.op ) + ( c.op === 'empty' || c.op === 'not_empty' ? '' : ' «' + c.value + '»' ) ), rule.match === 'any' ) )
+				? sprintf( __( 'When %s', 'forms-notifier-for-elementor' ), and( rule.conditions.map( ( c ) => subjectLabel( c.field ) + ' ' + ( OPS()[ c.op ] || c.op ) + ( c.op === 'empty' || c.op === 'not_empty' ? '' : /* translators: %s: value of a condition */ ' ' + sprintf( __( '"%s"', 'forms-notifier-for-elementor' ), c.value || '?' ) ) ), rule.match === 'any' ) )
 				: __( 'Always', 'forms-notifier-for-elementor' );
 			const names = rule.channels.map( ui.channelLabel ).join( __( ', ', 'forms-notifier-for-elementor' ) );
 			const count = Object.keys( rule.receivers || {} ).reduce( ( sum, id ) => sum + ( rule.channels.indexOf( id ) > -1 ? rule.receivers[ id ].length : 0 ), 0 );
@@ -72,13 +72,13 @@
 					return sprintf( __( '%s: send nothing.', 'forms-notifier-for-elementor' ), when );
 				case 'only':
 					/* translators: %1$s: the condition part of the sentence, %2$s: channel names */
-					return sprintf( __( '%1$s: use only %2$s.', 'forms-notifier-for-elementor' ), when, names || '…' );
+					return sprintf( __( '%1$s: use only %2$s.', 'forms-notifier-for-elementor' ), when, names || '?' );
 				case 'replace':
 					/* translators: %1$s: the condition part of the sentence, %2$s: channel names, %3$s: number of receivers */
-					return sprintf( __( '%1$s: notify %3$s receivers on %2$s instead.', 'forms-notifier-for-elementor' ), when, names || '…', fmt.number( count ) );
+					return sprintf( _n( '%1$s: notify %3$s receiver on %2$s instead.', '%1$s: notify %3$s receivers on %2$s instead.', count, 'forms-notifier-for-elementor' ), when, names || '?', fmt.number( count ) );
 			}
 			/* translators: %1$s: the condition part of the sentence, %2$s: channel names, %3$s: number of receivers */
-			return sprintf( __( '%1$s: also notify %3$s receivers on %2$s.', 'forms-notifier-for-elementor' ), when, names || '…', fmt.number( count ) );
+			return sprintf( _n( '%1$s: also notify %3$s receiver on %2$s.', '%1$s: also notify %3$s receivers on %2$s.', count, 'forms-notifier-for-elementor' ), when, names || '?', fmt.number( count ) );
 		}
 
 		function conditionRow( rule, condition, i, redraw ) {

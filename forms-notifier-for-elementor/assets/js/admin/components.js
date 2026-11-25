@@ -368,6 +368,42 @@
 
 	const mono = ( text ) => h( 'bdi', { class: 'fnfe-mono', dir: 'ltr' }, text );
 
+	/* In the Persian panel digits are drawn as Persian ones; words such as "n8n" keep theirs. */
+	const CODE = /[A-Za-z][A-Za-z0-9._+-]*\d[A-Za-z0-9._+-]*/g;
+	const persian = () => root().dataset.font === 'fa';
+
+	function keepCodes( node ) {
+		Array.from( node.childNodes ).forEach( ( child ) => {
+			if ( child.nodeType === 1 ) {
+				keepCodes( child );
+			} else if ( child.nodeType === 3 && child.nodeValue.search( CODE ) > -1 ) {
+				const out = document.createDocumentFragment();
+				let at = 0;
+				child.nodeValue.replace( CODE, ( word, index ) => {
+					out.appendChild( document.createTextNode( child.nodeValue.slice( at, index ) ) );
+					out.appendChild( h( 'bdi', { class: 'fnfe-latin', dir: 'ltr' }, word ) );
+					at = index + word.length;
+					return word;
+				} );
+				out.appendChild( document.createTextNode( child.nodeValue.slice( at ) ) );
+				node.replaceChild( out, child );
+			}
+		} );
+		return node;
+	}
+
+	/** Text of the interface as nodes. */
+	const tx = ( text ) => {
+		const out = document.createDocumentFragment();
+		out.appendChild( document.createTextNode( String( text === null || text === undefined ? '' : text ) ) );
+		return persian() ? keepCodes( out ) : out;
+	};
+	const baseHtml = window.fnfe.safeHtml;
+	window.fnfe.safeHtml = ( html ) => ( persian() ? keepCodes( baseHtml( html ) ) : baseHtml( html ) );
+
+	/** Text people typed or sent: digits stay as they are. */
+	const raw = ( text, tag ) => h( tag || 'bdi', { class: 'fnfe-latin' }, text );
+
 	const MONOGRAMS = { telegram: 'TG', bale: 'BL', sms: 'SM', whatsapp: 'WA', email: 'EM', webhook: 'WH', slack: 'SL', discord: 'DC', googlechat: 'GC', teams: 'MT', mattermost: 'MM', rocketchat: 'RC', ntfy: 'NT', pushover: 'PO', gotify: 'GO', eitaa: 'EI', rubika: 'RB', soroush: 'SR', gap: 'GP' };
 	const HUES = { telegram: 205, bale: 150, sms: 262, whatsapp: 138, email: 222, webhook: 18, slack: 320, discord: 236, googlechat: 45, teams: 250, mattermost: 212, rocketchat: 2, ntfy: 170, pushover: 198, gotify: 188, eitaa: 28, rubika: 340, soroush: 190, gap: 285 };
 
@@ -1219,7 +1255,7 @@
 		id: nextId,
 		root, isRtl, focusables,
 		Button, IconButton, CopyButton, copyText, Switch, Segmented, Tabs, LangTabs, multilingual, langDir,
-		Badge, Status, statusLabel, Dot, Pips, mono, Tile, ChannelChip, channelMeta, channelLabel,
+		Badge, Status, statusLabel, Dot, Pips, mono, tx, raw, Tile, ChannelChip, channelMeta, channelLabel,
 		Callout, Card, Empty, Skeleton, ErrorState, fail, Time, Code, Result,
 		Modal, Sheet, closeAll, confirm, popover, Menu,
 		Combobox, Select, Search, Chips, DateRange,

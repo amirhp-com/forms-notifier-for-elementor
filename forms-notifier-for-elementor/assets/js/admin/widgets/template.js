@@ -158,7 +158,7 @@
 				return;
 			}
 			const meta = ui.channelMeta( opts.channel );
-			mount( out, raw ? h( 'pre', { class: 'fnfe-preview__raw', dir: 'auto' }, last.text ) : bubble( last, meta ? meta.format : 'text' ) );
+			mount( out, raw ? h( 'pre', { class: 'fnfe-preview__raw', dir: 'auto' }, last.text ) : bubble( Object.assign( {}, last, meta && ! meta.capabilities.subject ? { subject: '' } : {} ), meta ? meta.format : 'text' ) );
 			const parts = ( last.parts || [] ).length;
 			const ratio = last.limit ? Math.min( 1, last.length / last.limit ) : 0;
 			mount( meter, frag(
@@ -221,6 +221,27 @@
 
 	/* ------------------------------------------------------------ Editor */
 
+	/** What a pattern text will do, in words; '' for normal texts. */
+	function patternNote( text ) {
+		const lines = String( text || '' ).split( '\n' ).map( ( line ) => line.trim() );
+		const head = ( lines[ 0 ] || '' ).match( /^(?:pattern|pcode|patterncode|bodyid|template)\s*[:=]\s*(\S+)$/i );
+		if ( ! head ) {
+			return '';
+		}
+		const end = lines.findIndex( ( line, i ) => i > 0 && /^-{3,}$/.test( line ) );
+		const vars = lines.slice( 1, end === -1 ? undefined : end ).filter( ( line ) => line && ! /^pattern@/i.test( line ) && ! /^lang\s*[:=]/i.test( line ) ).length;
+		const rest = end === -1 ? '' : lines.slice( end + 1 ).join( ' ' ).trim();
+		return sprintf(
+			/* translators: %1$s: pattern code, %2$s: number of variables */
+			_n( 'Sent as pattern %1$s with %2$s variable.', 'Sent as pattern %1$s with %2$s variables.', vars, 'forms-notifier-for-elementor' ),
+			head[ 1 ],
+			fmt.number( vars )
+		) + ' ' + ( rest
+			/* translators: %s: normal text */
+			? sprintf( __( 'Gateways without patterns send: %s', 'forms-notifier-for-elementor' ), rest )
+			: __( 'Gateways without patterns are skipped: there is no normal text below "---".', 'forms-notifier-for-elementor' ) );
+	}
+
 	function editor( field, value, onChange, ctx ) {
 		const many = ui.multilingual() && field.localized;
 		const channel = field.channel || ctx.channel || '';
@@ -246,6 +267,7 @@
 					tabs.mark( lang, lang !== '_' && !! area.value );
 				}
 				onChange( field.localized ? current : current._ );
+				note();
 				pane.load();
 			},
 			onKeydown( event ) {
@@ -255,6 +277,14 @@
 				}
 			},
 		} ) );
+
+		const meta = ui.channelMeta( channel );
+		const hint = h( 'p', { class: 'fnfe-tpl__pattern', role: 'status', hidden: true } );
+		const note = () => {
+			const text = meta && meta.capabilities.pattern ? patternNote( area.value ) : '';
+			hint.hidden = ! text;
+			mount( hint, ui.tx( text ) );
+		};
 
 		const copyDefault = ui.Button( { label: __( 'Copy from default', 'forms-notifier-for-elementor' ), icon: 'copy', size: 's', variant: 'ghost', onClick() {
 			area.value = current._ || '';
@@ -270,6 +300,7 @@
 			} else {
 				area.setAttribute( 'lang', lang );
 			}
+			note();
 			copyDefault.hidden = lang === '_' || ! current._ || !! current[ lang ];
 		};
 
@@ -319,7 +350,8 @@
 						tool( 'branch', __( 'Show a part only if a field is filled', 'forms-notifier-for-elementor' ), '{if field:ID}', '{/if}' )
 					),
 					area
-				)
+				),
+				hint
 			),
 			pane
 		);

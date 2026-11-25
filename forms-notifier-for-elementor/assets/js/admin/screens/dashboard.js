@@ -192,7 +192,7 @@
 		function healthPill( item ) {
 			const tone = { good: 'ok', warning: 'warn', critical: 'danger' }[ item.status ] || 'mute';
 			const button = h( 'button', { type: 'button', class: 'fnfe-health__pill', 'aria-haspopup': 'dialog', onClick() {
-				ui.popover( button, h( 'div', { class: 'fnfe-health__pop' }, h( 'strong', null, item.label ), h( 'p', null, item.message || __( 'Everything is in order.', 'forms-notifier-for-elementor' ) ), item.url ? h( 'a', { href: item.url }, __( 'Open', 'forms-notifier-for-elementor' ) ) : null ), { role: 'dialog' } );
+				ui.popover( button, h( 'div', { class: 'fnfe-health__pop' }, h( 'strong', null, item.label ), h( 'p', null, item.message || __( 'Everything is in order.', 'forms-notifier-for-elementor' ) ), item.route ? h( 'a', { href: '#/' + String( item.route ).replace( /^#?\/*/, '' ) }, __( 'Open', 'forms-notifier-for-elementor' ) ) : null ), { role: 'dialog' } );
 			} }, h( 'span', { class: 'fnfe-dot fnfe-dot--' + tone, 'aria-hidden': 'true' } ), item.label, item.status === 'good' ? null : h( 'span', { class: 'fnfe-sr' }, item.message ) );
 			return button;
 		}
@@ -208,14 +208,14 @@
 			}
 			ui.cached( 'recent', () => api.get( 'submissions', { per_page: 5 } ), ( data ) => mount( recent, ui.Card(
 				{ title: __( 'Recent submissions', 'forms-notifier-for-elementor' ), flush: true, actions: h( 'a', { class: 'fnfe-more', href: '#/submissions' }, __( 'All', 'forms-notifier-for-elementor' ), icon( 'chevron-end', 16 ) ) },
-				data.items.length ? h( 'ul', { class: 'fnfe-feed' }, data.items.map( ( item ) => h( 'li', null, h( 'a', { href: '#/submissions/' + item.id }, ui.Dot( item.delivery_status ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, item.preview || item.form_name ), h( 'small', null, h( 'bdi', null, item.form_name ) ) ), ui.Time( item.created ) ) ) ) ) : ui.Empty( { icon: 'inbox', small: true, text: __( 'Submissions appear here as soon as someone sends a form.', 'forms-notifier-for-elementor' ) } )
+				data.items.length ? h( 'ul', { class: 'fnfe-feed' }, data.items.map( ( item ) => h( 'li', null, h( 'a', { href: '#/submissions/' + item.id }, ui.Dot( item.delivery_status ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, item.preview || item.form_name ), h( 'small', null, h( 'bdi', null, item.form_name ) ) ), ui.Time( item.created ) ) ) ) ) : ui.Empty( { icon: 'inbox', small: true, text: __( 'Submissions appear here as soon as someone sends a form.', 'forms-notifier-for-elementor' ) } )
 			) ), ( error ) => mount( recent, ui.Card( { title: __( 'Recent submissions', 'forms-notifier-for-elementor' ) }, ui.ErrorState( error, loadRecent ) ) ) );
 		}
 
 		function drawAttention( failed ) {
 			const items = [];
 			( boot.channels || [] ).filter( ( item ) => item.enabled && ! item.ready ).forEach( ( item ) => items.push( h( 'li', null, h( 'a', { href: '#/channels/' + item.id }, ui.Tile( item.id, 's' ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', null, item.label ), h( 'small', null, item.problems[ 0 ] || __( 'Needs setup', 'forms-notifier-for-elementor' ) ) ), icon( 'chevron-end', 16 ) ) ) ) );
-			( failed || [] ).forEach( ( item ) => items.push( h( 'li', null, h( 'a', { href: '#/log/' + item.id }, ui.Tile( item.channel, 's' ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, item.error || ui.statusLabel( 'failed' ) ), h( 'small', null, h( 'bdi', null, item.recipient_label || item.recipient ) ) ), ui.Time( item.created ) ) ) ) );
+			( failed || [] ).forEach( ( item ) => items.push( h( 'li', null, h( 'a', { href: '#/log/' + item.id }, ui.Tile( item.channel, 's' ), h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, item.error || ui.statusLabel( 'failed' ) ), h( 'small', null, ui.raw( item.recipient_label || item.recipient ) ) ), ui.Time( item.created ) ) ) ) );
 			mount( attention, ui.Card( { title: __( 'Needs attention', 'forms-notifier-for-elementor' ), flush: true, actions: items.length && shell.can( 'logs' ) ? h( 'a', { class: 'fnfe-more', href: '#/log?status=failed' }, __( 'Log', 'forms-notifier-for-elementor' ), icon( 'chevron-end', 16 ) ) : null }, items.length ? h( 'ul', { class: 'fnfe-feed' }, items.slice( 0, 6 ) ) : ui.Empty( { icon: 'check-circle', small: true, text: __( 'Nothing to fix. Every channel that is on can send.', 'forms-notifier-for-elementor' ) } ) ) );
 		}
 

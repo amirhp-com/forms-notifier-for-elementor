@@ -62,7 +62,7 @@
 
 		function rowNode( row, i ) {
 			const details = h( 'div', { class: 'fnfe-receiver__more', hidden: ! open.has( row.id ) } );
-			const title = h( 'span', { class: 'fnfe-receiver__label', dir: 'auto' }, row.label || ( isField( row.address ) ? __( 'Value of a form field', 'forms-notifier-for-elementor' ) : shownAddress( row ) ) );
+			const title = h( 'span', { class: 'fnfe-receiver__label fnfe-latin', dir: 'auto' }, row.label || ( isField( row.address ) ? __( 'Value of a form field', 'forms-notifier-for-elementor' ) : shownAddress( row ) ) );
 			const toggle = ui.IconButton( { icon: 'edit', size: 's', label: __( 'Edit receiver', 'forms-notifier-for-elementor' ), attrs: { 'aria-expanded': open.has( row.id ) }, onClick() {
 				details.hidden = ! details.hidden;
 				toggle.setAttribute( 'aria-expanded', details.hidden ? 'false' : 'true' );
@@ -201,7 +201,7 @@
 								button.setLabel( __( 'Added', 'forms-notifier-for-elementor' ) );
 							}
 						} } );
-						nodes.push( h( 'div', { class: 'fnfe-picklist__row' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( glyphOf( { address: option.address, meta: option.meta }, kind ), 18 ) ), h( 'div', { class: 'fnfe-receiver__text' }, h( 'span', { class: 'fnfe-receiver__label', dir: 'auto' }, option.label ), h( 'span', { class: 'fnfe-receiver__sub' }, ui.mono( option.address ), option.hint ? h( 'span', { dir: 'auto' }, option.hint ) : null ) ), button ) );
+						nodes.push( h( 'div', { class: 'fnfe-picklist__row' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( glyphOf( { address: option.address, meta: option.meta }, kind ), 18 ) ), h( 'div', { class: 'fnfe-receiver__text' }, h( 'span', { class: 'fnfe-receiver__label fnfe-latin', dir: 'auto' }, option.label ), h( 'span', { class: 'fnfe-receiver__sub' }, ui.mono( option.address ), option.hint ? h( 'span', { dir: 'auto' }, option.hint ) : null ) ), button ) );
 					} );
 					mount( results, nodes );
 				}, ( error ) => mount( results, ui.ErrorState( error, () => load( search ) ) ) );
@@ -213,7 +213,7 @@
 			function typed() {
 				const texts = kindText( kind );
 				const draft = { address: '', label: '' };
-				const grid = h( 'form', { class: 'fnfe-grid', onSubmit( event ) {
+				const grid = h( 'form', { class: 'fnfe-grid', novalidate: true, onSubmit( event ) {
 					event.preventDefault();
 					const problem = check( kind, draft.address );
 					address.setError( problem );
@@ -241,7 +241,7 @@
 				const options = ctx.formFields.filter( ( item ) => ! wanted || wanted.indexOf( item.type ) > -1 );
 				return options.length ? h( 'div', { class: 'fnfe-picklist' }, options.map( ( item ) => {
 					const address = '{field:' + item.id + '}';
-					return h( 'div', { class: 'fnfe-picklist__row' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( 'tag', 18 ) ), h( 'div', { class: 'fnfe-receiver__text' }, h( 'span', { class: 'fnfe-receiver__label', dir: 'auto' }, item.label || item.id ), h( 'span', { class: 'fnfe-receiver__sub' }, ui.mono( address ) ) ), ui.Button( { label: __( 'Add', 'forms-notifier-for-elementor' ), icon: 'plus', size: 's', onClick() {
+					return h( 'div', { class: 'fnfe-picklist__row' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( 'tag', 18 ) ), h( 'div', { class: 'fnfe-receiver__text' }, h( 'span', { class: 'fnfe-receiver__label fnfe-latin', dir: 'auto' }, item.label || item.id ), h( 'span', { class: 'fnfe-receiver__sub' }, ui.mono( address ) ) ), ui.Button( { label: __( 'Add', 'forms-notifier-for-elementor' ), icon: 'plus', size: 's', onClick() {
 						if ( add( { address: address, label: item.label || item.id } ) ) {
 							mark();
 						}

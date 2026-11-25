@@ -159,7 +159,7 @@
 				rowClass: ( row ) => ( row.status === 'new' ? 'is-unread' : '' ),
 				columns: [
 					{ label: __( 'Delivery', 'forms-notifier-for-elementor' ), class: 'fnfe-table__dot', render: ( row ) => ui.Dot( row.delivery_status ) },
-					{ label: __( 'Content', 'forms-notifier-for-elementor' ), primary: true, class: 'fnfe-table__wide', render: ( row ) => h( 'a', { class: 'fnfe-previewline', href: '#/submissions/' + row.id, dir: 'auto' }, row.preview || /* translators: %s: submission id */ sprintf( __( 'Submission %s', 'forms-notifier-for-elementor' ), row.id ) ) },
+					{ label: __( 'Content', 'forms-notifier-for-elementor' ), primary: true, class: 'fnfe-table__wide', render: ( row ) => h( 'a', { class: 'fnfe-previewline fnfe-latin', href: '#/submissions/' + row.id, dir: 'auto' }, row.preview || /* translators: %s: submission id */ sprintf( __( 'Submission %s', 'forms-notifier-for-elementor' ), row.id ) ) },
 					{ label: __( 'Form', 'forms-notifier-for-elementor' ), class: 'fnfe-table__clip', render: ( row ) => h( 'bdi', null, row.form_name ) },
 					{ label: __( 'Files', 'forms-notifier-for-elementor' ), render: ( row ) => ( row.files_count ? h( 'span', { class: 'fnfe-inline' }, icon( 'paperclip', 16 ), fmt.number( row.files_count ) ) : '' ) },
 					{ label: __( 'Status', 'forms-notifier-for-elementor' ), render: ( row ) => ui.Status( row.status ) },

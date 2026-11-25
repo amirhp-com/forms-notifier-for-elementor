@@ -74,7 +74,7 @@
 	const lead = h( 'div', { class: 'fnfe-pagehead__lead' } );
 	const sub = h( 'p', { class: 'fnfe-pagehead__sub' } );
 	const actions = h( 'div', { class: 'fnfe-pagehead__actions' } );
-	const content = h( 'div', { class: 'fnfe-screen' } );
+	const content = h( 'div', { class: 'fnfe-view' } );
 	const main = h( 'main', { class: 'fnfe-main' },
 		h( 'div', { class: 'fnfe-top' }, burger, crumbs, h( 'span', { class: 'fnfe-grow' } ), themeButton, helpButton ),
 		h( 'header', { class: 'fnfe-pagehead' }, lead, h( 'div', { class: 'fnfe-pagehead__titles' }, title, sub ), actions ),
@@ -296,7 +296,7 @@
 		setSavebar( null );
 		drawer( false );
 		mount( content, null );
-		content.className = 'fnfe-screen';
+		content.className = 'fnfe-view';
 		const shell = makeShell( route );
 		const section = sectionOf( route.path );
 		helpTopic = HELP[ route.path.split( '/' )[ 0 ] ] || 'quick-start';

@@ -32,7 +32,7 @@
 	/** Delivery rows of a submission. */
 	ui.deliveries = ( messages, reload ) => h( 'ul', { class: 'fnfe-timeline' }, messages.map( ( item ) => h( 'li', null,
 		ui.Tile( item.channel, 's' ),
-		h( 'div', { class: 'fnfe-feed__text' }, h( 'strong', null, item.channel_label, item.purpose === 'admin' ? null : h( 'span', { class: 'fnfe-muted' }, ' ', purposeLabel( item.purpose ) ) ), h( 'small', null, h( 'bdi', null, item.recipient_label || item.recipient ) ), item.error ? h( 'small', { class: 'fnfe-errtext', dir: 'auto' }, item.error ) : null ),
+		h( 'div', { class: 'fnfe-feed__text' }, h( 'strong', null, item.channel_label, item.purpose === 'admin' ? null : h( 'span', { class: 'fnfe-muted' }, ' ', purposeLabel( item.purpose ) ) ), h( 'small', null, ui.raw( item.recipient_label || item.recipient ) ), item.error ? h( 'small', { class: 'fnfe-errtext', dir: 'auto' }, item.error ) : null ),
 		ui.Time( item.sent || item.created ),
 		ui.Status( item.status ),
 		boot.user.caps.logs ? h( 'span', { class: 'fnfe-rowactions' }, [ 'failed', 'retry', 'skipped', 'cancelled' ].indexOf( item.status ) > -1 ? ui.IconButton( { icon: 'refresh', size: 's', label: __( 'Send again', 'forms-notifier-for-elementor' ), onClick: () => ui.retryMessage( item ).then( reload ) } ) : null, ui.IconButton( { icon: 'eye', size: 's', label: __( 'Details', 'forms-notifier-for-elementor' ), onClick: () => ui.messageSheet( item.id, reload ) } ) ) : null
@@ -64,7 +64,7 @@
 				toggle.setAttribute( 'aria-pressed', raw.hidden ? 'false' : 'true' );
 			} } );
 			mount( body, frag(
-				h( 'div', { class: 'fnfe-msghead' }, ui.Tile( item.channel, 'l' ), h( 'div', { class: 'fnfe-grow' }, h( 'strong', { dir: 'auto' }, item.recipient_label || item.recipient ), item.recipient_label ? h( 'div', null, ui.mono( item.recipient ) ) : null ), ui.Status( item.status ) ),
+				h( 'div', { class: 'fnfe-msghead' }, ui.Tile( item.channel, 'l' ), h( 'div', { class: 'fnfe-grow' }, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, item.recipient_label || item.recipient ), item.recipient_label ? h( 'div', null, ui.mono( item.recipient ) ) : null ), ui.Status( item.status ) ),
 				item.error ? ui.Callout( item.status === 'failed' ? 'danger' : 'warning', h( 'span', { dir: 'auto' }, item.error ) ) : null,
 				h( 'div', { class: 'fnfe-preview fnfe-preview--sheet' }, h( 'div', { class: 'fnfe-preview__head' }, h( 'span', null, __( 'As sent', 'forms-notifier-for-elementor' ) ), h( 'span', { class: 'fnfe-grow' } ), item.body ? toggle : null ), item.body ? [ shown, raw ] : h( 'p', { class: 'fnfe-preview__none' }, __( 'The text was not kept.', 'forms-notifier-for-elementor' ) ) ),
 				item.attachments.length || item.links.length ? h( 'ul', { class: 'fnfe-files' }, item.attachments.map( ( file ) => h( 'li', null, h( 'bdi', null, file.name ), h( 'span', { class: 'fnfe-muted' }, fmt.bytes( file.size ) ) ) ), item.links.map( ( link ) => h( 'li', null, h( 'a', { href: link.url, target: '_blank', rel: 'noopener noreferrer' }, h( 'bdi', null, link.name || link.url ) ) ) ) ) : null,
@@ -124,7 +124,7 @@
 		const bars = h( 'div', null );
 		const bulkSlot = h( 'div', null );
 		const list = h( 'div', null );
-		const updated = h( 'span', { class: 'fnfe-muted', role: 'status' } );
+		const updated = h( 'p', { class: 'fnfe-muted fnfe-updated', role: 'status' } );
 		const search = ui.Search( { value: state.search, placeholder: __( 'Search receiver, error or text', 'forms-notifier-for-elementor' ), onSearch: ( text ) => shell.setQuery( { q: text, page: '' }, true ) } );
 		const runButton = ui.Button( { label: __( 'Run queue now', 'forms-notifier-for-elementor' ), icon: 'play', onClick: () => api.post( 'queue/run' ).then( ( data ) => {
 			/* translators: %1$s: sent messages, %2$s: failed messages, %3$s: waiting messages */
@@ -134,7 +134,7 @@
 		}, ui.fail ) } );
 		shell.wide();
 		shell.header( { title: __( 'Log', 'forms-notifier-for-elementor' ), sub: __( 'Every message, its receiver and what the service answered.', 'forms-notifier-for-elementor' ), actions: [ ui.Button( { label: __( 'Export CSV', 'forms-notifier-for-elementor' ), icon: 'download', onClick: () => api.download( 'messages/export', filters(), 'messages.csv' ).catch( ui.fail ) } ), runButton ] } );
-		mount( container, frag( bars, h( 'div', { class: 'fnfe-toolbar' }, search, h( 'span', { class: 'fnfe-grow' } ), updated ), bulkSlot, list ) );
+		mount( container, frag( bars, bulkSlot, list, updated ) );
 
 		function drawFilters() {
 			const option = ( value, label ) => ( { value: value, label: label } );
@@ -143,6 +143,7 @@
 			mount( bars, h( 'div', { class: 'fnfe-filters' },
 				ui.Chips( { label: __( 'Status', 'forms-notifier-for-elementor' ), value: state.status, onChange: ( value ) => shell.setQuery( { status: value, page: '' } ), options: [ { value: '', label: __( 'All', 'forms-notifier-for-elementor' ) }, { value: 'sent', label: ui.statusLabel( 'sent' ), tone: 'ok' }, { value: 'failed', label: ui.statusLabel( 'failed' ), tone: 'danger' }, { value: 'retry', label: ui.statusLabel( 'retry' ), tone: 'warn' }, { value: 'queued', label: ui.statusLabel( 'queued' ), tone: 'info' }, { value: 'skipped', label: ui.statusLabel( 'skipped' ), tone: 'mute' } ] } ),
 				h( 'div', { class: 'fnfe-filters__row' },
+					search,
 					select( 'channel', __( 'All channels', 'forms-notifier-for-elementor' ), ( boot.channels || [] ).map( ( item ) => option( item.id, item.label ) ) ),
 					select( 'purpose', __( 'All purposes', 'forms-notifier-for-elementor' ), [ 'admin', 'submitter', 'alert', 'digest', 'test' ].map( ( id ) => option( id, purposeLabel( id ) ) ) ),
 					select( 'form_id', __( 'All forms', 'forms-notifier-for-elementor' ), forms ),
@@ -208,11 +209,10 @@
 				onRow: ( row ) => sheet( row.id ),
 				columns: [
 					{ label: __( 'Status', 'forms-notifier-for-elementor' ), render: ( row ) => ui.Status( row.status ) },
-					{ label: __( 'Receiver', 'forms-notifier-for-elementor' ), primary: true, render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'button', { type: 'button', class: 'fnfe-linkbtn', dir: 'auto', onClick: () => sheet( row.id ) }, row.recipient_label || row.recipient || '–' ), row.recipient_label && row.recipient ? h( 'small', null, ui.mono( row.recipient ) ) : null ) },
+					{ label: __( 'Receiver', 'forms-notifier-for-elementor' ), primary: true, render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'button', { type: 'button', class: 'fnfe-linkbtn fnfe-latin', dir: 'auto', onClick: () => sheet( row.id ) }, row.recipient_label || row.recipient || '–' ), row.recipient_label && row.recipient ? h( 'small', null, ui.mono( row.recipient ) ) : null, row.error ? h( 'small', { class: 'fnfe-errtext', dir: 'auto', title: row.error }, row.error ) : null ) },
 					{ label: __( 'Channel', 'forms-notifier-for-elementor' ), render: ( row ) => h( 'span', { class: 'fnfe-channelchip' }, ui.Tile( row.channel, 's' ), h( 'span', null, row.channel_label, row.purpose === 'admin' ? null : h( 'small', null, purposeLabel( row.purpose ) ) ) ) },
 					{ label: __( 'Form', 'forms-notifier-for-elementor' ), class: 'fnfe-table__clip', render: ( row ) => ( row.submission_id ? h( 'a', { href: '#/submissions/' + row.submission_id, dir: 'auto' }, row.form_name || '#' + row.submission_id ) : h( 'bdi', null, row.form_name || '–' ) ) },
 					{ label: __( 'Attempts', 'forms-notifier-for-elementor' ), render: ( row ) => ui.Pips( row.attempts, row.max_attempts, row.status ) },
-					{ label: __( 'Error', 'forms-notifier-for-elementor' ), class: 'fnfe-table__clip', render: ( row ) => ( row.error ? h( 'span', { class: 'fnfe-errtext', dir: 'auto', title: row.error }, row.error ) : '' ) },
 					{ label: __( 'Time', 'forms-notifier-for-elementor' ), class: 'fnfe-nowrap', render: ( row ) => ui.Time( row.sent || row.created ) },
 				],
 				actions: ( row ) => ( [ 'failed', 'retry', 'cancelled', 'skipped' ].indexOf( row.status ) > -1 ? ui.IconButton( { icon: 'refresh', size: 's', label: __( 'Send again', 'forms-notifier-for-elementor' ), onClick: () => ui.retryMessage( row ).then( () => load( true ) ) } ) : null ),

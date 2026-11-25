@@ -93,6 +93,7 @@
 		const attrs = field.attrs || {};
 		return {
 			id: ctx.id,
+			'aria-labelledby': ctx.labelId || undefined,
 			'aria-describedby': ctx.describedBy || undefined,
 			'aria-required': field.required || undefined,
 			placeholder: field.placeholder || undefined,
@@ -582,7 +583,7 @@
 		}, ctx );
 
 		const single = GROUPS.indexOf( type ) === -1 && ! field.localized;
-		const label = field.label && type !== 'action' ? h( single ? 'label' : 'div', { class: 'fnfe-field__label', id: labelId, for: single ? id : undefined }, field.label, field.required ? h( 'span', { class: 'fnfe-field__req', title: __( 'Required', 'forms-notifier-for-elementor' ) }, ' *' ) : null ) : null;
+		const label = field.label && type !== 'action' ? h( single ? 'label' : 'div', { class: 'fnfe-field__label', id: labelId, for: single ? id : undefined }, ui.tx( field.label ), field.required ? h( 'span', { class: 'fnfe-field__req', title: __( 'Required', 'forms-notifier-for-elementor' ) }, ' *' ) : null ) : null;
 		const desc = field.desc ? h( 'p', { class: 'fnfe-field__desc', id: descId }, safeHtml( field.desc ) ) : null;
 
 		let el;
@@ -640,6 +641,10 @@
 					onChange( field.key, next );
 					refresh();
 				}, ctx );
+				if ( field.label === section.title && node.querySelector( '.fnfe-field__label' ) ) {
+					// The title of the section already says it.
+					node.querySelector( '.fnfe-field__label' ).classList.add( 'fnfe-sr' );
+				}
 				own.push( { field: field, el: node } );
 				grid.appendChild( node );
 			} );

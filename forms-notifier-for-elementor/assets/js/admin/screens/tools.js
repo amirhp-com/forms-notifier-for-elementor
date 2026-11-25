@@ -111,7 +111,7 @@
 			} } ) );
 			return api.get( 'logs', { level: state.level, search: state.search, page: state.page, per_page: 20 } ).then( ( data ) => mount( body, data.items.length ? frag( ui.Table( { label: __( 'System log', 'forms-notifier-for-elementor' ), rows: data.items, columns: [
 				{ label: __( 'Level', 'forms-notifier-for-elementor' ), render: ( row ) => ui.Badge( ( levels.find( ( item ) => item.value === row.level ) || { label: row.level } ).label, ( levels.find( ( item ) => item.value === row.level ) || {} ).tone ) },
-				{ label: __( 'Message', 'forms-notifier-for-elementor' ), primary: true, class: 'fnfe-table__wide', render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'span', { dir: 'auto' }, row.message ), row.data && Object.keys( row.data ).length ? h( 'small', { class: 'fnfe-logdata' }, ui.mono( JSON.stringify( row.data ) ) ) : null ) },
+				{ label: __( 'Message', 'forms-notifier-for-elementor' ), primary: true, class: 'fnfe-table__wide', render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'span', { class: 'fnfe-latin', dir: 'auto' }, row.message ), row.data && Object.keys( row.data ).length ? h( 'small', { class: 'fnfe-logdata' }, ui.mono( JSON.stringify( row.data ) ) ) : null ) },
 				{ label: __( 'Part', 'forms-notifier-for-elementor' ), render: ( row ) => ui.mono( row.context ) },
 				{ label: __( 'Time', 'forms-notifier-for-elementor' ), class: 'fnfe-nowrap', render: ( row ) => ui.Time( row.created ) },
 			] } ), ui.Pagination( { page: data.page, perPage: data.per_page, total: data.total, onPage( page ) {

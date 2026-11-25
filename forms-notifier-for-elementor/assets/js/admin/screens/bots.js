@@ -21,7 +21,7 @@
 	/* -------------------------------------------------------------- Chats */
 
 	function chats( container, platform, shell ) {
-		const list = h( 'div', null );
+		const list = h( 'div', { class: 'fnfe-gap' } );
 		const state = { type: shell.query.type || '', search: shell.query.q || '', page: Number( shell.query.page ) || 1 };
 		const how = ui.Fold( { class: 'fnfe-fold--inset', title: __( 'How chats get here', 'forms-notifier-for-elementor' ), lead: h( 'span', { class: 'fnfe-fold__lead' }, icon( 'info', 18 ) ) }, h( 'div', { class: 'fnfe-prose' },
 			h( 'p', null, __( 'A messenger does not hand out a list of chats. The bot only knows chats it heard from.', 'forms-notifier-for-elementor' ) ),
@@ -80,7 +80,7 @@
 			ui.confirm( { /* translators: %s: chat name */ title: sprintf( __( 'Forget %s?', 'forms-notifier-for-elementor' ), chat.topic_name || chat.title || chat.chat_id ), text: __( 'It disappears from this list until the bot hears from it again. Receivers you already added keep working.', 'forms-notifier-for-elementor' ), confirm: __( 'Forget', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'bots/' + platform + '/chats/' + chat.id ).then( load, ui.fail ) );
 		}
 
-		const name = ( chat ) => h( 'div', { class: [ 'fnfe-chatcell', chat.thread_id ? 'is-topic' : '' ] }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( chat.thread_id ? 'topic' : TYPE_ICON[ chat.type ] || 'chat', 18 ) ), h( 'span', null, h( 'strong', { dir: 'auto' }, chat.thread_id ? chat.topic_name || chat.title : chat.title || chat.username || chat.chat_id ), h( 'small', null, chat.thread_id ? h( 'bdi', null, chat.title ) : typeName( chat.type ), chat.username ? ui.mono( '@' + chat.username ) : null ) ) );
+		const name = ( chat ) => h( 'div', { class: [ 'fnfe-chatcell', chat.thread_id ? 'is-topic' : '' ] }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( chat.thread_id ? 'topic' : TYPE_ICON[ chat.type ] || 'chat', 18 ) ), h( 'span', null, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, chat.thread_id ? chat.topic_name || chat.title : chat.title || chat.username || chat.chat_id ), h( 'small', null, chat.thread_id ? h( 'bdi', null, chat.title ) : typeName( chat.type ), chat.username ? ui.mono( '@' + chat.username ) : null ) ) );
 
 		function load() {
 			mount( list, ui.Skeleton( 'rows', 5 ) );
@@ -177,7 +177,7 @@
 					rows: known,
 					rowKey: ( row ) => row.uid,
 					columns: [
-						{ label: __( 'Person', 'forms-notifier-for-elementor' ), primary: true, render: ( row ) => h( 'div', { class: 'fnfe-chatcell' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( 'user', 18 ) ), h( 'span', null, h( 'strong', { dir: 'auto' }, row.name || row.uid ), row.username ? h( 'small', null, ui.mono( '@' + row.username ) ) : null ) ) },
+						{ label: __( 'Person', 'forms-notifier-for-elementor' ), primary: true, render: ( row ) => h( 'div', { class: 'fnfe-chatcell' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( 'user', 18 ) ), h( 'span', null, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, row.name || row.uid ), row.username ? h( 'small', null, ui.mono( '@' + row.username ) ) : null ) ) },
 						{ label: __( 'Id', 'forms-notifier-for-elementor' ), render: ( row ) => ui.mono( row.uid ) },
 						{ label: __( 'WordPress user', 'forms-notifier-for-elementor' ), render: ( row ) => row.wp_name || '–' },
 						{ label: __( 'May', 'forms-notifier-for-elementor' ), render: ( row ) => ( row.perms || [] ).indexOf( 'act' ) > -1 ? __( 'View and act', 'forms-notifier-for-elementor' ) : __( 'View', 'forms-notifier-for-elementor' ) },
@@ -199,7 +199,7 @@
 
 	function connection( container, platform ) {
 		const body = h( 'div', null );
-		const guide = h( 'div', null );
+		const guide = h( 'div', { class: 'fnfe-gap' } );
 		mount( container, frag( body, guide ) );
 		const modeName = ( mode ) => ( { webhook: __( 'Webhook', 'forms-notifier-for-elementor' ), polling: __( 'Regular checks', 'forms-notifier-for-elementor' ), off: _x( 'Off', 'channel state', 'forms-notifier-for-elementor' ), auto: __( 'Automatic', 'forms-notifier-for-elementor' ) }[ mode ] || mode || '–' );
 
