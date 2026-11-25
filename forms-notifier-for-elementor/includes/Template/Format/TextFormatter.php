@@ -1,19 +1,16 @@
 <?php
 /**
- * Stub: replaced in Phase 1
+ * Plain text.
  *
  * @package FormsNotifier
  */
 
 namespace AmirhpCom\FormsNotifier\Template\Format;
 
-use AmirhpCom\FormsNotifier\Contracts\FormatterInterface;
-use AmirhpCom\FormsNotifier\Template\Splitter;
-
 defined( 'ABSPATH' ) || exit;
 
-/** Plain text. */
-final class TextFormatter implements FormatterInterface {
+/** Plain text: marks dropped, links as "text (url)". */
+final class TextFormatter extends AbstractFormatter {
 
 	/** Format id. */
 	public function id(): string {
@@ -21,7 +18,7 @@ final class TextFormatter implements FormatterInterface {
 	}
 
 	/**
-	 * Escape a raw value.
+	 * Escape a raw value: nothing is special in plain text.
 	 *
 	 * @param string $value Raw value.
 	 */
@@ -30,36 +27,24 @@ final class TextFormatter implements FormatterInterface {
 	}
 
 	/**
-	 * Convert canonical markup.
+	 * Marks are dropped.
 	 *
-	 * @param string $canonical Canonical markup.
+	 * @param string $tag   Tag.
+	 * @param string $inner Converted text.
+	 * @param array  $open  Open elements.
 	 */
-	public function convert( string $canonical ): string {
-		return html_entity_decode( preg_replace( '~</?[a-zA-Z][^>]*>~', '', $canonical ), ENT_QUOTES, 'UTF-8' );
-	}
-
-	/** Hard limit. */
-	public function limit(): int {
-		return 0;
+	protected function mark( string $tag, string $inner, array $open ): string {
+		return $inner;
 	}
 
 	/**
-	 * Split converted text.
+	 * A link.
 	 *
-	 * @param string $converted Converted text.
-	 * @param int    $limit     Limit, 0 = limit().
-	 * @return string[]
+	 * @param string $inner Label.
+	 * @param string $url   URL.
+	 * @param string $plain Plain label.
 	 */
-	public function split( string $converted, int $limit = 0 ): array {
-		return Splitter::split_plain( $converted, $limit > 0 ? $limit : $this->limit() );
-	}
-
-	/**
-	 * Length as the remote API counts it.
-	 *
-	 * @param string $converted Converted text.
-	 */
-	public function length( string $converted ): int {
-		return mb_strlen( $converted );
+	protected function link( string $inner, string $url, string $plain ): string {
+		return $plain === $url ? $url : $inner . ' (' . $url . ')';
 	}
 }

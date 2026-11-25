@@ -1,20 +1,18 @@
 <?php
 /**
- * Stub: replaced in Phase 1
+ * Telegram HTML parse mode.
  *
  * @package FormsNotifier
  */
 
 namespace AmirhpCom\FormsNotifier\Template\Format;
 
-use AmirhpCom\FormsNotifier\Contracts\FormatterInterface;
-use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Template\Splitter;
 
 defined( 'ABSPATH' ) || exit;
 
 /** Telegram HTML parse mode. */
-final class TelegramHtmlFormatter implements FormatterInterface {
+final class TelegramHtmlFormatter extends AbstractFormatter {
 
 	/** Format id. */
 	public function id(): string {
@@ -30,15 +28,6 @@ final class TelegramHtmlFormatter implements FormatterInterface {
 		return str_replace( [ '&', '<', '>' ], [ '&amp;', '&lt;', '&gt;' ], $value );
 	}
 
-	/**
-	 * Convert canonical markup.
-	 *
-	 * @param string $canonical Canonical markup.
-	 */
-	public function convert( string $canonical ): string {
-		return $canonical;
-	}
-
 	/** Hard limit. */
 	public function limit(): int {
 		return 4096;
@@ -52,15 +41,40 @@ final class TelegramHtmlFormatter implements FormatterInterface {
 	 * @return string[]
 	 */
 	public function split( string $converted, int $limit = 0 ): array {
-		return Splitter::split_plain( $converted, $limit > 0 ? $limit : $this->limit() );
+		return Splitter::split_html( $converted, $limit > 0 ? $limit : $this->limit(), [ $this, 'length' ] );
 	}
 
 	/**
-	 * Length as the remote API counts it.
+	 * UTF-16 code units after entity parsing.
 	 *
 	 * @param string $converted Converted text.
 	 */
 	public function length( string $converted ): int {
-		return Text::utf16_length( $converted );
+		// Only real tags: wp_strip_all_tags() would trim spaces that count.
+		$text = (string) preg_replace( '~</?[a-z][a-z-]*(?:\s[^<>]*)?>~i', '', $converted );
+		return self::utf16( html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	}
+
+	/**
+	 * Apply a mark.
+	 *
+	 * @param string $tag   Tag.
+	 * @param string $inner Converted text.
+	 * @param array  $open  Open elements.
+	 */
+	protected function mark( string $tag, string $inner, array $open ): string {
+		$tag = $tag === 'spoiler' ? 'tg-spoiler' : $tag;
+		return '<' . $tag . '>' . $inner . '</' . $tag . '>';
+	}
+
+	/**
+	 * A link.
+	 *
+	 * @param string $inner Label.
+	 * @param string $url   URL.
+	 * @param string $plain Plain label.
+	 */
+	protected function link( string $inner, string $url, string $plain ): string {
+		return '<a href="' . str_replace( '"', '&quot;', $this->escape( $url ) ) . '">' . $inner . '</a>';
 	}
 }
