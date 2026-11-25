@@ -320,6 +320,11 @@
 		return h( 'bdi', { dir: /^[\x20-\x7e]+$/.test( text ) ? 'ltr' : 'auto', class: className || '' }, text );
 	}
 
+	/* Keeps phone numbers inside a sentence in their own order: the plus sign stays in front. */
+	function isolateNumbers( text ) {
+		return String( text ).replace( /\+?\d[\d ()-]{5,}\d/g, '\u2066$&\u2069' );
+	}
+
 	/* First letter of a name, for the tile in front of it. */
 	function initial( name ) {
 		return Array.from( String( name ).replace( /^[^\p{L}\p{N}]+/u, '' ) )[ 0 ] || '#';
@@ -728,7 +733,8 @@
 				icon( 'next', 18 )
 			) ) );
 		}
-		digest.health.filter( ( item ) => item.status !== 'good' ).forEach( ( item ) => {
+		// The row above already says it and opens the list.
+		digest.health.filter( ( item ) => item.status !== 'good' && ! ( failed > 0 && item.id === 'failures' ) ).forEach( ( item ) => {
 			rows.push( h( 'li', null, h(
 				'div',
 				{ class: 'fnfe-mini-row' },
@@ -890,7 +896,7 @@
 			h(
 				'span',
 				{ class: 'fnfe-mini-row__main' },
-				h( 'span', { class: 'fnfe-mini-row__title is-clamped', dir: 'auto' }, item.preview || __( 'Empty submission', 'forms-notifier-for-elementor' ) ),
+				h( 'span', { class: 'fnfe-mini-row__title is-clamped', dir: 'auto' }, isolateNumbers( item.preview ) || __( 'Empty submission', 'forms-notifier-for-elementor' ) ),
 				h(
 					'span',
 					{ class: 'fnfe-mini-row__text' },
@@ -1412,6 +1418,8 @@
 			);
 		} else if ( error.code === 'fnfe_app_disabled' ) {
 			gate( 'lock', __( 'The app is turned off', 'forms-notifier-for-elementor' ), __( 'The owner of the site has turned the mini app off.', 'forms-notifier-for-elementor' ) );
+		} else if ( error.code === 'fnfe_app_invalid' ) {
+			gate( 'lock', __( 'Sign-in failed', 'forms-notifier-for-elementor' ), problem( error ), botButton() );
 		} else if ( error.status === 401 ) {
 			gate( 'clock', __( 'Session expired', 'forms-notifier-for-elementor' ), __( 'Close the app and open it again from the bot.', 'forms-notifier-for-elementor' ), h( 'div', { class: 'fnfe-mini-gate__id' }, botButton() || button( __( 'Close', 'forms-notifier-for-elementor' ), { kind: 'primary', onClick: host.close } ) ) );
 		} else {
