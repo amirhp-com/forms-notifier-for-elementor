@@ -167,7 +167,11 @@ final class Runner {
 			}
 		);
 		while ( ob_get_level() > $level ) {
-			ob_end_clean();
+			$status = ob_get_status();
+			// A buffer that cannot be removed would keep this loop running forever.
+			if ( empty( $status['flags'] ) || ! ( $status['flags'] & PHP_OUTPUT_HANDLER_REMOVABLE ) || ! ob_end_clean() ) {
+				break;
+			}
 		}
 		if ( $this->verbose ) {
 			echo '  ' . ( $ok ? 'ok   ' : 'FAIL ' ) . $name . "\n";
