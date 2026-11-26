@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Forms Notifier for Elementor 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/forms-notifier-for-elementor\n"
-"POT-Creation-Date: 2026-11-26T07:34:38+00:00\n"
+"POT-Creation-Date: 2026-11-26T08:36:54+00:00\n"
 "PO-Revision-Date: 2026-11-26T07:10:52+00:00\n"
 "Last-Translator: Amirhossein Hosseinpour\n"
 "Language-Team: Persian\n"
@@ -48,7 +48,7 @@ msgstr "افزونه اطلاع‌رسان فرم‌های المنتور به P
 #: includes/Admin/Admin.php:43 includes/Admin/Admin.php:44
 #: includes/Elementor/FormAction.php:46 includes/Elementor/FormAction.php:84
 #: assets/js/admin/app.js:40 assets/js/admin/app.js:41
-#: assets/js/admin/app.js:262 assets/js/core/fnfe.js:709
+#: assets/js/admin/app.js:262 assets/js/core/fnfe.js:720
 msgid "Forms Notifier"
 msgstr "اطلاع‌رسان فرم"
 
@@ -78,7 +78,7 @@ msgstr "پیشخوان"
 
 #: includes/Admin/Admin.php:158 includes/Admin/HelpContent.php:118
 #: includes/Channels/Bot/ChatDiscovery.php:439 includes/Core/Schema.php:595
-#: includes/Elementor/FormAction.php:133 includes/Health/SiteHealth.php:227
+#: includes/Elementor/FormAction.php:133 includes/Health/SiteHealth.php:228
 #: includes/Rest/MetaController.php:207 assets/js/admin/screens/alerts.js:47
 #: assets/js/admin/screens/bots.js:37 assets/js/admin/screens/channel.js:50
 #: assets/js/admin/screens/channel.js:186
@@ -579,11 +579,11 @@ msgstr "افزونه اطلاع‌رسان فرم به افزونه المنتو
 msgid "Forms Notifier did not find a form builder. Activate Elementor Pro (Forms widget) to receive form submissions."
 msgstr "اطلاع‌رسان فرم هیچ فرم‌سازی پیدا نکرد. برای دریافت ارسالی‌های فرم، المنتور پرو (ابزارک فرم) را فعال کنید."
 
-#: includes/Attachments/Storage.php:56
+#: includes/Attachments/Storage.php:183
 msgid "The storage folder could not be created."
 msgstr "پوشه ذخیره‌سازی ساخته نشد."
 
-#: includes/Attachments/Storage.php:63
+#: includes/Attachments/Storage.php:191
 msgid "An uploaded file could not be copied to the storage folder."
 msgstr "یکی از فایل‌های بارگذاری‌شده در پوشه ذخیره‌سازی کپی نشد."
 
@@ -1020,12 +1020,12 @@ msgid "As in the channel settings"
 msgstr "مطابق تنظیمات کانال"
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:365
-#: includes/Health/SiteHealth.php:114 assets/js/admin/screens/bots.js:264
+#: includes/Health/SiteHealth.php:115 assets/js/admin/screens/bots.js:264
 msgid "Yes"
 msgstr "بله"
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:366
-#: includes/Health/SiteHealth.php:115 assets/js/admin/screens/bots.js:264
+#: includes/Health/SiteHealth.php:116 assets/js/admin/screens/bots.js:264
 msgid "No"
 msgstr "خیر"
 
@@ -4030,7 +4030,7 @@ msgid "%1$s to %2$s"
 msgstr "%1$s تا %2$s"
 
 #. translators: %1$s: number, %2$s: signed change in percent
-#: includes/Delivery/Digest.php:276
+#: includes/Delivery/Digest.php:283
 #, php-format
 msgid "%1$s (%2$s%%)"
 msgstr "%1$s (%2$s%%)"
@@ -4317,249 +4317,283 @@ msgid "Choose in the settings, per channel, per form or in the Elementor editor 
 msgstr "در تنظیمات، برای هر کانال، هر فرم یا در ویرایشگر المنتور مشخص کنید فایل‌ها ارسال شوند، پیوندشان فرستاده شود، هر دو یا هیچ‌کدام. فایلی که برای یک کانال بیش از حد بزرگ است به پیوند تبدیل می‌شود."
 
 #: includes/Elementor/HelpTopics.php:41
-msgid "The folder is closed with an .htaccess file. On nginx, deny access to the folder fnfe-files in your uploads directory as well."
-msgstr "این پوشه با یک فایل ‎.htaccess بسته شده است. روی nginx دسترسی به پوشه fnfe-files در پوشه بارگذاری‌ها را هم ببندید."
+msgid "The folder is closed with an .htaccess file, which only Apache and LiteSpeed read. Site Health (check \"File storage\") asks your web server whether the folder is really closed. On nginx, deny access to the folder fnfe-files in your uploads directory, or move the folder out of the public folder with the constant FNFE_FILES_DIR in wp-config.php."
+msgstr "این پوشه با یک فایل ‎.htaccess بسته می‌شود که فقط Apache و LiteSpeed آن را می‌خوانند. بررسی «ذخیره‌سازی فایل» در سلامت سایت از سرور وب شما می‌پرسد که آیا پوشه واقعاً بسته است. روی nginx دسترسی به پوشه fnfe-files را در پوشه بارگذاری‌ها ببندید، یا با ثابت FNFE_FILES_DIR در wp-config.php پوشه را به بیرون از پوشه عمومی سایت ببرید."
 
 #: includes/Elementor/ProFormSource.php:26
 msgctxt "form technology"
 msgid "Form"
 msgstr "فرم"
 
-#: includes/Health/SiteHealth.php:64 includes/Health/SiteHealth.php:215
+#: includes/Health/SiteHealth.php:65 includes/Health/SiteHealth.php:216
 msgid "Bot connection"
 msgstr "اتصال ربات"
 
-#: includes/Health/SiteHealth.php:93
+#: includes/Health/SiteHealth.php:94
 msgid "This could not be checked."
 msgstr "بررسی این مورد ممکن نشد."
 
-#: includes/Health/SiteHealth.php:117
+#: includes/Health/SiteHealth.php:118
 msgid "Version"
 msgstr "نسخه"
 
-#: includes/Health/SiteHealth.php:118
+#: includes/Health/SiteHealth.php:119
 msgid "Database version"
 msgstr "نسخه پایگاه داده"
 
-#: includes/Health/SiteHealth.php:119
+#: includes/Health/SiteHealth.php:120
 msgid "Capture mode"
 msgstr "حالت دریافت فرم"
 
-#: includes/Health/SiteHealth.php:120
+#: includes/Health/SiteHealth.php:121
 msgid "Delivery mode"
 msgstr "حالت ارسال"
 
-#: includes/Health/SiteHealth.php:121
+#: includes/Health/SiteHealth.php:122
 msgid "Channels that are ready"
 msgstr "کانال‌های آماده"
 
-#: includes/Health/SiteHealth.php:122
+#: includes/Health/SiteHealth.php:123
 msgid "Queue driver"
 msgstr "راه‌انداز صف"
 
-#: includes/Health/SiteHealth.php:123
+#: includes/Health/SiteHealth.php:124
 msgid "Next queue run"
 msgstr "اجرای بعدی صف"
 
 #. translators: %1$s: message status
-#: includes/Health/SiteHealth.php:129
+#: includes/Health/SiteHealth.php:130
 #, php-format
 msgid "Messages: %1$s"
 msgstr "پیام‌ها: %1$s"
 
-#: includes/Health/SiteHealth.php:199
+#: includes/Health/SiteHealth.php:200
 msgid "no answer"
 msgstr "بدون پاسخ"
 
-#: includes/Health/SiteHealth.php:203
+#: includes/Health/SiteHealth.php:204
 msgid "A bot cannot be reached from this server."
 msgstr "از این سرور به یکی از ربات‌ها دسترسی نیست."
 
-#: includes/Health/SiteHealth.php:206
+#: includes/Health/SiteHealth.php:207
 msgid "The connected bots answer."
 msgstr "ربات‌های متصل پاسخ می‌دهند."
 
-#: includes/Health/SiteHealth.php:209
+#: includes/Health/SiteHealth.php:210
 msgid "No bot is connected."
 msgstr "هیچ رباتی متصل نیست."
 
-#: includes/Health/SiteHealth.php:226
+#: includes/Health/SiteHealth.php:227
 msgid "Form builder"
 msgstr "فرم‌ساز"
 
-#: includes/Health/SiteHealth.php:228
+#: includes/Health/SiteHealth.php:229
 msgid "Background tasks"
 msgstr "کارهای پس‌زمینه"
 
-#: includes/Health/SiteHealth.php:229
+#: includes/Health/SiteHealth.php:230
 msgid "Message queue"
 msgstr "صف ارسال پیام‌ها"
 
-#: includes/Health/SiteHealth.php:230
+#: includes/Health/SiteHealth.php:231
 msgid "Failed messages"
 msgstr "پیام‌های ناموفق"
 
-#: includes/Health/SiteHealth.php:231
+#: includes/Health/SiteHealth.php:232
 msgid "Saved credentials"
 msgstr "اطلاعات ورود ذخیره‌شده"
 
-#: includes/Health/SiteHealth.php:232
+#: includes/Health/SiteHealth.php:233
 msgid "Security keys"
 msgstr "کلیدهای امنیتی"
 
-#: includes/Health/SiteHealth.php:233
+#: includes/Health/SiteHealth.php:234
 msgid "File storage"
 msgstr "ذخیره‌سازی فایل"
 
-#: includes/Health/SiteHealth.php:235
+#: includes/Health/SiteHealth.php:236
 msgid "Permalinks"
 msgstr "پیوندهای یکتا"
 
-#: includes/Health/SiteHealth.php:236
+#: includes/Health/SiteHealth.php:237
 msgid "Database tables"
 msgstr "جدول‌های پایگاه داده"
 
-#: includes/Health/SiteHealth.php:237
+#: includes/Health/SiteHealth.php:238
 msgid "PHP extensions"
 msgstr "افزونه‌های PHP"
 
-#: includes/Health/SiteHealth.php:252
+#: includes/Health/SiteHealth.php:253
 msgid "A supported form builder is active."
 msgstr "یک فرم‌ساز پشتیبانی‌شده فعال است."
 
-#: includes/Health/SiteHealth.php:255
+#: includes/Health/SiteHealth.php:256
 msgid "No supported form builder was found. Activate Elementor Pro."
 msgstr "هیچ فرم‌ساز پشتیبانی‌شده‌ای پیدا نشد. المنتور پرو را فعال کنید."
 
 #. translators: %1$d: number of minutes
-#: includes/Health/SiteHealth.php:271
+#: includes/Health/SiteHealth.php:272
 #, php-format
 msgid "Messages are stuck: the oldest has been waiting for %1$d minute."
 msgid_plural "Messages are stuck: the oldest has been waiting for %1$d minutes."
 msgstr[0] "پیام‌ها گیر کرده‌اند: قدیمی‌ترین پیام %1$d دقیقه است که در انتظار است."
 msgstr[1] "پیام‌ها گیر کرده‌اند: قدیمی‌ترین پیام %1$d دقیقه است که در انتظار است."
 
-#: includes/Health/SiteHealth.php:277
+#: includes/Health/SiteHealth.php:278
 msgid "Messages are sent on time."
 msgstr "پیام‌ها به‌موقع ارسال می‌شوند."
 
 #. translators: %1$s: comma separated list of setting names
-#: includes/Health/SiteHealth.php:286
+#: includes/Health/SiteHealth.php:287
 #, php-format
 msgid "These credentials cannot be read any more. Enter them again: %1$s"
 msgstr "این اطلاعات ورود دیگر خوانا نیستند. آن‌ها را دوباره وارد کنید: %1$s"
 
-#: includes/Health/SiteHealth.php:287
+#: includes/Health/SiteHealth.php:288
 msgid "All saved credentials can be read."
 msgstr "همه اطلاعات ورود ذخیره‌شده خوانا هستند."
 
-#: includes/Health/SiteHealth.php:291
+#: includes/Health/SiteHealth.php:292
 msgid "The security keys in wp-config.php are missing or still the default ones. Credentials cannot be protected well."
 msgstr "کلیدهای امنیتی در wp-config.php وجود ندارند یا هنوز همان مقدارهای پیش‌فرض‌اند. اطلاعات ورود به‌خوبی محافظت نمی‌شوند."
 
-#: includes/Health/SiteHealth.php:292
+#: includes/Health/SiteHealth.php:293
 msgid "The security keys of WordPress are set."
 msgstr "کلیدهای امنیتی وردپرس تنظیم شده‌اند."
 
-#: includes/Health/SiteHealth.php:303
+#: includes/Health/SiteHealth.php:304
 msgid "Bot webhooks and the mini app need HTTPS, but the address of this site starts with http."
 msgstr "وب‌هوک ربات‌ها و مینی‌اپ به HTTPS نیاز دارند، اما نشانی این سایت با http شروع می‌شود."
 
-#: includes/Health/SiteHealth.php:304
+#: includes/Health/SiteHealth.php:305
 msgid "The address of this site fits the features in use."
 msgstr "نشانی این سایت با امکاناتی که استفاده می‌شوند سازگار است."
 
-#: includes/Health/SiteHealth.php:308
+#: includes/Health/SiteHealth.php:309
 msgid "Pretty permalinks are on."
 msgstr "پیوندهای یکتای خوانا روشن هستند."
 
-#: includes/Health/SiteHealth.php:309
+#: includes/Health/SiteHealth.php:310
 msgid "Plain permalinks are in use. Everything works, with longer addresses."
 msgstr "پیوندهای یکتای ساده استفاده می‌شوند. همه چیز کار می‌کند، فقط نشانی‌ها بلندترند."
 
-#: includes/Health/SiteHealth.php:313
+#: includes/Health/SiteHealth.php:314
 msgid "All tables exist and are up to date."
 msgstr "همه جدول‌ها وجود دارند و به‌روز هستند."
 
-#: includes/Health/SiteHealth.php:314
+#: includes/Health/SiteHealth.php:315
 msgid "Tables are missing or outdated. Deactivate and activate the plugin again."
 msgstr "برخی جدول‌ها وجود ندارند یا قدیمی‌اند. افزونه را غیرفعال و دوباره فعال کنید."
 
-#: includes/Health/SiteHealth.php:330
+#: includes/Health/SiteHealth.php:331
 msgid "The PHP extensions the plugin uses are installed."
 msgstr "افزونه‌های PHP موردنیاز افزونه نصب هستند."
 
-#: includes/Health/SiteHealth.php:345
+#: includes/Health/SiteHealth.php:346
 msgid "Forms Notifier for Elementor: the PHP extension mbstring is missing. Submissions are still saved and sent, but upper and lower case work for Latin letters only and some texts are shortened less precisely. Ask your host to enable mbstring."
 msgstr "اطلاع‌رسان فرم‌های المنتور: افزونه mbstring در PHP نصب نیست. ارسالی‌ها همچنان ذخیره و ارسال می‌شوند، اما تبدیل حروف بزرگ و کوچک فقط برای حروف لاتین کار می‌کند و برخی متن‌ها با دقت کمتری کوتاه می‌شوند. از میزبان خود بخواهید mbstring را فعال کند."
 
 #. translators: %1$s: comma separated list of channel names
-#: includes/Health/SiteHealth.php:366
+#: includes/Health/SiteHealth.php:367
 #, php-format
 msgid "These channels are switched on but not set up: %1$s"
 msgstr "این کانال‌ها روشن هستند اما تنظیم نشده‌اند: %1$s"
 
-#: includes/Health/SiteHealth.php:371
+#: includes/Health/SiteHealth.php:372
 msgid "No channel is connected yet, so nothing is sent."
 msgstr "هنوز هیچ کانالی وصل نشده است، پس چیزی ارسال نمی‌شود."
 
 #. translators: %1$d: number of channels
-#: includes/Health/SiteHealth.php:377
+#: includes/Health/SiteHealth.php:378
 #, php-format
 msgid "%1$d channel is ready."
 msgid_plural "%1$d channels are ready."
 msgstr[0] "%1$d کانال آماده است."
 msgstr[1] "%1$d کانال آماده است."
 
-#: includes/Health/SiteHealth.php:388
+#: includes/Health/SiteHealth.php:389
 msgid "The background task of the message queue is not scheduled. Deactivate and activate the plugin again."
 msgstr "کار پس‌زمینه صف ارسال زمان‌بندی نشده است. افزونه را غیرفعال و دوباره فعال کنید."
 
-#: includes/Health/SiteHealth.php:391
+#: includes/Health/SiteHealth.php:392
 msgid "Background tasks do not run. Set up a system cron job for wp-cron.php."
 msgstr "کارهای پس‌زمینه اجرا نمی‌شوند. برای wp-cron.php یک کران‌جاب سیستمی تنظیم کنید."
 
-#: includes/Health/SiteHealth.php:394
+#: includes/Health/SiteHealth.php:395
 msgid "Action Scheduler runs the message queue."
 msgstr "صف ارسال با Action Scheduler اجرا می‌شود."
 
-#: includes/Health/SiteHealth.php:397
+#: includes/Health/SiteHealth.php:398
 msgid "WP-Cron is switched off in wp-config.php. Make sure a system cron job calls wp-cron.php every minute."
 msgstr "کران وردپرس (WP-Cron) در wp-config.php خاموش شده است. مطمئن شوید یک کران‌جاب سیستمی هر دقیقه wp-cron.php را اجرا می‌کند."
 
-#: includes/Health/SiteHealth.php:399
+#: includes/Health/SiteHealth.php:400
 msgid "WP-Cron runs the message queue."
 msgstr "صف ارسال با کران وردپرس (WP-Cron) اجرا می‌شود."
 
 #. translators: %1$d: failed messages, %2$d: all messages
-#: includes/Health/SiteHealth.php:412
+#: includes/Health/SiteHealth.php:413
 #, php-format
 msgid "%1$d of %2$d messages failed in the last 24 hours."
 msgstr "در ۲۴ ساعت گذشته %1$d پیام از %2$d پیام ناموفق بود."
 
-#: includes/Health/SiteHealth.php:419
+#: includes/Health/SiteHealth.php:420
 msgid "Deliveries of the last 24 hours look fine."
 msgstr "ارسال‌های ۲۴ ساعت گذشته مشکلی ندارند."
 
-#: includes/Health/SiteHealth.php:425
+#: includes/Health/SiteHealth.php:426
 msgid "Uploaded files are not copied."
 msgstr "فایل‌های بارگذاری‌شده کپی نمی‌شوند."
 
-#: includes/Health/SiteHealth.php:430
+#: includes/Health/SiteHealth.php:431
 msgid "The folder for uploaded files is not writable."
 msgstr "پوشه فایل‌های بارگذاری‌شده قابل نوشتن نیست."
 
-#: includes/Health/SiteHealth.php:433
+#: includes/Health/SiteHealth.php:434
+msgid "Uploaded files are kept outside the public folder."
+msgstr "فایل‌های بارگذاری‌شده بیرون از پوشه عمومی سایت نگه داشته می‌شوند."
+
+#: includes/Health/SiteHealth.php:438
 msgid "The protection files of the upload folder are missing."
 msgstr "فایل‌های محافظ پوشه بارگذاری وجود ندارند."
 
-#: includes/Health/SiteHealth.php:435
+#: includes/Health/SiteHealth.php:442
+msgid "Stored files can be opened by their direct address. The names cannot be guessed, but links then never expire. Close the folder on the web server or move it with FNFE_FILES_DIR."
+msgstr "فایل‌های ذخیره‌شده با نشانی مستقیمشان باز می‌شوند. نام‌ها حدس‌زدنی نیستند، ولی این نشانی‌ها هیچ‌وقت منقضی نمی‌شوند. پوشه را روی سرور وب ببندید یا با FNFE_FILES_DIR جابه‌جایش کنید."
+
+#: includes/Health/SiteHealth.php:445
 msgid "The folder for uploaded files is writable and closed."
 msgstr "پوشه فایل‌های بارگذاری‌شده قابل نوشتن و بسته است."
 
-#: includes/Health/SiteHealth.php:470
+#: includes/Health/SiteHealth.php:447
+msgid "The folder for uploaded files is writable. Whether the web server closes it could not be tested."
+msgstr "پوشه فایل‌های بارگذاری‌شده قابل نوشتن است، ولی نشد بررسی کرد که سرور وب آن را می‌بندد یا نه."
+
+#: includes/Health/SiteHealth.php:482
 msgid "Open Forms Notifier"
 msgstr "باز کردن اطلاع‌رسان فرم"
+
+#. translators: %s: folder on the disk
+#: includes/Health/SiteHealth.php:506
+#, php-format
+msgid "The .htaccess file in the folder closes it when the server allows overrides (AllowOverride All or AuthConfig). Otherwise add this to the site configuration, with the path of %s:"
+msgstr "فایل ‎.htaccess داخل پوشه، آن را می‌بندد؛ به شرطی که سرور اجازه بازنویسی تنظیمات را بدهد (AllowOverride All یا AuthConfig). در غیر این صورت این را با مسیر %s به پیکربندی سایت اضافه کنید:"
+
+#: includes/Health/SiteHealth.php:511
+msgid "nginx ignores .htaccess files. Add this to the server block of the site and reload nginx:"
+msgstr "سرور nginx فایل‌های ‎.htaccess را نمی‌خواند. این را به بلوک server سایت اضافه کنید و nginx را دوباره بارگذاری کنید:"
+
+#: includes/Health/SiteHealth.php:516
+msgid "LiteSpeed Enterprise reads the .htaccess file when overrides are on. OpenLiteSpeed does not: add a context for this address with access turned off in the WebAdmin console, then restart."
+msgstr "سرور LiteSpeed Enterprise فایل ‎.htaccess را وقتی بازنویسی تنظیمات روشن باشد می‌خواند، ولی OpenLiteSpeed نه: در کنسول WebAdmin برای این نشانی یک context با دسترسی بسته بسازید و سرور را دوباره راه‌اندازی کنید."
+
+#: includes/Health/SiteHealth.php:520
+msgid "Any server"
+msgstr "هر سروری"
+
+#: includes/Health/SiteHealth.php:521
+msgid "Move the folder out of the public folder in wp-config.php. Files stored before the move stay where they are and keep working."
+msgstr "در wp-config.php پوشه را به بیرون از پوشه عمومی سایت ببرید. فایل‌هایی که پیش از جابه‌جایی ذخیره شده‌اند سر جایشان می‌مانند و کار می‌کنند."
 
 #: includes/MiniApp/MenuButton.php:57 assets/js/admin/screens/dashboard.js:213
 #: assets/js/admin/widgets/buttons.js:225
@@ -6019,7 +6053,7 @@ msgstr "دوباره امتحان کنید"
 
 #: assets/js/admin/components.js:574 assets/js/admin/screens/alerts.js:37
 #: assets/js/admin/screens/bots.js:151 assets/js/admin/screens/channel.js:95
-#: assets/js/admin/screens/form.js:131 assets/js/core/fnfe.js:506
+#: assets/js/admin/screens/form.js:131 assets/js/core/fnfe.js:517
 #: assets/js/miniapp/app.js:1424
 msgid "Close"
 msgstr "بستن"
@@ -7459,7 +7493,7 @@ msgstr "یک فرم را ارسال کنید یا از صفحه یکی از کا
 msgid "Open channels"
 msgstr "باز کردن کانال‌ها"
 
-#: assets/js/admin/screens/log.js:204 assets/js/core/fnfe.js:478
+#: assets/js/admin/screens/log.js:204 assets/js/core/fnfe.js:489
 #: assets/js/miniapp/app.js:1115
 msgid "Messages"
 msgstr "پیام‌ها"
@@ -8553,7 +8587,7 @@ msgstr "دسترسی به سایت ممکن نشد. اتصال خود را بر�
 msgid "The site sent an unexpected answer."
 msgstr "سایت پاسخی غیرمنتظره فرستاد."
 
-#: assets/js/core/fnfe.js:710
+#: assets/js/core/fnfe.js:721
 msgid "The panel is not available yet."
 msgstr "پنل هنوز در دسترس نیست."
 

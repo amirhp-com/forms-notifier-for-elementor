@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-26T07:34:38+00:00\n"
+"POT-Creation-Date: 2026-11-26T08:37:27+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Domain: forms-notifier-for-elementor\n"
 
@@ -51,7 +51,7 @@ msgstr ""
 #: assets/js/admin/app.js:40
 #: assets/js/admin/app.js:41
 #: assets/js/admin/app.js:262
-#: assets/js/core/fnfe.js:709
+#: assets/js/core/fnfe.js:720
 msgid "Forms Notifier"
 msgstr ""
 
@@ -89,7 +89,7 @@ msgstr ""
 #: includes/Channels/Bot/ChatDiscovery.php:439
 #: includes/Core/Schema.php:595
 #: includes/Elementor/FormAction.php:133
-#: includes/Health/SiteHealth.php:227
+#: includes/Health/SiteHealth.php:228
 #: includes/Rest/MetaController.php:207
 #: assets/js/admin/screens/alerts.js:47
 #: assets/js/admin/screens/bots.js:37
@@ -627,11 +627,11 @@ msgstr ""
 msgid "Forms Notifier did not find a form builder. Activate Elementor Pro (Forms widget) to receive form submissions."
 msgstr ""
 
-#: includes/Attachments/Storage.php:56
+#: includes/Attachments/Storage.php:183
 msgid "The storage folder could not be created."
 msgstr ""
 
-#: includes/Attachments/Storage.php:63
+#: includes/Attachments/Storage.php:191
 msgid "An uploaded file could not be copied to the storage folder."
 msgstr ""
 
@@ -1082,13 +1082,13 @@ msgid "As in the channel settings"
 msgstr ""
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:365
-#: includes/Health/SiteHealth.php:114
+#: includes/Health/SiteHealth.php:115
 #: assets/js/admin/screens/bots.js:264
 msgid "Yes"
 msgstr ""
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:366
-#: includes/Health/SiteHealth.php:115
+#: includes/Health/SiteHealth.php:116
 #: assets/js/admin/screens/bots.js:264
 msgid "No"
 msgstr ""
@@ -4150,7 +4150,7 @@ msgid "%1$s to %2$s"
 msgstr ""
 
 #. translators: %1$s: number, %2$s: signed change in percent
-#: includes/Delivery/Digest.php:276
+#: includes/Delivery/Digest.php:283
 #, php-format
 msgid "%1$s (%2$s%%)"
 msgstr ""
@@ -4443,7 +4443,7 @@ msgid "Choose in the settings, per channel, per form or in the Elementor editor 
 msgstr ""
 
 #: includes/Elementor/HelpTopics.php:41
-msgid "The folder is closed with an .htaccess file. On nginx, deny access to the folder fnfe-files in your uploads directory as well."
+msgid "The folder is closed with an .htaccess file, which only Apache and LiteSpeed read. Site Health (check \"File storage\") asks your web server whether the folder is really closed. On nginx, deny access to the folder fnfe-files in your uploads directory, or move the folder out of the public folder with the constant FNFE_FILES_DIR in wp-config.php."
 msgstr ""
 
 #: includes/Elementor/ProFormSource.php:26
@@ -4451,241 +4451,275 @@ msgctxt "form technology"
 msgid "Form"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:64
-#: includes/Health/SiteHealth.php:215
+#: includes/Health/SiteHealth.php:65
+#: includes/Health/SiteHealth.php:216
 msgid "Bot connection"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:93
+#: includes/Health/SiteHealth.php:94
 msgid "This could not be checked."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:117
+#: includes/Health/SiteHealth.php:118
 msgid "Version"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:118
+#: includes/Health/SiteHealth.php:119
 msgid "Database version"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:119
+#: includes/Health/SiteHealth.php:120
 msgid "Capture mode"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:120
+#: includes/Health/SiteHealth.php:121
 msgid "Delivery mode"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:121
+#: includes/Health/SiteHealth.php:122
 msgid "Channels that are ready"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:122
+#: includes/Health/SiteHealth.php:123
 msgid "Queue driver"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:123
+#: includes/Health/SiteHealth.php:124
 msgid "Next queue run"
 msgstr ""
 
 #. translators: %1$s: message status
-#: includes/Health/SiteHealth.php:129
+#: includes/Health/SiteHealth.php:130
 #, php-format
 msgid "Messages: %1$s"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:199
+#: includes/Health/SiteHealth.php:200
 msgid "no answer"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:203
+#: includes/Health/SiteHealth.php:204
 msgid "A bot cannot be reached from this server."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:206
+#: includes/Health/SiteHealth.php:207
 msgid "The connected bots answer."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:209
+#: includes/Health/SiteHealth.php:210
 msgid "No bot is connected."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:226
+#: includes/Health/SiteHealth.php:227
 msgid "Form builder"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:228
+#: includes/Health/SiteHealth.php:229
 msgid "Background tasks"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:229
+#: includes/Health/SiteHealth.php:230
 msgid "Message queue"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:230
+#: includes/Health/SiteHealth.php:231
 msgid "Failed messages"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:231
+#: includes/Health/SiteHealth.php:232
 msgid "Saved credentials"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:232
+#: includes/Health/SiteHealth.php:233
 msgid "Security keys"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:233
+#: includes/Health/SiteHealth.php:234
 msgid "File storage"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:235
+#: includes/Health/SiteHealth.php:236
 msgid "Permalinks"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:236
+#: includes/Health/SiteHealth.php:237
 msgid "Database tables"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:237
+#: includes/Health/SiteHealth.php:238
 msgid "PHP extensions"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:252
+#: includes/Health/SiteHealth.php:253
 msgid "A supported form builder is active."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:255
+#: includes/Health/SiteHealth.php:256
 msgid "No supported form builder was found. Activate Elementor Pro."
 msgstr ""
 
 #. translators: %1$d: number of minutes
-#: includes/Health/SiteHealth.php:271
+#: includes/Health/SiteHealth.php:272
 #, php-format
 msgid "Messages are stuck: the oldest has been waiting for %1$d minute."
 msgid_plural "Messages are stuck: the oldest has been waiting for %1$d minutes."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Health/SiteHealth.php:277
+#: includes/Health/SiteHealth.php:278
 msgid "Messages are sent on time."
 msgstr ""
 
 #. translators: %1$s: comma separated list of setting names
-#: includes/Health/SiteHealth.php:286
+#: includes/Health/SiteHealth.php:287
 #, php-format
 msgid "These credentials cannot be read any more. Enter them again: %1$s"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:287
+#: includes/Health/SiteHealth.php:288
 msgid "All saved credentials can be read."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:291
+#: includes/Health/SiteHealth.php:292
 msgid "The security keys in wp-config.php are missing or still the default ones. Credentials cannot be protected well."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:292
+#: includes/Health/SiteHealth.php:293
 msgid "The security keys of WordPress are set."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:303
+#: includes/Health/SiteHealth.php:304
 msgid "Bot webhooks and the mini app need HTTPS, but the address of this site starts with http."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:304
+#: includes/Health/SiteHealth.php:305
 msgid "The address of this site fits the features in use."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:308
+#: includes/Health/SiteHealth.php:309
 msgid "Pretty permalinks are on."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:309
+#: includes/Health/SiteHealth.php:310
 msgid "Plain permalinks are in use. Everything works, with longer addresses."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:313
+#: includes/Health/SiteHealth.php:314
 msgid "All tables exist and are up to date."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:314
+#: includes/Health/SiteHealth.php:315
 msgid "Tables are missing or outdated. Deactivate and activate the plugin again."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:330
+#: includes/Health/SiteHealth.php:331
 msgid "The PHP extensions the plugin uses are installed."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:345
+#: includes/Health/SiteHealth.php:346
 msgid "Forms Notifier for Elementor: the PHP extension mbstring is missing. Submissions are still saved and sent, but upper and lower case work for Latin letters only and some texts are shortened less precisely. Ask your host to enable mbstring."
 msgstr ""
 
 #. translators: %1$s: comma separated list of channel names
-#: includes/Health/SiteHealth.php:366
+#: includes/Health/SiteHealth.php:367
 #, php-format
 msgid "These channels are switched on but not set up: %1$s"
 msgstr ""
 
-#: includes/Health/SiteHealth.php:371
+#: includes/Health/SiteHealth.php:372
 msgid "No channel is connected yet, so nothing is sent."
 msgstr ""
 
 #. translators: %1$d: number of channels
-#: includes/Health/SiteHealth.php:377
+#: includes/Health/SiteHealth.php:378
 #, php-format
 msgid "%1$d channel is ready."
 msgid_plural "%1$d channels are ready."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/Health/SiteHealth.php:388
+#: includes/Health/SiteHealth.php:389
 msgid "The background task of the message queue is not scheduled. Deactivate and activate the plugin again."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:391
+#: includes/Health/SiteHealth.php:392
 msgid "Background tasks do not run. Set up a system cron job for wp-cron.php."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:394
+#: includes/Health/SiteHealth.php:395
 msgid "Action Scheduler runs the message queue."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:397
+#: includes/Health/SiteHealth.php:398
 msgid "WP-Cron is switched off in wp-config.php. Make sure a system cron job calls wp-cron.php every minute."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:399
+#: includes/Health/SiteHealth.php:400
 msgid "WP-Cron runs the message queue."
 msgstr ""
 
 #. translators: %1$d: failed messages, %2$d: all messages
-#: includes/Health/SiteHealth.php:412
+#: includes/Health/SiteHealth.php:413
 #, php-format
 msgid "%1$d of %2$d messages failed in the last 24 hours."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:419
+#: includes/Health/SiteHealth.php:420
 msgid "Deliveries of the last 24 hours look fine."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:425
+#: includes/Health/SiteHealth.php:426
 msgid "Uploaded files are not copied."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:430
+#: includes/Health/SiteHealth.php:431
 msgid "The folder for uploaded files is not writable."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:433
+#: includes/Health/SiteHealth.php:434
+msgid "Uploaded files are kept outside the public folder."
+msgstr ""
+
+#: includes/Health/SiteHealth.php:438
 msgid "The protection files of the upload folder are missing."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:435
+#: includes/Health/SiteHealth.php:442
+msgid "Stored files can be opened by their direct address. The names cannot be guessed, but links then never expire. Close the folder on the web server or move it with FNFE_FILES_DIR."
+msgstr ""
+
+#: includes/Health/SiteHealth.php:445
 msgid "The folder for uploaded files is writable and closed."
 msgstr ""
 
-#: includes/Health/SiteHealth.php:470
+#: includes/Health/SiteHealth.php:447
+msgid "The folder for uploaded files is writable. Whether the web server closes it could not be tested."
+msgstr ""
+
+#: includes/Health/SiteHealth.php:482
 msgid "Open Forms Notifier"
+msgstr ""
+
+#. translators: %s: folder on the disk
+#: includes/Health/SiteHealth.php:506
+#, php-format
+msgid "The .htaccess file in the folder closes it when the server allows overrides (AllowOverride All or AuthConfig). Otherwise add this to the site configuration, with the path of %s:"
+msgstr ""
+
+#: includes/Health/SiteHealth.php:511
+msgid "nginx ignores .htaccess files. Add this to the server block of the site and reload nginx:"
+msgstr ""
+
+#: includes/Health/SiteHealth.php:516
+msgid "LiteSpeed Enterprise reads the .htaccess file when overrides are on. OpenLiteSpeed does not: add a context for this address with access turned off in the WebAdmin console, then restart."
+msgstr ""
+
+#: includes/Health/SiteHealth.php:520
+msgid "Any server"
+msgstr ""
+
+#: includes/Health/SiteHealth.php:521
+msgid "Move the folder out of the public folder in wp-config.php. Files stored before the move stay where they are and keep working."
 msgstr ""
 
 #: includes/MiniApp/MenuButton.php:57
@@ -6217,7 +6251,7 @@ msgstr ""
 #: assets/js/admin/screens/bots.js:151
 #: assets/js/admin/screens/channel.js:95
 #: assets/js/admin/screens/form.js:131
-#: assets/js/core/fnfe.js:506
+#: assets/js/core/fnfe.js:517
 #: assets/js/miniapp/app.js:1424
 msgid "Close"
 msgstr ""
@@ -7756,7 +7790,7 @@ msgid "Open channels"
 msgstr ""
 
 #: assets/js/admin/screens/log.js:204
-#: assets/js/core/fnfe.js:478
+#: assets/js/core/fnfe.js:489
 #: assets/js/miniapp/app.js:1115
 msgid "Messages"
 msgstr ""
@@ -8893,7 +8927,7 @@ msgstr ""
 msgid "The site sent an unexpected answer."
 msgstr ""
 
-#: assets/js/core/fnfe.js:710
+#: assets/js/core/fnfe.js:721
 msgid "The panel is not available yet."
 msgstr ""
 
