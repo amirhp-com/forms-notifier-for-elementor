@@ -18,21 +18,15 @@ The plugin is free. It is not affiliated with or endorsed by Elementor or by any
 
 = Features =
 
-* Forms of Elementor Pro (classic and atomic) and Hello Plus. Forms are found on their own, also in popups, templates and global widgets. No form action is needed, but an action "Forms Notifier" in the editor can change settings per form.
+* Elementor Pro forms (classic and atomic) and Hello Plus forms, found on their own, also in popups and templates. No form action needed.
 * 19 channels: Telegram, Bale, SMS, WhatsApp, email, webhooks, Slack, Discord, Google Chat, Microsoft Teams, Mattermost, Rocket.Chat, ntfy, Pushover, Gotify, Eitaa, Rubika, Soroush Plus, Gap.
-* Telegram and Bale bots find groups, topics and channels themselves, answer commands (/id, /last, /stats), and add buttons under a message to mark a submission as read, done or spam.
-* A Mini App inside Telegram and Bale with forms, submissions and delivery problems. No remote script is loaded.
-* 31 SMS gateways (Iranian and international), pass-through to the WP SMS and Persian WooCommerce SMS plugins, and a custom HTTP gateway. Gateway per country, backup gateways, pattern (template) messages.
-* 10 WhatsApp gateways, the Cloud API of Meta first.
-* Templates per channel and per form, with tags, filters and conditions, and a text per language.
-* Webhooks with presets for n8n, Make, Zapier, Pabbly Connect and IFTTT, signed requests and stable delivery ids.
-* Rules: send some submissions to other people, or only to some channels.
-* Uploaded files are sent, linked through signed links, or left out, per channel and per form.
-* Saved submissions with search, statuses, CSV export and import of older Elementor submissions.
-* Message log, queue with retries, a backup channel, failure alerts, daily or weekly digest, quiet hours.
-* WPML and Polylang. A full Persian translation with a bundled Persian font.
-* Privacy tools of WordPress, retention settings, encrypted tokens, Site Health checks, WP-CLI, REST API and hooks for developers.
+* Bots that find groups and topics, answer commands and carry buttons; a Mini App inside Telegram and Bale.
+* 28 SMS gateways plus WP SMS, Persian WooCommerce SMS and a custom HTTP gateway; 10 WhatsApp gateways.
+* Templates per channel and form, rules, uploaded files as files or signed links.
+* Saved submissions, message log, retries, failure alerts, digest, quiet hours.
+* WPML, Polylang, full Persian translation, privacy tools, WP-CLI, REST API and hooks.
 
+All features: https://github.com/amirhp-com/forms-notifier-for-elementor/blob/main/docs/features.md
 Documentation: https://github.com/amirhp-com/forms-notifier-for-elementor/tree/main/docs
 
 = Requirements =
@@ -69,6 +63,10 @@ Background tasks need WordPress cron. Press Run queue now on the Log screen; if 
 = Where are tokens stored? =
 
 Encrypted in the database. They can also be defined as constants in wp-config.php.
+
+= Are uploaded files public? =
+
+Files are copied into the folder fnfe-files in your uploads folder under random names nobody can guess, and links in messages are signed, can expire and go through the plugin. Apache closes the folder with the .htaccess file the plugin writes. nginx ignores that file: add `location ^~ /wp-content/uploads/fnfe-files/ { deny all; }`, or move the folder out of the public folder with `define( 'FNFE_FILES_DIR', '/path/outside/public_html/fnfe-files' );` in wp-config.php. Files stored before a move are not moved and keep working. Site Health (File storage) tells you whether your server really closes the folder.
 
 = What happens when I delete the plugin? =
 
@@ -121,10 +119,10 @@ SMS gateways (phone number, text or pattern values, sender line, credentials):
 * Plivo (api.plivo.com). Terms: https://www.plivo.com/legal/tos/ Privacy: https://www.plivo.com/legal/privacy/
 * Bird (platform.bird.com) and MessageBird (rest.messagebird.com). Terms: https://bird.com/legal/terms Privacy: https://bird.com/legal/privacy
 * ClickSend (rest.clicksend.com). Terms: https://www.clicksend.com/us/legal/terms-of-service/ Privacy: https://www.clicksend.com/us/legal/privacy-policy/
-* Infobip (your account's API address). Terms: https://www.infobip.com/policies/service-terms-conditions Privacy: https://www.infobip.com/policies/privacy-notice
+* Infobip (your account's API address, xxxxx.api.infobip.com). Terms: https://www.infobip.com/policies/service-terms-conditions Privacy: https://www.infobip.com/policies/privacy-notice
 * Telnyx (api.telnyx.com). Terms: https://telnyx.com/terms-and-conditions-of-service Privacy: https://telnyx.com/privacy-policy
 * Brevo (api.brevo.com). Terms: https://www.brevo.com/legal/termsofuse/ Privacy: https://www.brevo.com/legal/privacypolicy/
-* SMS.to (api.sms.to). Terms: https://sms.to/terms-of-service/ Privacy: https://sms.to/privacy-policy/
+* SMS.to (api.sms.to, auth.sms.to for the balance). Terms: https://sms.to/terms-of-service/ Privacy: https://sms.to/privacy-policy/
 * 46elks (api.46elks.com). Terms: https://46elks.com/terms Privacy: https://46elks.com/privacy-policy
 * SMSAPI (api.smsapi.com, api.smsapi.pl). Terms: https://www.smsapi.com/en/terms Privacy: https://www.smsapi.com/en/privacy
 * MSG91 (control.msg91.com). Terms: https://msg91.com/terms-of-use Privacy: https://msg91.com/privacy-policy

@@ -42,6 +42,9 @@ Yes. Every site has its own settings, bots, tables and files.
 **WPML or Polylang?**
 Both. See [multilingual sites](multilingual.md).
 
+**Are uploaded files public?**
+Names are random and links in messages are signed and can expire. Apache closes the folder with its `.htaccess`; nginx and OpenLiteSpeed do not read it. Site Health, **File storage**, asks the server and shows the rule to add, or move the folder with `FNFE_FILES_DIR` (see the [user guide](user-guide.md#uploaded-files)). Files stored before a move are not moved and keep working.
+
 **What happens when I delete the plugin?**
 Nothing is lost unless "Delete all data when the plugin is deleted" is on (Settings, Privacy). Deactivation only stops the scheduled tasks.
 

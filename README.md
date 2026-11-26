@@ -7,7 +7,7 @@ Free WordPress plugin by [Amirhossein Hosseinpour](https://amirhp.com/). Licence
 ## What it does
 
 - Notices every submission of Elementor Pro forms (classic and atomic) and Hello Plus forms, without extra setup.
-- 19 channels: Telegram, Bale, SMS (31 gateways), WhatsApp (10 gateways), email, webhooks (n8n, Make, Zapier, Pabbly Connect, IFTTT), Slack, Discord, Google Chat, Microsoft Teams, Mattermost, Rocket.Chat, ntfy, Pushover, Gotify, Eitaa, Rubika, Soroush Plus, Gap.
+- 19 channels: Telegram, Bale, SMS (28 gateways plus pass-through and custom HTTP), WhatsApp (10 gateways), email, webhooks (n8n, Make, Zapier, Pabbly Connect, IFTTT), Slack, Discord, Google Chat, Microsoft Teams, Mattermost, Rocket.Chat, ntfy, Pushover, Gotify, Eitaa, Rubika, Soroush Plus, Gap.
 - Bots that find groups and topics, answer commands and carry action buttons; a Mini App inside Telegram and Bale.
 - Templates per channel and form with tags, filters, conditions and texts per language (WPML, Polylang).
 - Queue, retries, message log, backup channel, failure alerts, digest, quiet hours, rules.
@@ -32,6 +32,7 @@ Download the zip of a [release](https://github.com/amirhp-com/forms-notifier-for
 | [Webhooks](docs/webhooks.md) | Payload, signatures, n8n, Make, Zapier, Pabbly, IFTTT |
 | [Cloudflare Worker](docs/cloudflare-worker.md) | Reach a blocked messenger through your own forwarder |
 | [Multilingual sites](docs/multilingual.md) | WPML, Polylang, texts per language |
+| [Features](docs/features.md) | Everything the plugin does |
 | [Questions](docs/faq.md) | Troubleshooting |
 | [Developer guide](docs/developer-guide.md) | Hooks, channels, gateways, REST, JavaScript, CLI, database |
 | [Changelog](CHANGELOG.md) | |
