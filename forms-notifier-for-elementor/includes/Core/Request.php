@@ -12,11 +12,45 @@ defined( 'ABSPATH' ) || exit;
 /** Sanitised facts about the current request. */
 final class Request {
 
-	/** Client IP: REMOTE_ADDR unless a site filters it. '' when not valid. */
+	/** Headers the setting advanced.proxy_header may name. */
+	public const PROXY_HEADERS = [ 'cf-connecting-ip', 'x-real-ip', 'x-forwarded-for' ];
+
+	/**
+	 * Client IP: REMOTE_ADDR, or the header of a trusted proxy (advanced.proxy_header). '' when not valid.
+	 * Filter fnfe_client_ip( string $ip ) has the last word.
+	 */
 	public static function ip(): string {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$ip     = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$header = Settings::str( 'advanced.proxy_header' );
+		if ( in_array( $header, self::PROXY_HEADERS, true ) ) {
+			$key   = 'HTTP_' . strtoupper( str_replace( '-', '_', $header ) );
+			$value = isset( $_SERVER[ $key ] ) ? sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) : '';
+			$found = self::from_header( $value );
+			$ip    = $found === '' ? $ip : $found;
+		}
 		$ip = apply_filters( 'fnfe_client_ip', $ip );
 		return is_string( $ip ) && filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+	}
+
+	/**
+	 * Visitor address in a proxy header. In a list the right-most public address counts: the entries to its left were
+	 * sent by the visitor and can be anything.
+	 *
+	 * @param string $value Header value.
+	 */
+	public static function from_header( string $value ): string {
+		$list = array_reverse( array_filter( array_map( 'trim', explode( ',', $value ) ), 'strlen' ) );
+		$last = '';
+		foreach ( $list as $entry ) {
+			if ( ! filter_var( $entry, FILTER_VALIDATE_IP ) ) {
+				return $last;
+			}
+			$last = $entry;
+			if ( filter_var( $entry, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return $entry;
+			}
+		}
+		return $last;
 	}
 
 	/**

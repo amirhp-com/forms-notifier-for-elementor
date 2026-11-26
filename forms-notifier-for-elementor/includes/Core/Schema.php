@@ -905,7 +905,31 @@ final class Schema {
 						'key'   => 'advanced.allow_private_hosts',
 						'type'  => 'toggle',
 						'label' => __( 'Allow addresses on private networks', 'forms-notifier-for-elementor' ),
-						'desc'  => __( 'Only for self-hosted services on the same network, such as n8n or a local API server.', 'forms-notifier-for-elementor' ),
+						'desc'  => __( 'Only for self-hosted services on the same network, such as n8n or a local API server. Public servers work on any port without this.', 'forms-notifier-for-elementor' ),
+					],
+					[
+						'key'     => 'advanced.proxy_header',
+						'type'    => 'select',
+						'label'   => __( 'Visitor address behind a proxy', 'forms-notifier-for-elementor' ),
+						'desc'    => __( 'Only when the site runs behind a proxy or CDN that sets this header. Otherwise every visitor shares the address of the proxy, in stored submissions and in the limits on sign-ins and downloads. A wrong choice lets visitors fake their address.', 'forms-notifier-for-elementor' ),
+						'options' => [
+							[
+								'value' => '',
+								'label' => __( 'Address of the connection (no proxy)', 'forms-notifier-for-elementor' ),
+							],
+							[
+								'value' => 'cf-connecting-ip',
+								'label' => 'CF-Connecting-IP (Cloudflare)',
+							],
+							[
+								'value' => 'x-real-ip',
+								'label' => 'X-Real-IP',
+							],
+							[
+								'value' => 'x-forwarded-for',
+								'label' => 'X-Forwarded-For',
+							],
+						],
 					],
 				],
 			],

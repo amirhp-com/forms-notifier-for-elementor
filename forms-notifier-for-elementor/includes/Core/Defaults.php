@@ -156,6 +156,7 @@ final class Defaults {
 			'advanced'    => [
 				'http_timeout'        => 20,
 				'allow_private_hosts' => false,
+				'proxy_header'        => '',
 				'debug_log'           => false,
 			],
 		];

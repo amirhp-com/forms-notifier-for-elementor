@@ -99,6 +99,26 @@ final class LimitsAndLocksTest extends TestCase {
 		Lock::release( 'state' );
 	}
 
+	public function test_ip_behind_a_trusted_proxy(): void {
+		$_SERVER['REMOTE_ADDR']           = '10.0.0.2';
+		$_SERVER['HTTP_X_FORWARDED_FOR']  = '1.2.3.4, 198.51.100.7, 10.0.0.9';
+		$_SERVER['HTTP_CF_CONNECTING_IP'] = '198.51.100.8';
+		try {
+			$this->assertSame( '10.0.0.2', Request::ip(), 'headers count only when the site says so' );
+			Settings::set( 'advanced.proxy_header', 'x-forwarded-for' );
+			$this->assertSame( '198.51.100.7', Request::ip(), 'right-most public address' );
+			Settings::set( 'advanced.proxy_header', 'cf-connecting-ip' );
+			$this->assertSame( '198.51.100.8', Request::ip() );
+			$_SERVER['HTTP_CF_CONNECTING_IP'] = 'junk';
+			$this->assertSame( '10.0.0.2', Request::ip() );
+			$this->assertSame( '10.0.0.9', Request::from_header( 'evil, 10.0.0.9' ) );
+			$this->assertSame( '', Request::from_header( '' ) );
+			$this->assertSame( 'select', \AmirhpCom\FormsNotifier\Core\Schema::field( 'advanced.proxy_header' )['type'] );
+		} finally {
+			unset( $_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['HTTP_CF_CONNECTING_IP'] );
+		}
+	}
+
 	public function test_request(): void {
 		$_SERVER['REMOTE_ADDR'] = '203.0.113.77';
 		$this->assertSame( '203.0.113.77', Request::ip() );
