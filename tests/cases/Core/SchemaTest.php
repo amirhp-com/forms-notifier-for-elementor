@@ -164,7 +164,9 @@ final class SchemaTest extends TestCase {
 		$this->assertSame( true, $this->clean( [ 'type' => 'toggle' ], '1' ) );
 		$this->assertSame( false, $this->clean( [ 'type' => 'toggle' ], 'off' ) );
 		$this->assertSame( 'p<ss w0rd', $this->clean( [ 'type' => 'secret' ], "  p<ss w0rd\x00 " ) );
-		$this->assertSame( 'ab', $this->clean( [ 'type' => 'secret' ], 'a<b onclick="x">b' ) );
+		$this->assertSame( 'a<b onclick="x">b', $this->clean( [ 'type' => 'secret' ], 'a<b onclick="x">b' ) );
+		$this->assertSame( 'Pa<ss>w0rd', $this->clean( [ 'type' => 'secret' ], 'Pa<ss>w0rd' ) );
+		$this->assertSame( 'a<b>c', $this->clean( [ 'type' => 'secret' ], "a<b>c\x07" ) );
 		$this->assertSame( '{"a":"<b>"}', $this->clean( [ 'type' => 'code' ], '{"a":"<b>"}' ) );
 		$this->clean( [ 'type' => 'code' ], str_repeat( 'x', 102401 ), $error );
 		$this->assertNotSame( '', $error );

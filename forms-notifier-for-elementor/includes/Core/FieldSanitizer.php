@@ -241,7 +241,7 @@ final class FieldSanitizer {
 	}
 
 	/**
-	 * Secret: trimmed, no tags, no control characters.
+	 * Secret: trimmed, no control characters. Nothing else changes: a secret is never printed, and "a<b>c" may be a password.
 	 *
 	 * @param mixed $value Untrusted value.
 	 */
@@ -250,9 +250,7 @@ final class FieldSanitizer {
 			return '';
 		}
 		$value = wp_check_invalid_utf8( (string) $value );
-		$value = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value );
-		// Complete tags only: a lone "<" may be part of a password.
-		return trim( preg_replace( '~</?[a-zA-Z!][^>]*>~', '', $value ) );
+		return trim( (string) preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value ) );
 	}
 
 	/**

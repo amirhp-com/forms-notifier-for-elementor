@@ -68,6 +68,9 @@ final class Plugin {
 		add_action( 'wp_uninitialize_site', [ Installer::class, 'on_delete_site' ], 5 );
 
 		if ( is_admin() ) {
+			if ( ! Core\Text::has_mbstring() ) {
+				add_action( 'admin_notices', [ Health\SiteHealth::class, 'mbstring_notice' ] );
+			}
 			Admin\Admin::register();
 			Admin\Notices::register();
 		}

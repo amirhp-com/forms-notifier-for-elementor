@@ -17,6 +17,7 @@ use AmirhpCom\FormsNotifier\Core\DbSchema;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Registry;
 use AmirhpCom\FormsNotifier\Core\Settings;
+use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Core\Urls;
 use AmirhpCom\FormsNotifier\Delivery\Queue;
 use AmirhpCom\FormsNotifier\Delivery\Ticker;
@@ -233,6 +234,7 @@ final class SiteHealth implements ModuleInterface {
 			'https'      => 'HTTPS',
 			'permalinks' => __( 'Permalinks', 'forms-notifier-for-elementor' ),
 			'database'   => __( 'Database tables', 'forms-notifier-for-elementor' ),
+			'extensions' => __( 'PHP extensions', 'forms-notifier-for-elementor' ),
 		];
 	}
 
@@ -310,8 +312,37 @@ final class SiteHealth implements ModuleInterface {
 				return DbSchema::exists() && (string) get_option( 'fnfe_db_version', '' ) === FNFE_DB_VERSION
 					? [ 'good', __( 'All tables exist and are up to date.', 'forms-notifier-for-elementor' ), '' ]
 					: [ 'critical', __( 'Tables are missing or outdated. Deactivate and activate the plugin again.', 'forms-notifier-for-elementor' ), 'tools' ];
+
+			case 'extensions':
+				return self::extensions( Text::has_mbstring() );
 		}
 		return [ 'good', '', '' ];
+	}
+
+	/**
+	 * The mbstring extension: without it everything works, but only Latin letters change case.
+	 *
+	 * @param bool $mbstring The extension is there.
+	 * @return array{0:string,1:string,2:string}
+	 */
+	public static function extensions( bool $mbstring ): array {
+		return $mbstring
+			? [ 'good', __( 'The PHP extensions the plugin uses are installed.', 'forms-notifier-for-elementor' ), '' ]
+			: [ 'warning', self::mbstring_text(), '' ];
+	}
+
+	/** Notice on the plugins screen while mbstring is missing. */
+	public static function mbstring_notice(): void {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || ! in_array( $screen->id, [ 'plugins', 'plugins-network', 'site-health' ], true ) || ! Capabilities::can( Capabilities::MANAGE ) ) {
+			return;
+		}
+		echo '<div class="notice notice-warning"><p>' . esc_html( self::mbstring_text() ) . '</p></div>';
+	}
+
+	/** Text about the missing extension. */
+	private static function mbstring_text(): string {
+		return __( 'Forms Notifier for Elementor: the PHP extension mbstring is missing. Submissions are still saved and sent, but upper and lower case work for Latin letters only and some texts are shortened less precisely. Ask your host to enable mbstring.', 'forms-notifier-for-elementor' );
 	}
 
 	/** At least one channel can send; enabled ones have no problems. */
