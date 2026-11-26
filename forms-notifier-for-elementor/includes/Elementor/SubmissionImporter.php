@@ -244,7 +244,7 @@ final class SubmissionImporter {
 	 * @param string $value    URLs joined with " , ".
 	 */
 	private static function files( string $field_id, string $value ): array {
-		$out = [];
+		$out    = [];
 		$folder = PathGuard::forms_dir();
 		foreach ( $folder === '' ? [] : preg_split( '/\s+,\s+|,\s*(?=https?:)/', $value ) as $url ) {
 			$path = PathGuard::url_to_path( trim( $url ), $folder );

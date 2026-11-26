@@ -106,7 +106,8 @@ final class Text {
 			return $s;
 		}
 		// Never further back than one character: the text may not be UTF-8 at all.
-		for ( $end = $limit; $end > max( 0, $limit - 4 ); $end-- ) {
+		$stop = max( 0, $limit - 4 );
+		for ( $end = $limit; $end > $stop; $end-- ) {
 			if ( ( ord( $s[ $end ] ) & 0xC0 ) !== 0x80 ) {
 				return substr( $s, 0, $end );
 			}
