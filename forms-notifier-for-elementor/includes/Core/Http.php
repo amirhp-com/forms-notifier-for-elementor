@@ -18,8 +18,8 @@ final class Http {
 	 * @param string $method HTTP method.
 	 * @param string $url    URL.
 	 * @param array  $args   wp_remote_request args plus: 'json' => array (encodes body + content type),
-	 *                       'timeout' (default advanced.http_timeout), 'safe' => bool (default true: wp_safe_remote_request
-	 *                       unless advanced.allow_private_hosts), 'scrub' => string[] secrets to remove from errors.
+	 *                       'timeout' (default advanced.http_timeout), 'safe' => bool (default true: wp_safe_remote_request,
+	 *                       with any port of a public host, unless advanced.allow_private_hosts), 'scrub' => string[] secrets to remove from errors.
 	 * @return array{ok:bool,code:int,body:string,json:mixed,headers:array<string,string>,error:string}
 	 */
 	public static function request( string $method, string $url, array $args = [] ): array {
@@ -46,12 +46,24 @@ final class Http {
 			return self::response( 0, '', [], __( 'The address is not a valid URL.', 'forms-notifier-for-elementor' ) );
 		}
 
-		$raw = $safe && ! Settings::bool( 'advanced.allow_private_hosts' )
-			? wp_safe_remote_request( $url, $args )
-			: wp_remote_request( $url, $args );
+		$reason = '';
+		if ( $safe && ! Settings::bool( 'advanced.allow_private_hosts' ) ) {
+			$guard = new PortGuard( $url );
+			try {
+				if ( $guard->is_needed() ) {
+					$guard->start();
+				}
+				$raw = wp_safe_remote_request( $url, $args );
+			} finally {
+				$guard->stop();
+			}
+			$reason = $guard->reason();
+		} else {
+			$raw = wp_remote_request( $url, $args );
+		}
 
 		if ( is_wp_error( $raw ) ) {
-			return self::response( 0, '', [], self::scrub( $raw->get_error_message(), $scrub ) );
+			return self::response( 0, '', [], $reason === '' ? self::scrub( $raw->get_error_message(), $scrub ) : $reason );
 		}
 
 		$code  = (int) wp_remote_retrieve_response_code( $raw );

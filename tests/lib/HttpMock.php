@@ -26,6 +26,12 @@ final class HttpMock {
 	/** @var string */
 	private static $unexpected = '';
 
+	/** @var bool */
+	private static $validating = false;
+
+	/** @var string[] */
+	private static $sent = [];
+
 	/** Hook into WordPress. */
 	public static function install(): void {
 		add_filter( 'pre_http_request', [ self::class, 'intercept' ], 1, 3 );
@@ -101,8 +107,34 @@ final class HttpMock {
 		}
 	}
 
+	/**
+	 * Let requests run through the real URL checks of WordPress and stop them right before the connection: the call
+	 * ends with the error "stopped" when the checks passed.
+	 */
+	public static function validate_only(): void {
+		self::$validating = true;
+		add_action( 'requests-requests.before_request', [ self::class, 'stop' ], PHP_INT_MAX );
+	}
+
+	/** Addresses that passed the checks under validate_only(). */
+	public static function passed(): array {
+		return self::$sent;
+	}
+
+	/** Action requests-requests.before_request. */
+	public static function stop( $url ): void {
+		self::$sent[] = (string) $url;
+		throw new \WpOrg\Requests\Exception( 'stopped', 'fnfe.test' );
+	}
+
 	/** Forget expectations and requests. */
 	public static function reset(): void {
+		self::$validating = false;
+		self::$sent       = [];
+		if ( function_exists( 'remove_action' ) ) {
+			remove_action( 'requests-requests.before_request', [ self::class, 'stop' ], PHP_INT_MAX );
+		}
+
 		self::$expectations = [];
 		self::$requests     = [];
 		self::$unexpected   = '';
@@ -121,6 +153,9 @@ final class HttpMock {
 		$request = self::record( $method, (string) $url, (array) $args );
 
 		self::$requests[] = $request;
+		if ( self::$validating ) {
+			return false;
+		}
 
 		foreach ( self::$expectations as $i => $expectation ) {
 			if ( ! $expectation['responses'] || ( $expectation['method'] !== '*' && $expectation['method'] !== $method ) || ! preg_match( $expectation['pattern'], (string) $url ) ) {

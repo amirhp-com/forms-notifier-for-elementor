@@ -9,6 +9,7 @@ namespace AmirhpCom\FormsNotifier\Tests\Core;
 
 use AmirhpCom\FormsNotifier\Channels\AbstractChannel;
 use AmirhpCom\FormsNotifier\Core\Http;
+use AmirhpCom\FormsNotifier\Core\PortGuard;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Tests\Db;
 use AmirhpCom\FormsNotifier\Tests\Fixtures;
@@ -150,5 +151,95 @@ final class HttpTest extends TestCase {
 		}
 		$this->assertSame( 9, $map( 429, '', [ 'retry-after' => '9' ] )->retry_after );
 		$this->assertSame( 'note', AbstractChannel::map_http( 'p', [ 'ok' => true, 'code' => 200, 'body' => 'x' ], 'note' )->response );
+	}
+	/* Ports. These run through wp_http_validate_url() and stop before the connection. */
+
+	public function test_custom_ports_of_public_hosts(): void {
+		HttpMock::validate_only();
+		$before = [ count( $GLOBALS['wp_filter']['http_allowed_safe_ports']->callbacks ?? [] ), count( $GLOBALS['wp_filter']['http_api_curl']->callbacks ?? [] ) ];
+		foreach ( [ 'https://93.184.216.34:5678/webhook/x', 'http://93.184.216.34:3000/', 'https://93.184.216.34:8065/hooks', 'https://93.184.216.34:8080/', 'https://93.184.216.34/' ] as $url ) {
+			$this->assertSame( 'stopped', Http::post( $url )['error'], $url );
+		}
+		$this->assertCount( 5, HttpMock::passed() );
+		$after = [ count( $GLOBALS['wp_filter']['http_allowed_safe_ports']->callbacks ?? [] ), count( $GLOBALS['wp_filter']['http_api_curl']->callbacks ?? [] ) ];
+		$this->assertSame( $before, $after, 'closed again afterwards' );
+		$this->assertFalse( wp_http_validate_url( 'https://93.184.216.34:5678/webhook/x' ) );
+	}
+
+	public function test_custom_ports_of_private_hosts_stay_closed(): void {
+		HttpMock::validate_only();
+		foreach ( [ '127.0.0.1', '10.0.0.5', '192.168.1.9', '172.20.0.1', '169.254.169.254', '100.64.0.1', '0.0.0.0', '224.0.0.1', '255.255.255.255', '198.18.0.1', 'localhost', '[::1]', '127.1', '2130706433' ] as $host ) {
+			$r = Http::post( "http://$host:5678/x" );
+			$this->assertFalse( $r['ok'] );
+			$this->assertNotSame( 'stopped', $r['error'], $host );
+		}
+		foreach ( [ 'http://93.184.216.34:22/', 'http://93.184.216.34:25/', 'http://user:pw@93.184.216.34:5678/', 'http://93.184.216.34:99999/' ] as $url ) {
+			$this->assertNotSame( 'stopped', Http::post( $url )['error'], $url );
+		}
+		$this->assertSame( [], HttpMock::passed() );
+	}
+
+	public function test_own_host_is_checked_too(): void {
+		HttpMock::validate_only();
+		$this->filter( 'pre_option_home', static function () { return 'http://localhost'; } );
+		$this->assertNotSame( 'stopped', Http::get( 'http://localhost:9200/' )['error'] );
+		$this->assertSame( __( 'The address leads to a private network. Allow addresses on private networks under Advanced if this is intended.', 'forms-notifier-for-elementor' ), Http::get( 'http://localhost:9200/' )['error'] );
+	}
+
+	public function test_allowed_hosts_keep_working(): void {
+		HttpMock::validate_only();
+		$this->filter( 'http_request_host_is_external', static function ( $ok, $host ) { return $host === '10.0.0.5' ? true : $ok; }, 20, 2 );
+		$this->assertSame( 'stopped', Http::get( 'http://10.0.0.5:5678/' )['error'] );
+		$this->assertNotSame( 'stopped', Http::get( 'http://10.0.0.6:5678/' )['error'] );
+		Settings::set( 'advanced.allow_private_hosts', true );
+		$this->assertSame( 'stopped', Http::get( 'http://10.0.0.6:5678/' )['error'] );
+	}
+
+	private function guard( string $url, $addresses ): PortGuard {
+		return new PortGuard( $url, static function () use ( $addresses ) { return $addresses; } );
+	}
+
+	public function test_names_need_public_addresses_only(): void {
+		$url = 'https://n8n.example.com:5678/x';
+		$this->assertSame( [ 80, 5678 ], $this->guard( $url, [ '93.184.216.34' ] )->allow( [ 80 ], 'n8n.example.com', $url ) );
+		foreach ( [ [ '93.184.216.34', '127.0.0.1' ], [ '10.1.1.1' ], [], false, [ '::1' ] ] as $addresses ) {
+			$guard = $this->guard( $url, $addresses );
+			$this->assertSame( [ 80 ], $guard->allow( [ 80 ], 'n8n.example.com', $url ) );
+			$this->assertNotSame( '', $guard->reason() );
+		}
+		// The port is open for this host only: a redirect cannot use it elsewhere.
+		$guard = $this->guard( $url, [ '93.184.216.34' ] );
+		$this->assertSame( [ 80 ], $guard->allow( [ 80 ], 'other.example.com', 'https://other.example.com:5678/' ) );
+		$this->assertSame( [ 80 ], $guard->allow( [ 80 ], 'n8n.example.com', 'https://n8n.example.com:6379/' ) );
+		// A spelling cURL would look up under another name than the checked one.
+		$url = 'https://n8n.example.com.:5678/x';
+		$this->assertSame( [ 80 ], $this->guard( $url, [ '93.184.216.34' ] )->allow( [ 80 ], 'n8n.example.com', $url ) );
+	}
+
+	/** cURL connects to the checked address, whatever the name resolves to by then. */
+	public function test_the_connection_is_pinned(): void {
+		$url   = 'http://pinned.example.com:5678/';
+		$guard = $this->guard( $url, [ '192.0.2.0' ] );
+		$guard->pin( curl_init( $url ) ); // Nothing was checked: nothing is pinned.
+
+		$property = new \ReflectionProperty( PortGuard::class, 'addresses' );
+		if ( PHP_VERSION_ID < 80100 ) {
+			$property->setAccessible( true );
+		}
+		$property->setValue( $guard, [ '127.0.0.1' ] );
+		$server = stream_socket_server( 'tcp://127.0.0.1:0' );
+		$port   = (int) substr( strrchr( stream_socket_get_name( $server, false ), ':' ), 1 );
+		$other  = new \ReflectionProperty( PortGuard::class, 'port' );
+		if ( PHP_VERSION_ID < 80100 ) {
+			$other->setAccessible( true );
+		}
+		$other->setValue( $guard, $port );
+		$handle = curl_init( "http://pinned.example.com:$port/" );
+		$guard->pin( $handle );
+		curl_setopt( $handle, CURLOPT_CONNECT_ONLY, true );
+		curl_setopt( $handle, CURLOPT_TIMEOUT, 3 );
+		$this->assertTrue( curl_exec( $handle ), curl_error( $handle ) );
+		$this->assertSame( '127.0.0.1', curl_getinfo( $handle, CURLINFO_PRIMARY_IP ) );
+		fclose( $server );
 	}
 }
