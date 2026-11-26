@@ -79,6 +79,15 @@ final class WhatsAppChannel extends AbstractChannel {
 				'fields'   => [
 					$this->field( 'provider', 'select', __( 'Gateway', 'forms-notifier-for-elementor' ), $providers ),
 					$this->field( 'fallback_provider', 'select', __( 'Backup gateway', 'forms-notifier-for-elementor' ), [ 'desc' => __( 'Used when the gateway above fails.', 'forms-notifier-for-elementor' ) ] + $providers ),
+					$this->field(
+						'retry_timeout',
+						'toggle',
+						__( 'Retry after a timeout (may send twice)', 'forms-notifier-for-elementor' ),
+						[
+							'default' => true,
+							'desc'    => __( 'When a gateway takes the request but does not answer in time, the message is tried again later or through a backup gateway. If the gateway did send it, the receiver gets it twice. Switch this off to mark such a message as failed instead; you can still retry it from the log.', 'forms-notifier-for-elementor' ),
+						]
+					),
 				],
 			],
 			ProviderFields::section( 'whatsapp', __( 'Gateway accounts', 'forms-notifier-for-elementor' ) ),
@@ -107,7 +116,7 @@ final class WhatsAppChannel extends AbstractChannel {
 								'channel' => 'whatsapp',
 								'id'      => 'test_whatsapp',
 								'label'   => __( 'Send test message', 'forms-notifier-for-elementor' ),
-								'send'    => [ 'test_to', 'test_text', 'receivers', 'provider', 'fallback_provider' ],
+								'send'    => [ 'test_to', 'test_text', 'receivers', 'provider', 'fallback_provider', 'retry_timeout' ],
 							],
 						]
 					),

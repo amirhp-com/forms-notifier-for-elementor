@@ -12,6 +12,7 @@ use AmirhpCom\FormsNotifier\Contracts\SmsProviderInterface;
 use AmirhpCom\FormsNotifier\Contracts\WhatsAppProviderInterface;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Registry;
+use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 
@@ -37,7 +38,7 @@ final class ProviderChain {
 				continue;
 			}
 			$own     = self::for_provider( $provider, $message, $i === 0 );
-			$result  = self::attempt( $provider, $to, $own );
+			$result  = self::after_timeout( $channel, self::attempt( $provider, $to, $own ) );
 			$tried[] = [
 				'provider' => $id,
 				'ok'       => $result->ok,
@@ -80,6 +81,43 @@ final class ProviderChain {
 		$result->retry_after = $retry;
 		$result->with_meta( [ 'chain' => $tried ] );
 		return $ambiguous ? $result->with_meta( [ 'ambiguous' => true ] ) : $result;
+	}
+
+	/**
+	 * The request was sent but no answer came in time: the gateway may have taken the message. By default this is
+	 * retried like any other temporary error. With "Retry after a timeout" off it becomes final and unclear, so neither
+	 * a retry nor a backup gateway can send the message a second time.
+	 *
+	 * @param string     $channel Channel id.
+	 * @param SendResult $result  Result of one gateway.
+	 */
+	private static function after_timeout( string $channel, SendResult $result ): SendResult {
+		if ( $result->ok || $result->permanent || ! self::is_unclear_timeout( $result ) ) {
+			return $result;
+		}
+		$result->with_meta( [ 'timeout' => true ] );
+		if ( Settings::bool( 'channels.' . $channel . '.retry_timeout', true ) ) {
+			return $result;
+		}
+		$result->permanent   = true;
+		$result->retry_after = 0;
+		$result->error       = trim( $result->error . ' ' . __( 'Not sent again: the gateway may have received the message.', 'forms-notifier-for-elementor' ) );
+		return $result->with_meta( [ 'ambiguous' => true ] );
+	}
+
+	/**
+	 * A transport error that timed out while waiting for the answer. Timeouts while resolving the name or opening the
+	 * connection happen before anything was sent and are not unclear.
+	 *
+	 * @param SendResult $result Failed result.
+	 */
+	public static function is_unclear_timeout( SendResult $result ): bool {
+		if ( $result->http_code !== 0 ) {
+			return false;
+		}
+		$error = $result->error;
+		return preg_match( '/timed?[ -]?out/i', $error ) === 1
+			&& preg_match( '/\b(connection|connect|resolving|resolve)\b[^.:;]{0,12}\btime(d)?[ -]?out/i', $error ) !== 1;
 	}
 
 	/**

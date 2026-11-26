@@ -55,7 +55,7 @@ Tokens and passwords are stored encrypted and never shown again; constants in `w
 
 **If sending fails** on each channel names a backup channel that is used once after the last attempt failed.
 
-**SMS**: choose a default gateway, backup gateways, and routes by country (the first route that contains the country of the number wins). Numbers are stored as `+989120000000`; national numbers are completed with the default country (Settings, General) or a country field of the form. Gateways with an unconfirmed request format show a notice: send a test first. "Sent" means the gateway accepted the message.
+**SMS**: choose a default gateway, backup gateways, and routes by country (the first route that contains the country of the number wins). Numbers are stored as `+989120000000`; national numbers are completed with the default country (Settings, General) or a country field of the form. Gateways with an unconfirmed request format show a notice: send a test first. "Sent" means the gateway accepted the message. **Retry after a timeout (may send twice)** (SMS and WhatsApp, on by default): when a gateway took the request but did not answer in time, the message is tried again later or through a backup gateway; switch it off if a second copy is worse than a missing one, and retry such messages from the log yourself.
 
 **WhatsApp**: the Cloud API of Meta is the official way; free text reaches a person only within 24 hours after they wrote to you, otherwise use a template. UltraMsg, Green API, WAHA, Evolution API, Wassenger and whapi.cloud drive a normal WhatsApp account, which WhatsApp's terms do not allow for automated messages; the account may be blocked.
 

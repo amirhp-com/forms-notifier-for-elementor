@@ -22,7 +22,7 @@ Messengers reject links to local or private addresses, and the Mini App needs HT
 Another notification (for example Elementor's own email action) may send it too. Repeated identical submissions within 30 seconds are ignored (Settings, General).
 
 **Are SMS messages billed twice when a gateway fails?**
-A backup gateway is tried only when the first one clearly refused or could not be reached. An answer the plugin does not understand is treated as final.
+A backup gateway is tried only when the first one clearly refused or could not be reached. An answer the plugin does not understand is treated as final. A gateway that did not answer in time is retried, unless you switch off **Retry after a timeout** on the SMS or WhatsApp screen.
 
 **Which SMS gateways are not fully confirmed?**
 FarazSMS (normal text, balance), ParsGreen, the legacy IPPanel/FarazSMS API, ClickSend, NetGSM, and for WhatsApp UltraMsg, Evolution API and whapi.cloud. Their settings show a notice; send a test first.

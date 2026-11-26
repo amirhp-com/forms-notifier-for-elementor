@@ -485,6 +485,28 @@ final class WhatsAppTest extends ProviderTestCase {
 		$this->assertContains( 'only', HttpMock::last()['json']['text']['body'] );
 	}
 
+	public function test_a_timeout_is_retried_unless_switched_off(): void {
+		$channel = Registry::channel( 'whatsapp' );
+		$timeout = new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out after 20001 milliseconds with 0 bytes received' );
+		$this->assertTrue( Schema::field( 'channels.whatsapp.retry_timeout' )['default'] );
+		$values  = [ 'enabled' => true, 'provider' => 'meta', 'fallback_provider' => 'wassenger', 'providers.meta.phone_number_id' => '1' ];
+		$secrets = [ 'providers.meta.token' => self::KEY, 'providers.wassenger.api_key' => self::KEY ];
+
+		$this->choose( $values, $secrets );
+		HttpMock::expect( 'POST', '~facebook~', $timeout );
+		HttpMock::expect( 'POST', '~wassenger~', [ 'id' => 'W' ], 201 );
+		$this->assertSame( 'wassenger', $channel->send( $this->message( 'hi' ) )->provider );
+
+		HttpMock::reset();
+		$this->choose( $values + [ 'retry_timeout' => false ], $secrets );
+		HttpMock::expect( 'POST', '~facebook~', $timeout );
+		$result = $channel->send( $this->message( 'hi' ) );
+		$this->assertFalse( $result->ok );
+		$this->assertTrue( $result->permanent );
+		$this->assertTrue( $result->meta['ambiguous'] );
+		$this->assertCount( 0, HttpMock::requests( '~wassenger~' ) );
+	}
+
 	public function test_readiness(): void {
 		$channel = Registry::channel( 'whatsapp' );
 		$this->choose( [ 'enabled' => true, 'provider' => 'nope' ] );

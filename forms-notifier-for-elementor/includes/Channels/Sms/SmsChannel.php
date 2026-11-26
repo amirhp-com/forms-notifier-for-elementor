@@ -109,6 +109,15 @@ final class SmsChannel extends AbstractChannel {
 							],
 						]
 					),
+					$this->field(
+						'retry_timeout',
+						'toggle',
+						__( 'Retry after a timeout (may send twice)', 'forms-notifier-for-elementor' ),
+						[
+							'default' => true,
+							'desc'    => __( 'When a gateway takes the request but does not answer in time, the message is tried again later or through a backup gateway. If the gateway did send it, the receiver gets it twice. Switch this off to mark such a message as failed instead; you can still retry it from the log.', 'forms-notifier-for-elementor' ),
+						]
+					),
 				],
 			],
 			ProviderFields::section( 'sms', __( 'Gateway accounts', 'forms-notifier-for-elementor' ) ),
@@ -160,7 +169,7 @@ final class SmsChannel extends AbstractChannel {
 								'channel' => 'sms',
 								'id'      => 'test_sms',
 								'label'   => __( 'Send test SMS', 'forms-notifier-for-elementor' ),
-								'send'    => [ 'test_to', 'test_text', 'receivers', 'default_provider', 'default_fallbacks', 'routes', 'max_parts', 'fa_digits' ],
+								'send'    => [ 'test_to', 'test_text', 'receivers', 'default_provider', 'default_fallbacks', 'routes', 'retry_timeout', 'max_parts', 'fa_digits' ],
 							],
 						]
 					),

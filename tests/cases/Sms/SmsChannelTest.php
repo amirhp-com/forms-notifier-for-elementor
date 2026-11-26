@@ -430,4 +430,42 @@ final class SmsChannelTest extends ProviderTestCase {
 		$this->channel()->send( $message );
 		$this->assertSame( 1, substr_count( $this->p['pa']->sent[0][1]->plain, 'fnfe/v1/file/7' ) );
 	}
+
+	public function test_a_timeout_is_retried_unless_switched_off(): void {
+		$this->provider( 'farazsms', [ 'api_key' => 'fake-key', 'sender' => '5000' ] );
+		$timeout = new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out after 20001 milliseconds with 0 bytes received' );
+		$this->assertTrue( Schema::field( 'channels.sms.retry_timeout' )['default'], 'on by default' );
+		$this->assertTrue( Settings::bool( 'channels.sms.retry_timeout' ) );
+
+		// Default: temporary, and the backup gateway is tried.
+		Settings::overlay( [ 'channels.sms.default_provider' => 'farazsms', 'channels.sms.default_fallbacks' => [ 'pb' ], 'general.default_country' => 'IR' ] );
+		HttpMock::expect( 'POST', '~iranpayamak~', $timeout );
+		$this->assertTrue( $this->channel()->send( $this->message() )->ok );
+		$this->assertCount( 1, $this->p['pb']->sent );
+
+		// Without a backup it stays temporary, so the queue retries it.
+		Settings::overlay( [ 'channels.sms.default_provider' => 'farazsms', 'channels.sms.default_fallbacks' => [], 'general.default_country' => 'IR' ] );
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~iranpayamak~', $timeout );
+		$result = $this->channel()->send( $this->message() );
+		$this->assertFalse( $result->ok );
+		$this->assertFalse( $result->permanent );
+		$this->assertTrue( $result->meta['timeout'] );
+
+		// Off: final and unclear, no backup.
+		Settings::overlay( [ 'channels.sms.default_provider' => 'farazsms', 'channels.sms.default_fallbacks' => [ 'pb' ], 'channels.sms.retry_timeout' => false, 'general.default_country' => 'IR' ] );
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~iranpayamak~', $timeout );
+		$result = $this->channel()->send( $this->message() );
+		$this->assertFalse( $result->ok );
+		$this->assertTrue( $result->permanent );
+		$this->assertTrue( $result->meta['ambiguous'] );
+		$this->assertCount( 1, $this->p['pb']->sent, 'the backup was not used again' );
+
+		// A connection that never opened sent nothing: it goes on to the backup even when the setting is off.
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~iranpayamak~', new \WP_Error( 'http_request_failed', 'cURL error 28: Connection timed out after 10001 milliseconds' ) );
+		$this->assertTrue( $this->channel()->send( $this->message() )->ok );
+		$this->assertCount( 2, $this->p['pb']->sent );
+	}
 }
