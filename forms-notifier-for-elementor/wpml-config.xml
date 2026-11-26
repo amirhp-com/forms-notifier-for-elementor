@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Forms Notifier for Elementor registers its texts itself, by language-independent names, under the domain
+  "Forms Notifier for Elementor" (WPML, String Translation). They are registered when settings or a form are saved and by
+  Tools, "Register texts for translation" or "wp fnfe strings sync".
+
+  The option fnfe_settings is NOT declared under admin-texts on purpose. WPML would then replace the default texts inside
+  the option with their translation in the language of the visitor, and
+   1. a message for a receiver with another language would get the wrong text,
+   2. saving any setting in that language would store the translation as the default text.
+
+  No elementor-widgets entry either: an entry for the widget "form" replaces the one of WPML, and labels, buttons and
+  messages of the form would not be translated any more.
+-->
+<wpml-config></wpml-config>
