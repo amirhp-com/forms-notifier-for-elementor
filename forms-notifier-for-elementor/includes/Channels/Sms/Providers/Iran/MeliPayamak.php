@@ -117,7 +117,8 @@ final class MeliPayamak extends AbstractIranProvider {
 			$names = $this->errors();
 			$error = $names[ $value ] ?? trim( $this->text_at( $r['json'], 'StrRetStatus' ) . ' (' . $value . ')' );
 		}
-		return $this->outcome( $r, $ok, $value, $error, $status === null ? null : $value !== '-6' );
+		// RetStatus 1 with a short number is a documented error code; with anything else it is not understood.
+		return $this->outcome( $r, $ok, $value, $error, $status === null ? null : $value !== '-6', $status !== null && ( (int) $status !== 1 || preg_match( '/^-?\d{1,5}$/', $value ) === 1 ) );
 	}
 
 	/** Documented pattern error codes. */

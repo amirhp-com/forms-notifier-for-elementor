@@ -395,4 +395,39 @@ final class SmsChannelTest extends ProviderTestCase {
 			}
 		}
 	}
+
+
+	// Review B, I7 and I1.
+
+	public function test_an_unclear_answer_is_never_sent_again_by_a_backup(): void {
+		$this->provider( 'farazsms', [ 'api_key' => 'fake-key', 'sender' => '5000' ] );
+		Settings::overlay( [ 'channels.sms.default_provider' => 'farazsms', 'channels.sms.default_fallbacks' => [ 'pb' ], 'general.default_country' => 'IR' ] );
+		HttpMock::expect( 'POST', '~iranpayamak~', [ 'state' => 'queued', 'info' => 'done' ] );
+		$result = $this->channel()->send( $this->message() );
+		$this->assertFalse( $result->ok );
+		$this->assertTrue( $result->permanent, 'no retry either' );
+		$this->assertTrue( $result->meta['ambiguous'] );
+		$this->assertCount( 0, $this->p['pb']->sent );
+
+		// A clear refusal still goes on to the backup.
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~iranpayamak~', [ 'status' => 'error', 'message' => 'no credit' ] );
+		$this->assertTrue( $this->channel()->send( $this->message() )->ok );
+		$this->assertCount( 1, $this->p['pb']->sent );
+
+		// So does an HTML page that names an error, but not one that does not.
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~iranpayamak~', '<html><body>Welcome</body></html>' );
+		$this->assertTrue( ! empty( $this->channel()->send( $this->message() )->meta['ambiguous'] ) );
+		$this->assertCount( 1, $this->p['pb']->sent );
+	}
+
+	public function test_a_signed_file_link_is_appended_once(): void {
+		$this->route( [ 'default_provider' => 'pa', 'append_links' => true ] );
+		$message        = $this->message( "Files: <https://site.example.com/wp-json/fnfe/v1/file/7?t=aaa&e=100>" );
+		$message->plain = str_replace( '<https://site.example.com/wp-json/fnfe/v1/file/7?t=aaa&e=100>', 'https://site.example.com/wp-json/fnfe/v1/file/7?t=aaa&e=100', $message->plain );
+		$message->links = [ [ 'name' => 'cv.pdf', 'url' => 'https://site.example.com/wp-json/fnfe/v1/file/7?t=bbb&e=101', 'size' => 1 ] ];
+		$this->channel()->send( $message );
+		$this->assertSame( 1, substr_count( $this->p['pa']->sent[0][1]->plain, 'fnfe/v1/file/7' ) );
+	}
 }

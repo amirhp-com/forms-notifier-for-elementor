@@ -526,4 +526,16 @@ final class WhatsAppTest extends ProviderTestCase {
 		$this->assertTrue( $out['ok'], $out['message'] );
 		$this->assertSame( [ 'name' => 'hello', 'language' => [ 'code' => 'en_US' ] ], HttpMock::last()['json']['template'] );
 	}
+
+
+	// Review B, I1: links signed a second later are the same file.
+
+	public function test_a_signed_link_of_another_second_is_not_repeated(): void {
+		$provider = $this->provider( 'wassenger', [ 'api_key' => self::KEY ] );
+		HttpMock::expect( 'POST', '~.~', [ 'id' => 'W' ], 201 );
+		$message        = $this->message( 'See https://site.example.com/wp-json/fnfe/v1/file/7?t=aaa&e=100' );
+		$message->links = [ [ 'name' => 'cv', 'url' => 'https://site.example.com/wp-json/fnfe/v1/file/7?t=bbb&e=101', 'size' => 1 ] ];
+		$provider->send( self::INTL, $message );
+		$this->assertSame( 'See https://site.example.com/wp-json/fnfe/v1/file/7?t=aaa&e=100', HttpMock::last()['json']['message'] );
+	}
 }

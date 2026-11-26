@@ -28,13 +28,24 @@ final class Digest {
 
 	/** Hourly hook fnfe_digest_tick. */
 	public static function tick(): void {
-		if ( ! self::is_due() || ! Lock::acquire( 'digest', 10 * MINUTE_IN_SECONDS ) ) {
+		if ( ! Settings::bool( 'digest.enabled' ) ) {
+			return;
+		}
+		$due = self::due();
+		if ( ! self::is_due() ) {
+			if ( State::get( 'digest_last', '' ) === '' ) {
+				// The first digest is the next one; from now on a moment that passes between two ticks is noticed.
+				State::set( 'digest_last', $due->format( 'Y-m-d' ) );
+			}
+			return;
+		}
+		if ( ! Lock::acquire( 'digest', 10 * MINUTE_IN_SECONDS ) ) {
 			return;
 		}
 		try {
 			// Marked first: a digest that fails half way must not be repeated every hour.
-			State::set( 'digest_last', Stats::now()->format( 'Y-m-d' ) );
-			$data = self::data();
+			State::set( 'digest_last', $due->format( 'Y-m-d' ) );
+			$data = self::data( $due );
 			if ( Settings::bool( 'digest.skip_empty', true ) && self::is_empty( $data ) ) {
 				return;
 			}
@@ -46,30 +57,41 @@ final class Digest {
 		}
 	}
 
-	/** Enabled, the time of the day has come, the weekday matches, not sent today. */
+	/** Enabled, and the latest moment of the schedule has no digest yet, however long ago it was. */
 	public static function is_due(): bool {
 		if ( ! Settings::bool( 'digest.enabled' ) ) {
 			return false;
 		}
-		$now = Stats::now();
-		if ( State::get( 'digest_last', '' ) === $now->format( 'Y-m-d' ) ) {
-			return false;
-		}
-		$time = Settings::str( 'digest.time', '09:00' );
-		if ( ! preg_match( '/^\d\d:\d\d$/', $time ) ) {
-			$time = '09:00';
-		}
-		if ( $now->format( 'H:i' ) < $time ) {
-			return false;
-		}
-		return Settings::str( 'digest.frequency', 'daily' ) !== 'weekly' || (int) $now->format( 'w' ) === abs( Settings::int( 'digest.weekday', 6 ) ) % 7;
+		$day  = self::due()->format( 'Y-m-d' );
+		$last = (string) State::get( 'digest_last', '' );
+		// Before the first digest there is nothing to catch up on, except the digest of today.
+		return $last === '' ? $day === Stats::now()->format( 'Y-m-d' ) : $last < $day;
 	}
 
-	/** Numbers of the period. Filter: fnfe_digest_data. */
-	public static function data(): array {
+	/** Day of the latest moment of the schedule that has passed, site time. */
+	private static function due(): \DateTimeImmutable {
+		$time = Settings::str( 'digest.time', '09:00' );
+		if ( ! preg_match( '/^([01]\d|2[0-3]):([0-5]\d)$/', $time ) ) {
+			$time = '09:00';
+		}
+		$now  = Stats::now();
+		$day  = $now->format( 'H:i' ) < $time ? Stats::today()->modify( '-1 day' ) : Stats::today();
+		$back = 0;
+		if ( Settings::str( 'digest.frequency', 'daily' ) === 'weekly' ) {
+			$back = ( (int) $day->format( 'w' ) - abs( Settings::int( 'digest.weekday', 6 ) ) % 7 + 7 ) % 7;
+		}
+		return $day->modify( "-$back days" );
+	}
+
+	/**
+	 * Numbers of the period. Filter: fnfe_digest_data.
+	 *
+	 * @param \DateTimeImmutable|null $day Day the digest belongs to (the period ends before it), null = today.
+	 */
+	public static function data( ?\DateTimeImmutable $day = null ): array {
 		$weekly = Settings::str( 'digest.frequency', 'daily' ) === 'weekly';
 		$days   = $weekly ? 7 : 1;
-		$to     = Stats::today();
+		$to     = $day ? $day->setTime( 0, 0 ) : Stats::today();
 		$from   = $to->modify( "-$days days" );
 		$before = $from->modify( "-$days days" );
 

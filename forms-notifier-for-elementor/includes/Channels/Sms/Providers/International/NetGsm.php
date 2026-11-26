@@ -77,6 +77,6 @@ final class NetGsm extends AbstractSmsProvider {
 		);
 		$code = $this->text_at( $r['json'], 'code' );
 		$id   = $this->text_at( $r['json'], 'jobid' );
-		return $this->outcome( $r, $code === '00' && $id !== '', $id, $code === '00' ? '' : trim( $code . ' ' . $this->text_at( $r['json'], 'description' ) ) );
+		return $this->outcome( $r, $code === '00' && $id !== '', $id, $code === '00' ? '' : trim( $code . ' ' . $this->text_at( $r['json'], 'description' ) ), null, $code !== '' && ! in_array( $code, [ '00', '01', '02' ], true ) );
 	}
 }

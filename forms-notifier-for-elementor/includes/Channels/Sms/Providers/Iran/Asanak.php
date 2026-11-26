@@ -102,6 +102,6 @@ final class Asanak extends AbstractIranProvider {
 	private function call( string $method, array $body ): SendResult {
 		$r      = $this->post_json( self::BASE . $method, $this->login() + $body );
 		$status = (int) $this->dig( $r['json'], 'meta.status' );
-		return $this->outcome( $r, $status === 200, $this->text_at( $r['json'], 'data.0' ), $status === 0 || $status === 200 ? '' : trim( $status . ' ' . $this->text_at( $r['json'], 'meta.message' ) ) );
+		return $this->outcome( $r, $status === 200, $this->text_at( $r['json'], 'data.0' ), $status === 0 || $status === 200 ? '' : trim( $status . ' ' . $this->text_at( $r['json'], 'meta.message' ) ), null, $status !== 0 && $status !== 200 );
 	}
 }

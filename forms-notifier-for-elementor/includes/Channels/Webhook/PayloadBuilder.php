@@ -38,7 +38,8 @@ final class PayloadBuilder {
 			$policy        = $delivery instanceof Delivery ? $delivery->attachment_policy : [];
 			$message->data = array_merge( self::from_submission( $s, $message, $policy ), $message->data );
 		}
-		// Receivers use it to drop repeated deliveries, so it is made once and kept for every attempt.
+		// Receivers use it to drop repeated deliveries. Messages of the queue take theirs from the row (delivery_id()), so
+		// it also survives a new rendering; this one serves messages without a row.
 		if ( empty( $message->data['delivery'] ) ) {
 			$message->data['delivery'] = Crypto::token( 16 );
 		}
@@ -225,17 +226,17 @@ final class PayloadBuilder {
 	}
 
 	/**
-	 * Id of a delivery: stable across attempts.
+	 * Id of a delivery: the same for every attempt of a queue row, also after the message was rendered again.
 	 *
 	 * @param Message $message Message.
 	 */
 	public static function delivery_id( Message $message ): string {
-		$id = $message->data['delivery'] ?? '';
-		if ( is_string( $id ) && preg_match( '/^[a-f0-9]{32}$/', $id ) ) {
-			return $id;
-		}
 		$seed = (int) ( $message->meta['message_id'] ?? 0 );
-		return $seed ? md5( home_url() . '|' . $seed ) : Crypto::token( 16 );
+		if ( $seed ) {
+			return md5( home_url() . '|' . $seed );
+		}
+		$id = $message->data['delivery'] ?? '';
+		return is_string( $id ) && preg_match( '/^[a-f0-9]{32}$/', $id ) ? $id : Crypto::token( 16 );
 	}
 
 	/**

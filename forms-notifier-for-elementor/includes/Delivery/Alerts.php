@@ -38,13 +38,14 @@ final class Alerts {
 	 * @param array      $message_row Row.
 	 * @param SendResult $result      Result.
 	 * @param bool       $final       No more attempts.
+	 * @param bool|null  $first       First failure of the row, null = by the number of attempts.
 	 */
-	public static function on_failure( array $message_row, SendResult $result, bool $final ): void {
+	public static function on_failure( array $message_row, SendResult $result, bool $final, ?bool $first = null ): void {
 		if ( self::$sending || ! Settings::bool( 'alerts.enabled' ) || in_array( $message_row['purpose'] ?? '', self::SILENT, true ) ) {
 			return;
 		}
-		$first = Settings::str( 'alerts.when', 'final' ) === 'first';
-		if ( $first ? (int) ( $message_row['attempts'] ?? 0 ) > 1 : ! $final ) {
+		$first = $first ?? (int) ( $message_row['attempts'] ?? 0 ) <= 1;
+		if ( ! ( Settings::str( 'alerts.when', 'final' ) === 'first' ? $first : $final ) ) {
 			return;
 		}
 		self::guarded(
@@ -209,17 +210,30 @@ final class Alerts {
 		if ( RateLimit::hit( 'alert_' . md5( $fingerprint ), 1, self::COALESCE ) && RateLimit::hit( 'alerts', $max, HOUR_IN_SECONDS ) ) {
 			return true;
 		}
-		State::set( 'alerts_suppressed', (int) State::get( 'alerts_suppressed', 0 ) + 1 );
+		State::update(
+			'alerts_suppressed',
+			static function ( $count ): int {
+				return (int) $count + 1;
+			},
+			0
+		);
 		return false;
 	}
 
 	/** Number of suppressed alerts since the last one; resets the counter. */
 	private static function take_suppressed(): int {
-		$count = (int) State::get( 'alerts_suppressed', 0 );
-		if ( $count ) {
-			State::delete( 'alerts_suppressed' );
+		$taken = 0;
+		if ( State::get( 'alerts_suppressed', 0 ) ) {
+			State::update(
+				'alerts_suppressed',
+				static function ( $count ) use ( &$taken ): int {
+					$taken = (int) $count;
+					return 0;
+				},
+				0
+			);
 		}
-		return $count;
+		return $taken;
 	}
 
 	/**

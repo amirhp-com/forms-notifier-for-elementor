@@ -222,7 +222,7 @@ final class Conditions {
 	 * @param string $text Text.
 	 */
 	private static function fold( string $text ): string {
-		return mb_strtolower( trim( Text::en_digits( $text ) ), 'UTF-8' );
+		return Text::lower( trim( Text::en_digits( $text ) ) );
 	}
 
 	/**

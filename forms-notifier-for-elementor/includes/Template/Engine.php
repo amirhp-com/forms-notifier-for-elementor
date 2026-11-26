@@ -60,11 +60,12 @@ final class Engine {
 	 * @param string|array $template  Template.
 	 * @param Context      $context   Context.
 	 * @param bool         $urlencode Encode every inserted value. A URL at the very start of the template is kept as a URL.
+	 * @param string       $name      Name the text is registered under for translation, '' = look it up.
 	 */
-	public static function render_inline( $template, Context $context, bool $urlencode = false ): string {
+	public static function render_inline( $template, Context $context, bool $urlencode = false, string $name = '' ): string {
 		try {
 			$context  = self::context( $context );
-			$source   = Markup::clean_text( self::source( $template, $context ) );
+			$source   = Markup::clean_text( self::source( $template, $context, $name ) );
 			$segments = self::segments( Parser::parse( $source )['nodes'], $context );
 			$out      = '';
 			foreach ( self::plain_segments( $segments ) as $segment ) {
@@ -213,10 +214,13 @@ final class Engine {
 	 *
 	 * @param string|array $template String or localized text.
 	 * @param Context      $context  Context.
+	 * @param string       $name     Name the text is registered under for translation, '' = look it up.
 	 */
-	public static function source( $template, Context $context ): string {
+	public static function source( $template, Context $context, string $name = '' ): string {
 		$base = is_array( $template ) ? ( $template['_'] ?? '' ) : $template;
-		$name = is_string( $base ) && $base !== '' ? Strings::find_name( $base, $context->submission->form_key ) : '';
+		if ( $name === '' ) {
+			$name = is_string( $base ) && $base !== '' ? Strings::find_name( $base, $context->submission->form_key ) : '';
+		}
 		return Settings::localize( $template, $context->lang, $name );
 	}
 

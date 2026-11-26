@@ -44,15 +44,17 @@ final class Extras {
 	 * @param array  $links [ [ name, url, size ] ].
 	 */
 	public static function missing_links( string $body, array $links ): array {
-		$out = [];
+		$out  = [];
+		$body = self::comparable( $body );
 		foreach ( $links as $link ) {
 			$url = is_array( $link ) ? (string) ( $link['url'] ?? '' ) : '';
 			if ( $url === '' ) {
 				continue;
 			}
-			$found = preg_match( '~fnfe(?:/|%2F)v1(?:/|%2F)file(?:/|%2F)(\d+)(?!\d)~i', $url, $m )
-				? preg_match( '~fnfe(?:/|%2F)v1(?:/|%2F)file(?:/|%2F)' . $m[1] . '(?!\d)~i', $body )
-				: strpos( $body, $url ) !== false || strpos( $body, str_replace( '&', '&amp;', $url ) ) !== false;
+			$url   = self::comparable( $url );
+			$found = preg_match( '~fnfe/v1/file/(\d+)(?!\d)~i', $url, $m )
+				? preg_match( '~fnfe/v1/file/' . $m[1] . '(?!\d)~i', $body )
+				: strpos( $body, $url ) !== false;
 			if ( ! $found ) {
 				$out[] = $link;
 			}
@@ -115,6 +117,15 @@ final class Extras {
 			}
 		}
 		return $max > 0 ? array_slice( $out, 0, $max ) : $out;
+	}
+
+	/**
+	 * Text in which an address reads the same in every format: formats encode some characters of a link.
+	 *
+	 * @param string $text Text.
+	 */
+	private static function comparable( string $text ): string {
+		return str_ireplace( [ '%2F', '%2A', '%5F', '%7E', '&amp;', '&#038;' ], [ '/', '*', '_', '~', '&', '&' ], $text );
 	}
 
 	/**

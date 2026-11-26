@@ -61,7 +61,9 @@ final class Queue {
 				[ 'next_attempt_gmt' => self::gmt( max( 0, $delay ) ) ]
 			)
 		);
-		if ( $id && $delay <= 0 ) {
+		if ( ! $id ) {
+			Logger::error( 'queue', 'A message could not be stored.', [ 'channel' => $m->channel ] );
+		} elseif ( $delay <= 0 ) {
 			self::$fresh[] = $id;
 		}
 		return $id;
@@ -156,7 +158,7 @@ final class Queue {
 			return false;
 		}
 		$patch = [];
-		if ( ! $row['payload'] ) {
+		if ( self::is_reduced( (array) $row['payload'] ) ) {
 			$message = self::rebuild( $row );
 			if ( ! $message ) {
 				return false;
@@ -300,6 +302,35 @@ final class Queue {
 	}
 
 	/**
+	 * What stays of a payload when contents are not kept: an address the log masks, so that a retry finds its receiver,
+	 * and the uuid of an unsaved submission, so that its messages find each other. Null when neither is needed.
+	 *
+	 * @param string $channel Channel id.
+	 * @param array  $payload Payload.
+	 */
+	public static function reduced( string $channel, array $payload ): ?array {
+		$out     = [];
+		$address = (string) ( $payload['recipient']['address'] ?? '' );
+		if ( self::shown_address( $channel, $address ) !== $address ) {
+			$out['recipient'] = array_intersect_key( $payload['recipient'], array_flip( [ 'channel', 'address', 'name', 'lang', 'role' ] ) );
+		}
+		$uuid = (string) ( $payload['meta']['uuid'] ?? '' );
+		if ( $uuid !== '' && empty( $payload['meta']['submission_id'] ) ) {
+			$out['meta'] = [ 'uuid' => $uuid ];
+		}
+		return $out ? $out : null;
+	}
+
+	/**
+	 * A payload without a message: it must be rendered again.
+	 *
+	 * @param array $payload Payload.
+	 */
+	public static function is_reduced( array $payload ): bool {
+		return ! array_key_exists( 'body', $payload );
+	}
+
+	/**
 	 * Message of a row without payload, rendered again from the stored submission; null when that is not possible.
 	 *
 	 * @param array $row Message row.
@@ -312,17 +343,23 @@ final class Queue {
 		if ( ! $s ) {
 			return null;
 		}
-		$form     = FormRepository::config( $s->form_id );
-		$delivery = null;
+		$form  = FormRepository::config( $s->form_id );
+		$known = (string) ( $row['payload']['recipient']['address'] ?? '' );
+		$found = [];
 		foreach ( Resolver::plan( $s, $form, [ (string) $row['channel'] ] ) as $planned ) {
-			if ( $planned->purpose === $row['purpose'] && self::shown_address( $planned->channel, $planned->recipient->address ) === $row['recipient'] ) {
-				$delivery = $planned;
-				break;
+			$address = $planned->recipient->address;
+			if ( $planned->purpose === $row['purpose'] && ( $known === '' ? self::shown_address( $planned->channel, $address ) === $row['recipient'] : $address === $known ) ) {
+				$found[] = $planned;
 			}
 		}
+		if ( count( $found ) > 1 ) {
+			// Masked addresses look the same: rather none than the wrong one.
+			return null;
+		}
+		$delivery = $found[0] ?? null;
 		if ( ! $delivery ) {
 			$channel = Registry::channel( (string) $row['channel'] );
-			$address = (string) $row['recipient'];
+			$address = $known === '' ? (string) $row['recipient'] : $known;
 			if ( $channel && $address !== Resolver::IMPLICIT && ! Settings::is_placeholder( $address ) ) {
 				$address = strpos( $address, '••' ) === false ? $channel->normalize_address( $address ) : '';
 			}

@@ -668,7 +668,8 @@ final class Tags {
 			$pieces = [ [ 'v', Markup::clean_text( $value ) ] ];
 			$files  = empty( $field['is_file'] ) ? [] : $context->submission->files_for( $id );
 			if ( $files ) {
-				$pieces = self::join( self::file_items( $files, $context, false ), ', ' );
+				// Names only: the links belong to {files} and {file_links}.
+				$pieces = [ [ 'v', Markup::clean_text( implode( ', ', self::names( $files ) ) ) ] ];
 			}
 			$rows[] = [ Markup::clean_text( self::label( $id, $context ) ), $pieces, $value ];
 			if ( $max > 0 && count( $rows ) >= $max ) {
@@ -755,6 +756,20 @@ final class Tags {
 	}
 
 	/**
+	 * Names of files.
+	 *
+	 * @param \AmirhpCom\FormsNotifier\Model\Attachment[] $files Files.
+	 * @return string[]
+	 */
+	private static function names( array $files ): array {
+		$names = [];
+		foreach ( $files as $file ) {
+			$names[] = $file->name;
+		}
+		return $names;
+	}
+
+	/**
 	 * Pieces per file: a link when the policy links files, the name otherwise.
 	 *
 	 * @param \AmirhpCom\FormsNotifier\Model\Attachment[] $files   Files.
@@ -801,8 +816,16 @@ final class Tags {
 			}
 		}
 		$mode = $policy['mode'] ?? 'off';
-		if ( $mode === 'off' || ( $mode === 'send' && ! $force ) ) {
+		if ( $mode === 'send' && ! $force ) {
+			// Only files that could not be uploaded have a link.
+			return (array) $context->links;
+		}
+		if ( $mode === 'off' ) {
 			return [];
+		}
+		// The links of the message itself, so a file has one address everywhere.
+		if ( $context->links !== null && $mode !== 'send' ) {
+			return $context->links;
 		}
 		$policy['mode'] = 'link';
 		return (array) ( Policy::apply( $policy, $context->submission, $channel )['links'] ?? [] );

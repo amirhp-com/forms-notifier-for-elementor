@@ -14,6 +14,7 @@ use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Phone\Phone;
+use AmirhpCom\FormsNotifier\Template\Extras;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -238,11 +239,9 @@ final class SmsChannel extends AbstractChannel {
 			$text = trim( $message->body );
 		}
 		if ( $text !== '' && $this->bool( 'append_links' ) ) {
-			foreach ( $message->links as $link ) {
-				$url = (string) ( $link['url'] ?? '' );
-				if ( $url !== '' && strpos( $text, $url ) === false ) {
-					$text .= "\n" . $url;
-				}
+			// Signed links differ from call to call: files are compared by id.
+			foreach ( Extras::missing_links( $text, $message->links ) as $link ) {
+				$text .= "\n" . $link['url'];
 			}
 		}
 		if ( $this->bool( 'fa_digits' ) ) {

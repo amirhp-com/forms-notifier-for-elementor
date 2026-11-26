@@ -174,7 +174,9 @@ final class EngineTest extends TestCase {
 		if ( $links ) {
 			$this->c->policy['mode'] = 'link';
 			$this->assertSame( 'cv.pdf (' . $links[0]['url'] . ')', $this->r( '{files}' ) );
-			$this->assertContains( '<b>Cv</b>: <a href="', $this->r( '{all_fields}', 'telegram_html' ) );
+			// Links belong to {files}: in {all_fields} they would repeat the same file.
+			$this->assertContains( '<b>Cv</b>: cv.pdf', $this->r( '{all_fields}', 'telegram_html' ) );
+			$this->assertNotContains( '<a href', $this->r( '{all_fields}', 'telegram_html' ) );
 			$this->c->purpose = 'submitter';
 			$this->assertSame( 'cv.pdf', $this->r( '{files}' ) );
 		}

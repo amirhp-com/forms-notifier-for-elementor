@@ -19,8 +19,8 @@ defined( 'ABSPATH' ) || exit;
  * Requests and result mapping shared by the SMS and WhatsApp gateways.
  *
  * Result rules: success only when the documented field of the body says so; 408, 429, 5xx and transport errors may be
- * retried; other 4xx are final. An unexpected 2xx body is final too: the message may already be on its way and a retry
- * would send it twice.
+ * retried; other 4xx are final. A 2xx body that is not understood is final too, and marked ambiguous unless it clearly
+ * refuses the message: it may already be on its way, so neither a retry nor a backup gateway may send it again.
  *
  * @mixin AbstractProvider
  */
@@ -211,8 +211,9 @@ trait GatewayHelpers {
 	 * @param string    $remote_id Remote message id.
 	 * @param string    $error     Error text of the gateway.
 	 * @param bool|null $permanent Retrying is pointless; null = by HTTP status.
+	 * @param bool|null $refused   A 2xx body clearly refuses the message; null = look for the usual signs.
 	 */
-	protected function outcome( array $r, bool $ok, string $remote_id = '', string $error = '', ?bool $permanent = null ): SendResult {
+	protected function outcome( array $r, bool $ok, string $remote_id = '', string $error = '', ?bool $permanent = null, ?bool $refused = null ): SendResult {
 		$code = (int) $r['code'];
 		if ( $ok && $r['ok'] ) {
 			$result            = $this->ok( (string) $r['body'], $remote_id );
@@ -234,7 +235,49 @@ trait GatewayHelpers {
 		$temporary           = $code === 0 || $code === 408 || $code === 429 || $code >= 500;
 		$result              = $this->fail( $error, $temporary ? false : ( $permanent ?? true ), (string) $r['body'], $code );
 		$result->retry_after = $r['ok'] ? 0 : $this->from_http( $r )->retry_after;
+		if ( $r['ok'] && ! ( $refused ?? ( $permanent !== null || self::refuses( $r ) ) ) ) {
+			$result->permanent = true;
+			$result->with_meta( [ 'ambiguous' => true ] );
+		}
 		return $result;
+	}
+
+	/**
+	 * A 2xx answer says that the message was not taken: a false success flag, a failure status, an error field.
+	 *
+	 * @param array $r Output of http().
+	 */
+	private static function refuses( array $r ): bool {
+		if ( ! is_array( $r['json'] ) ) {
+			$body = trim( wp_strip_all_tags( (string) $r['body'] ) );
+			return $body !== '' && strlen( $body ) <= 300 && preg_match( '/\b(error|fail(ed|ure)?|invalid|denied|unauthori[sz]ed|forbidden|wrong)\b/i', $body ) === 1;
+		}
+		return self::refusal_in( $r['json'], 0 );
+	}
+
+	/**
+	 * Signs of a refusal in decoded JSON, two levels deep.
+	 *
+	 * @param array $json  Decoded JSON.
+	 * @param int   $depth Depth.
+	 */
+	private static function refusal_in( array $json, int $depth ): bool {
+		foreach ( $json as $key => $value ) {
+			$key = strtolower( (string) $key );
+			if ( in_array( $key, [ 'success', 'issuccess', 'succeed', 'ok', 'sent', 'r_success', 'accepted' ], true ) && in_array( $value, [ false, 'false', 0, '0' ], true ) ) {
+				return true;
+			}
+			if ( in_array( $key, [ 'status', 'type', 'result', 'groupname' ], true ) && is_string( $value ) && preg_match( '/^(error|fail(ed|ure)?|rejected|undeliverable|undelivered|invalid)$/i', $value ) ) {
+				return true;
+			}
+			if ( preg_match( '/^(errors?|error_?(code|message|text|description)|exception)$/', $key ) && ! in_array( $value, [ null, '', [], 0, '0', false ], true ) ) {
+				return true;
+			}
+			if ( is_array( $value ) && $depth < 2 && self::refusal_in( $value, $depth + 1 ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

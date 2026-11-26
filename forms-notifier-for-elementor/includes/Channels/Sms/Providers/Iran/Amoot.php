@@ -107,6 +107,6 @@ final class Amoot extends AbstractIranProvider {
 		$status = $this->text_at( $r['json'], 'Status' );
 		$item   = $this->text_at( $r['json'], 'Data.0.Status' );
 		$ok     = $status === 'Success' && in_array( $item, [ 'Success', '' ], true );
-		return $this->outcome( $r, $ok, $this->first_text( $r['json'], [ 'Data.0.MessageID', 'CampaignID' ] ), $status === 'Success' ? $item : $status );
+		return $this->outcome( $r, $ok, $this->first_text( $r['json'], [ 'Data.0.MessageID', 'CampaignID' ] ), $status === 'Success' ? $item : $status, null, $status !== '' && ( $status !== 'Success' || $item !== '' ) );
 	}
 }

@@ -22,8 +22,20 @@ final class PreviewTest extends TestCase {
 
 	const KEYS = [ 'text', 'parts', 'length', 'limit', 'plain', 'subject', 'buttons', 'warnings' ];
 
+	/** @var int own administrator: users of the site are shared with other runs */
+	private static $admin = 0;
+
+	public static function setUpClass(): void {
+		self::$admin = (int) wp_insert_user( [ 'user_login' => 'fnfe_preview_' . getmypid(), 'user_pass' => wp_generate_password(), 'role' => 'administrator' ] );
+	}
+
+	public static function tearDownClass(): void {
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		wp_delete_user( self::$admin );
+	}
+
 	public function setUp(): void {
-		wp_set_current_user( (int) get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] );
+		wp_set_current_user( self::$admin );
 	}
 
 	public function tearDown(): void {

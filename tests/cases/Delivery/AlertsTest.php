@@ -151,7 +151,7 @@ final class AlertsTest extends TestCase {
 		$rows = $this->alerts();
 		$this->assertCount( 2, $rows );
 		$this->assertContains( '2', substr( $rows[1]['body'], strpos( $rows[1]['body'], '#/log/' ) + 8 ) );
-		$this->assertNull( State::get( 'alerts_suppressed' ) );
+		$this->assertSame( 0, (int) State::get( 'alerts_suppressed' ) );
 
 		$this->freeze( self::NOW + 601 );
 		$this->failing( 'Too many requests: retry after 12' );

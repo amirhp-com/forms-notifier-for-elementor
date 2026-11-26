@@ -93,7 +93,7 @@ function fnfe_register_whatsapp_provider( string $id, $class_or_instance ): void
  *     @type string   $form_key  Default 'api:custom'.
  *     @type array    $meta      Extra submission meta.
  * }
- * @return int Submission id, 0 on failure.
+ * @return int Submission id, -1 when it was accepted but submissions are not stored on this site, 0 on failure.
  */
 function fnfe_send( array $args ): int {
 	$args = array_merge(
@@ -149,7 +149,10 @@ function fnfe_send( array $args ): int {
 	$draft->meta['editor']['fnfe_channels'] = array_values( array_map( 'sanitize_key', (array) $args['channels'] ) );
 
 	$saved = Capture::ingest( $draft );
-	return $saved ? $saved->id : 0;
+	if ( ! $saved ) {
+		return 0;
+	}
+	return $saved->id ? $saved->id : -1;
 }
 
 /**

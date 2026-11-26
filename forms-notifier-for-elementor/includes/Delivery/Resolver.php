@@ -503,7 +503,7 @@ final class Resolver {
 	 *
 	 * @param FormConfig $form Form config.
 	 */
-	private static function owner_key( FormConfig $form ): string {
+	public static function owner_key( FormConfig $form ): string {
 		static $keys = [];
 		$link        = (int) $form->get( 'link', 0 );
 		if ( ! $link || ! I18n::provider() ) {

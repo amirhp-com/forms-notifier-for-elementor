@@ -241,4 +241,63 @@ final class ChatTest extends TestCase {
 			$this->assertNotContains( $url, Logger::clean( "x $url" ) );
 		}
 	}
+
+
+	// Review B, I4 and M11.
+
+	public function test_a_failed_part_is_not_followed_by_the_first_one_again(): void {
+		$m                     = $this->message( 'discord', implode( ' ', range( 1000, 1800 ) ), false );
+		$m->meta['message_id'] = 4242;
+		HttpMock::queue( 'POST', '~.~', [ [ 'id' => '1' ], [ 'code' => 429, 'body' => [ 'message' => 'slow down', 'retry_after' => 1 ] ] ] );
+		$first = ( new Chat\DiscordChannel() )->send( $m );
+		$this->assertSame( [ false, 1 ], [ $first->ok, $first->meta['parts_sent'] ] );
+		$posted = array_map( function ( $r ) { return $r['json']['content']; }, HttpMock::requests() );
+		HttpMock::reset();
+		HttpMock::queue( 'POST', '~.~', [ [ 'id' => '2' ], [ 'id' => '3' ] ] );
+		$second = ( new Chat\DiscordChannel() )->send( $m );
+		$this->assertTrue( $second->ok );
+		$this->assertSame( '1,2,3', $second->remote_id );
+		$again = array_map( function ( $r ) { return $r['json']['content']; }, HttpMock::requests() );
+		$this->assertCount( 2, $again );
+		$this->assertSame( $posted[1], $again[0], 'goes on with the part that failed' );
+		$this->assertFalse( in_array( $posted[0], $again, true ), 'the first part is not posted twice' );
+		// Finished: a new attempt of another row starts from the beginning.
+		$this->assertFalse( get_transient( 'fnfe_parts_' . md5( 'discord|4242|' . $m->recipient->address ) ) );
+	}
+
+	public function test_discord_files_over_the_limit_become_links(): void {
+		HttpMock::expect( 'POST', '~.~', [ 'id' => '1' ] );
+		$m              = $this->message( 'discord', 'Hi', false );
+		$small          = Fixtures::file( 'a.pdf', 'AAA' );
+		$big            = Fixtures::file( 'big.pdf', str_repeat( 'x', 21 * MB_IN_BYTES ) );
+		$big->url       = 'https://example.com/big.pdf';
+		$lost           = Fixtures::file( 'lost.pdf', str_repeat( 'y', 21 * MB_IN_BYTES ) );
+		$m->attachments = [ $small, $big, $lost ];
+		$result         = ( new Chat\DiscordChannel() )->send( $m );
+		unlink( $big->path );
+		unlink( $lost->path );
+		$request = HttpMock::last();
+		$this->assertSame( 'AAA', $request['parts']['files[0]']['value'] );
+		$this->assertFalse( isset( $request['parts']['files[1]'] ) );
+		$this->assertContains( 'https://example.com/big.pdf', json_decode( $request['parts']['payload_json']['value'], true )['content'] );
+		$this->assertSame( [ 'lost.pdf' ], $result->meta['files_failed'] );
+		$this->assertSame( [], $m->links, 'the caller\'s message is unchanged' );
+	}
+
+	public function test_ntfy_goes_on_after_the_delivered_parts(): void {
+		Settings::overlay( [ 'channels.ntfy.server' => 'https://ntfy.example.com' ] );
+		$m                     = new Message( 'ntfy', new Recipient( 'ntfy', 'alerts_topic' ) );
+		$m->format             = 'markdown';
+		$m->body               = implode( ' سلام ', range( 1000, 2400 ) );
+		$m->meta['message_id'] = 77;
+		HttpMock::queue( 'POST', '~.~', [ [ 'id' => 'a' ], [ 'code' => 500, 'body' => 'down' ] ] );
+		$this->assertFalse( Registry::channel( 'ntfy' )->send( $m )->ok );
+		$first = HttpMock::requests()[0]['json']['message'];
+		HttpMock::reset();
+		HttpMock::expect( 'POST', '~.~', [ 'id' => 'b' ] );
+		$this->assertTrue( Registry::channel( 'ntfy' )->send( $m )->ok );
+		$again = array_map( function ( $r ) { return $r['json']['message']; }, HttpMock::requests() );
+		$this->assertTrue( count( $again ) >= 1 );
+		$this->assertFalse( in_array( $first, $again, true ), 'the first part is not sent again' );
+	}
 }

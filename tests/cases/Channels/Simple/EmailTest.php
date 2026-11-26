@@ -184,4 +184,24 @@ final class EmailTest extends TestCase {
 		$this->assertNotContains( '<table', $this->mails[0]['message'] );
 		wp_set_current_user( 0 );
 	}
+
+
+	// Review B, M7.
+
+	public function test_links_of_large_files_follow_the_setting_and_stay_in_the_send(): void {
+		$this->intercept();
+		$this->freeze( 1767261600 );
+		Settings::overlay( [ 'attachments.link_ttl_days' => 2 ] );
+		$s              = Fixtures::submission();
+		\AmirhpCom\FormsNotifier\Repository\SubmissionRepository::insert( $s );
+		$big            = Fixtures::file( 'big.pdf', str_repeat( 'x', 15 * MB_IN_BYTES + 1 ) );
+		$big->stored    = true;
+		$big->id        = \AmirhpCom\FormsNotifier\Repository\FileRepository::insert( $s->id, $big );
+		$m              = $this->message();
+		$m->attachments = [ $big ];
+		( new EmailChannel() )->send( $m );
+		unlink( $big->path );
+		$this->assertContains( 'e=' . ( 1767261600 + 2 * DAY_IN_SECONDS ), $this->mails[0]['message'] );
+		$this->assertSame( [], $m->links, 'the caller\'s message is unchanged' );
+	}
 }

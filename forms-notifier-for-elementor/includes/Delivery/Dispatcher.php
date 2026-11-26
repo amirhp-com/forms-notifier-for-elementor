@@ -13,9 +13,11 @@ use AmirhpCom\FormsNotifier\Channels\Sms\PatternText;
 use AmirhpCom\FormsNotifier\Contracts\ChannelInterface;
 use AmirhpCom\FormsNotifier\Core\I18n;
 use AmirhpCom\FormsNotifier\Core\Logger;
+use AmirhpCom\FormsNotifier\Core\RateLimit;
 use AmirhpCom\FormsNotifier\Core\Registry;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\Urls;
+use AmirhpCom\FormsNotifier\I18n\Strings;
 use AmirhpCom\FormsNotifier\Model\Delivery;
 use AmirhpCom\FormsNotifier\Model\FormConfig;
 use AmirhpCom\FormsNotifier\Model\Message;
@@ -34,6 +36,9 @@ final class Dispatcher {
 	/** Longest text of a copy button. */
 	private const MAX_COPY = 256;
 
+	/** Auto-replies to one phone number per hour. */
+	private const MAX_REPLIES = 3;
+
 	/** Platforms with a mini app. */
 	private const MINIAPP_PLATFORMS = [ 'telegram', 'bale' ];
 
@@ -46,6 +51,10 @@ final class Dispatcher {
 	 * @return int[] fnfe_messages ids, skipped rows included
 	 */
 	public static function dispatch( Submission $s, FormConfig $form, array $only_channels = [] ): array {
+		if ( $s->uuid === '' && ! $s->id ) {
+			// Messages of an unsaved submission find each other by it.
+			$s->uuid = wp_generate_uuid4();
+		}
 		$plan = Resolver::resolve( $s, $form, $only_channels );
 		$ids  = [];
 		$due  = [];
@@ -56,6 +65,10 @@ final class Dispatcher {
 
 		$test = self::is_test( $s );
 		foreach ( $plan['deliveries'] as $delivery ) {
+			if ( ! $test && ! self::reply_allowed( $delivery, $s ) ) {
+				$ids[] = self::skip( $delivery, $s, __( 'The hourly limit of automatic replies to this number was reached.', 'forms-notifier-for-elementor' ) );
+				continue;
+			}
 			$delay = $delivery->purpose === 'admin' && ! $test ? QuietHours::delay( $delivery->channel, $form ) : 0;
 			$id    = self::enqueue( $delivery, $s, $form, $delay );
 			$ids[] = $id;
@@ -108,6 +121,9 @@ final class Dispatcher {
 			return $id;
 		}
 		$message->meta = array_merge( $message->meta, $meta );
+		if ( ! empty( $message->meta['fallback_of'] ) ) {
+			unset( $message->meta['submission'] );
+		}
 		return Queue::push( $message, $delay );
 	}
 
@@ -147,15 +163,16 @@ final class Dispatcher {
 		$m->meta['message_id'] = $id;
 		$m->meta['attempt']    = 1;
 
-		$result = Worker::deliver( $m );
+		$result = Worker::send( $m );
 		$patch  = Worker::outcome( $result );
 
-		$patch['status'] = $result->ok ? 'sent' : 'failed';
+		$patch['status']    = $result->ok ? 'sent' : 'failed';
+		$patch['recipient'] = Queue::shown_address( $m->channel, $m->recipient->address );
 		if ( ! Settings::bool( 'privacy.log_bodies', true ) ) {
 			$patch['body']    = null;
-			$patch['payload'] = null;
+			$patch['payload'] = Queue::reduced( $m->channel, $m->to_array() );
 		}
-		MessageRepository::update( $id, $patch );
+		Worker::save( $id, $patch );
 		return $result;
 	}
 
@@ -221,11 +238,21 @@ final class Dispatcher {
 		if ( self::is_test( $s ) ) {
 			$message->meta['test'] = true;
 		}
+		if ( ! $s->id && $d->purpose === 'admin' && Settings::str( "channels.{$d->channel}.fallback" ) !== '' ) {
+			// Nothing else keeps it: the backup channel is rendered from here. Removed when the row is final.
+			$message->meta['submission'] = $s->to_array();
+		}
 
 		if ( ! empty( $capabilities['subject'] ) ) {
 			$subject          = Settings::localize( $d->subject, $d->lang );
 			$message->subject = Engine::render_inline( trim( $subject ) === '' ? DefaultTemplates::subject( $d->purpose ) : $subject, $context );
 		}
+
+		// Files first: the tags and the message show the same links.
+		if ( $channel && $s->files && ( $d->attachment_policy['mode'] ?? 'off' ) !== 'off' ) {
+			self::attach( $message, $d, $s, $channel );
+		}
+		$context->links = $message->links;
 
 		// Patterns are read from the raw template, so nothing a visitor typed can become one.
 		$pattern = empty( $capabilities['pattern'] ) ? null : PatternText::parse( $template );
@@ -233,12 +260,8 @@ final class Dispatcher {
 			$template         = (string) ( $pattern['text'] ?? '' );
 			$message->pattern = self::pattern( $pattern, $context );
 		}
-		$message->body  = $message->format === 'json' || $template === '' ? '' : Engine::render( $template, $context, $message->format );
-		$message->plain = $template === '' ? '' : Engine::render( $template, $context, 'text' );
-
-		if ( $channel && $s->files && ( $d->attachment_policy['mode'] ?? 'off' ) !== 'off' ) {
-			self::attach( $message, $d, $s, $channel );
-		}
+		$message->body    = $message->format === 'json' || $template === '' ? '' : Engine::render( $template, $context, $message->format );
+		$message->plain   = $template === '' ? '' : Engine::render( $template, $context, 'text' );
 		$message->buttons = self::buttons( $d, $message, $s, $context, (array) ( $capabilities['buttons'] ?? [] ) );
 
 		try {
@@ -337,7 +360,7 @@ final class Dispatcher {
 	private static function button( array $button, Delivery $d, Submission $s, Context $context, array $supported ): ?array {
 		$type  = (string) ( $button['type'] ?? '' );
 		$value = (string) ( $button['value'] ?? '' );
-		$text  = Engine::render_inline( $button['text'] ?? '', $context );
+		$text  = Engine::render_inline( $button['text'] ?? '', $context, false, self::button_name( $button, $context ) );
 
 		if ( $type === 'submission' ) {
 			if ( ! $s->id ) {
@@ -379,6 +402,42 @@ final class Dispatcher {
 			'value' => $value,
 			'style' => (string) ( $button['style'] ?? '' ),
 		];
+	}
+
+	/**
+	 * Name under which the text of a button is registered for translation, '' when unknown. Buttons with the same text
+	 * have different names.
+	 *
+	 * @param array   $button  Button definition.
+	 * @param Context $context Context.
+	 */
+	private static function button_name( array $button, Context $context ): string {
+		$id = (string) ( $button['id'] ?? '' );
+		if ( $id === '' ) {
+			return '';
+		}
+		$path  = "channels.{$context->channel}.buttons.$id.text";
+		$names = [ Strings::name_for( $path ) ];
+		if ( $context->form ) {
+			array_unshift( $names, Strings::name_for( $path, Resolver::owner_key( $context->form ) ) );
+		}
+		return Strings::first_match( $names, $button['text'] ?? '' );
+	}
+
+	/**
+	 * An auto-reply to a phone costs money and the number comes from the visitor, so every number has an hourly limit.
+	 *
+	 * @param Delivery   $d Delivery.
+	 * @param Submission $s Submission.
+	 */
+	private static function reply_allowed( Delivery $d, Submission $s ): bool {
+		if ( $d->purpose !== 'submitter' ) {
+			return true;
+		}
+		$channel = Registry::channel( $d->channel );
+		$phone   = $channel && ( $channel->capabilities()['receiver_kind'] ?? '' ) === 'phone';
+		$limit   = (int) apply_filters( 'fnfe_submitter_limit', $phone ? self::MAX_REPLIES : 0, $d, $s );
+		return $limit <= 0 || RateLimit::hit( 'reply_' . md5( $d->channel . '|' . $d->recipient->address ), $limit, HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -442,6 +501,13 @@ final class Dispatcher {
 				'status'          => $status,
 				'max_attempts'    => Settings::int( 'queue.max_attempts', 5 ),
 				'error'           => $reason,
+				'payload'         => Queue::reduced(
+					$d->channel,
+					[
+						'recipient' => $d->recipient->to_array(),
+						'meta'      => [ 'submission_id' => $s->id ],
+					]
+				),
 			]
 		);
 	}

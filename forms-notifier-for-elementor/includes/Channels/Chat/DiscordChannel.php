@@ -8,8 +8,11 @@
 namespace AmirhpCom\FormsNotifier\Channels\Chat;
 
 use AmirhpCom\FormsNotifier\Attachments\PathGuard;
+use AmirhpCom\FormsNotifier\Attachments\Storage;
 use AmirhpCom\FormsNotifier\Core\Http;
+use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\Text;
+use AmirhpCom\FormsNotifier\Model\Attachment;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 
@@ -104,6 +107,34 @@ final class DiscordChannel extends AbstractWebhookChat {
 	}
 
 	/**
+	 * Files Discord does not take become links of the text; files without a link are reported.
+	 *
+	 * @param string  $url     Webhook URL.
+	 * @param Message $message Message.
+	 */
+	protected function deliver( string $url, Message $message ): SendResult {
+		list( , $rest ) = $this->split_files( $message );
+		$failed         = [];
+		if ( $rest ) {
+			$message = clone $message;
+			foreach ( $rest as $file ) {
+				$link = $file->id ? Storage::link( $file, Settings::int( 'attachments.link_ttl_days', 30 ) ) : $file->url;
+				if ( $link === '' ) {
+					$failed[] = $file->name;
+					continue;
+				}
+				$message->links[] = [
+					'name' => $file->name,
+					'url'  => $link,
+					'size' => $file->size,
+				];
+			}
+		}
+		$result = parent::deliver( $url, $message );
+		return $failed ? $result->with_meta( [ 'files_failed' => $failed ] ) : $result;
+	}
+
+	/**
 	 * Post one part.
 	 *
 	 * @param string  $url     Webhook URL.
@@ -163,16 +194,8 @@ final class DiscordChannel extends AbstractWebhookChat {
 	 * @param Message $message Message.
 	 */
 	private function files( Message $message ): array {
-		$out   = [];
-		$total = 0;
-		foreach ( $message->attachments as $file ) {
-			$size = $file->exists() ? (int) filesize( $file->path ) : 0;
-			if ( ! $size || $size > self::MAX_FILE || $total + $size > self::MAX_TOTAL || count( $out ) >= self::MAX_FILES
-				|| ( class_exists( PathGuard::class ) && ! PathGuard::is_safe( $file->path ) ) ) {
-				continue;
-			}
-			$total += $size;
-
+		$out = [];
+		foreach ( $this->split_files( $message )[0] as $file ) {
 			$out[ 'files[' . count( $out ) . ']' ] = [
 				'path' => $file->path,
 				'name' => $file->name,
@@ -180,5 +203,30 @@ final class DiscordChannel extends AbstractWebhookChat {
 			];
 		}
 		return $out;
+	}
+
+	/**
+	 * Files within the limits of one request, and the others.
+	 *
+	 * @param Message $message Message.
+	 * @return array{0:Attachment[],1:Attachment[]}
+	 */
+	private function split_files( Message $message ): array {
+		$fit   = [];
+		$rest  = [];
+		$total = 0;
+		foreach ( $message->attachments as $file ) {
+			$size = $file->exists() ? (int) filesize( $file->path ) : 0;
+			if ( ! $size || ( class_exists( PathGuard::class ) && ! PathGuard::is_safe( $file->path ) ) ) {
+				continue;
+			}
+			if ( $size > self::MAX_FILE || $total + $size > self::MAX_TOTAL || count( $fit ) >= self::MAX_FILES ) {
+				$rest[] = $file;
+				continue;
+			}
+			$total += $size;
+			$fit[]  = $file;
+		}
+		return [ $fit, $rest ];
 	}
 }

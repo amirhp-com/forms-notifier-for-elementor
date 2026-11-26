@@ -75,6 +75,6 @@ final class RayganSms extends AbstractIranProvider {
 			/* translators: %1$s: error code */
 			$error = sprintf( __( 'The gateway answered with error code %1$s.', 'forms-notifier-for-elementor' ), $body );
 		}
-		return $this->outcome( $r, $value > 2000, $value > 2000 ? $body : '', $error );
+		return $this->outcome( $r, $value > 2000, $value > 2000 ? $body : '', $error, null, $error !== '' );
 	}
 }

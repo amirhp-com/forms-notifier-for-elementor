@@ -18,6 +18,7 @@ use AmirhpCom\FormsNotifier\Model\Attachment;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Phone\Phone;
+use AmirhpCom\FormsNotifier\Template\Extras;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -237,8 +238,8 @@ abstract class AbstractWhatsAppProvider extends AbstractProvider implements What
 			$last     = $result;
 		}
 
-		// Links of the message itself are in the text already.
-		$rest = $this->with_links( '', array_diff_key( $this->links( $message, $failed ), $this->links( $message, [] ) ) );
+		// Links of the message itself, and links the text already shows, are not sent again.
+		$rest = $this->with_links( (string) $message->body, array_diff_key( $this->links( $message, $failed ), $this->links( $message, [] ) ), false );
 		if ( $rest !== '' ) {
 			$result = $this->send_text( $to, $this->parts( $rest )[0] ?? '', $message );
 			if ( $result->ok ) {
@@ -296,15 +297,23 @@ abstract class AbstractWhatsAppProvider extends AbstractProvider implements What
 	 *
 	 * @param string $text  Text.
 	 * @param array  $links URL => name.
+	 * @param bool   $keep  Return the text with the links; false = the missing links only.
 	 */
-	private function with_links( string $text, array $links ): string {
+	private function with_links( string $text, array $links, bool $keep = true ): string {
+		$list = [];
 		foreach ( $links as $url => $name ) {
-			if ( strpos( $text, (string) $url ) === false ) {
-				$name  = Registry::formatter( 'whatsapp' )->escape( $name );
-				$text .= ( $text === '' ? '' : "\n" ) . ( $name === '' ? '' : $name . ': ' ) . $url;
-			}
+			$list[] = [
+				'url'  => (string) $url,
+				'name' => (string) $name,
+			];
 		}
-		return $text;
+		// Signed links differ from call to call: files are compared by id.
+		$out = $keep ? $text : '';
+		foreach ( Extras::missing_links( $text, $list ) as $link ) {
+			$name = Registry::formatter( 'whatsapp' )->escape( $link['name'] );
+			$out .= ( $out === '' ? '' : "\n" ) . ( $name === '' ? '' : $name . ': ' ) . $link['url'];
+		}
+		return $out;
 	}
 
 	/**

@@ -463,12 +463,7 @@ final class QueueTest extends TestCase {
 		$row = MessageRepository::find( $ids[0] );
 		$this->assertSame( [ 'sent', '-100500/7', 1 ], [ $row['status'], $row['recipient'], $row['attempts'] ] );
 		$this->assertSame( '-100500/7', FakeChannel::$sent[1]->recipient->address );
-		$this->assertSame( [ '-100500/7', '-55' ], array_column( Settings::arr( 'channels.telegram.receivers' ), 'address' ) );
-		$this->assertSame( [ '-100500' ], array_column( Settings::arr( 'alerts.channels.telegram.receivers' ), 'address' ) );
-		$config = FormRepository::config( $s->form_id );
-		$this->assertSame( '-100500/7', $config->route( 'telegram' )['receivers'][0]['address'] );
-		$this->assertSame( '-100500', $config->get( 'rules.0.receivers.telegram.0.address' ) );
-		$this->assertNotNull( ChatRepository::find_chat( 'telegram', '-100500' ) );
+		// Stored receivers are moved by the bot channel (Bot/SendTest, Delivery/FixesTest); the fake one does not.
 	}
 
 	public function test_hooks_around_a_send() {

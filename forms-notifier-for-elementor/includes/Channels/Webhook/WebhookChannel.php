@@ -11,6 +11,7 @@ use AmirhpCom\FormsNotifier\Channels\AbstractChannel;
 use AmirhpCom\FormsNotifier\Core\Http;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Settings;
+use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 
@@ -282,7 +283,7 @@ final class WebhookChannel extends AbstractChannel {
 	 * @param array $params search.
 	 */
 	public function receiver_options( array $params ): array {
-		$search = mb_strtolower( trim( is_scalar( $params['search'] ?? '' ) ? (string) ( $params['search'] ?? '' ) : '' ) );
+		$search = Text::lower( trim( is_scalar( $params['search'] ?? '' ) ? (string) ( $params['search'] ?? '' ) : '' ) );
 		$labels = Presets::labels();
 		$rows   = [];
 		foreach ( $this->endpoints() as $endpoint ) {
@@ -290,7 +291,7 @@ final class WebhookChannel extends AbstractChannel {
 			$name  = (string) ( $endpoint['name'] ?? '' );
 			$host  = (string) wp_parse_url( (string) ( $endpoint['url'] ?? '' ), PHP_URL_HOST );
 			$label = $name === '' ? ( $host === '' ? $id : $host ) : $name;
-			if ( $id === '' || ( $search !== '' && strpos( mb_strtolower( $label . ' ' . $host ), $search ) === false ) ) {
+			if ( $id === '' || ( $search !== '' && strpos( Text::lower( $label . ' ' . $host ), $search ) === false ) ) {
 				continue;
 			}
 			$preset = (string) ( $endpoint['preset'] ?? 'custom' );

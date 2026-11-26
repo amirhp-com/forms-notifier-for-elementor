@@ -119,6 +119,7 @@ final class IranProvidersTest extends ProviderTestCase {
 				[ [ 'Value' => '-6', 'RetStatus' => 1, 'StrRetStatus' => 'Ok' ], 200, false, '' ],
 				[ [ 'Value' => '11', 'RetStatus' => 35, 'StrRetStatus' => 'InvalidData' ], 200, true, 'InvalidData' ],
 				[ [ 'Value' => '2', 'RetStatus' => 1, 'StrRetStatus' => 'Ok' ], 200, true, '(2)' ],
+				[ [ 'Value' => 'x', 'RetStatus' => 1, 'StrRetStatus' => 'Ok' ], 200, true, '' ],
 			],
 			'status'   => [ 'POST', '~/GetCredit$~', [ 'Value' => '321', 'RetStatus' => 1, 'StrRetStatus' => 'Ok' ], '321' ],
 		] );

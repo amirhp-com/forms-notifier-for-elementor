@@ -61,11 +61,11 @@ final class Filters {
 
 		switch ( $name ) {
 			case 'upper':
-				return mb_strtoupper( $value, 'UTF-8' );
+				return Text::upper( $value );
 			case 'lower':
-				return mb_strtolower( $value, 'UTF-8' );
+				return Text::lower( $value );
 			case 'title':
-				return mb_convert_case( $value, MB_CASE_TITLE, 'UTF-8' );
+				return Text::title( $value );
 			case 'trim':
 				return (string) preg_replace( '/^\s+|\s+$/u', '', $value );
 			case 'truncate':

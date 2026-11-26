@@ -8,6 +8,7 @@
 namespace AmirhpCom\FormsNotifier\Channels\Chat;
 
 use AmirhpCom\FormsNotifier\Channels\AbstractChannel;
+use AmirhpCom\FormsNotifier\Channels\PartsResume;
 use AmirhpCom\FormsNotifier\Core\Http;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Registry;
@@ -120,18 +121,21 @@ abstract class AbstractWebhookChat extends AbstractChannel {
 		if ( ! $parts ) {
 			return $this->fail( __( 'The message is empty.', 'forms-notifier-for-elementor' ), true );
 		}
-		$ids  = [];
-		$last = count( $parts ) - 1;
+		$resume = new PartsResume( $message, $parts );
+		$result = $this->ok();
+		$last   = count( $parts ) - 1;
 		foreach ( $parts as $i => $part ) {
+			if ( $resume->has( $i ) ) {
+				continue;
+			}
 			$result = $this->post( $url, $part, $message, $i === $last );
 			if ( ! $result->ok ) {
-				return $result->with_meta( [ 'parts_sent' => $i ] );
+				return $result->with_meta( [ 'parts_sent' => $resume->count() ] );
 			}
-			if ( $result->remote_id !== '' ) {
-				$ids[] = $result->remote_id;
-			}
+			$resume->add( $i, $result->remote_id );
 		}
-		$result->remote_id = implode( ',', $ids );
+		$resume->done();
+		$result->remote_id = $resume->remote_ids();
 		return $result->with_meta( [ 'parts' => count( $parts ) ] );
 	}
 

@@ -10,6 +10,7 @@ namespace AmirhpCom\FormsNotifier\I18n;
 use AmirhpCom\FormsNotifier\Core\I18n;
 use AmirhpCom\FormsNotifier\Core\Schema;
 use AmirhpCom\FormsNotifier\Core\Settings;
+use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Model\FormConfig;
 use AmirhpCom\FormsNotifier\Repository\FormRepository;
 
@@ -42,7 +43,7 @@ final class Strings {
 	 */
 	public static function name_for( string $path, string $form_key = '' ): string {
 		$name = $form_key === '' ? 'setting:' . $path : 'form:' . $form_key . ':' . $path;
-		return strlen( $name ) > self::MAX_NAME ? mb_strcut( $name, 0, self::MAX_NAME - 33, 'UTF-8' ) . ':' . md5( $name ) : $name;
+		return strlen( $name ) > self::MAX_NAME ? Text::cut_bytes( $name, self::MAX_NAME - 33 ) . ':' . md5( $name ) : $name;
 	}
 
 	/**
@@ -129,6 +130,26 @@ final class Strings {
 			}
 		}
 		return $names[0] ?? '';
+	}
+
+	/**
+	 * First of several names under which a text is registered, '' when it is none of them.
+	 *
+	 * @param string[]     $names Names.
+	 * @param string|array $value Localized value or string.
+	 */
+	public static function first_match( array $names, $value ): string {
+		$text = is_array( $value ) ? ( $value['_'] ?? '' ) : $value;
+		if ( ! is_string( $text ) || trim( $text ) === '' || I18n::provider() === '' ) {
+			return '';
+		}
+		$known = self::all();
+		foreach ( $names as $name ) {
+			if ( isset( $known[ $name ] ) && $known[ $name ] === $text ) {
+				return $name;
+			}
+		}
+		return '';
 	}
 
 	/** Forget the collected texts; they are read again when needed. */

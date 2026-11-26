@@ -61,7 +61,7 @@ final class Cleanup {
 			} while ( $done >= self::BATCH && microtime( true ) < $deadline );
 		}
 		if ( ! Settings::bool( 'privacy.log_bodies', true ) ) {
-			$out['bodies'] = self::clear_bodies();
+			$out['bodies'] = self::clear_bodies( $deadline );
 		}
 		$out['log'] = LogRepository::purge_older_than( Settings::int( 'privacy.retention_log_days', 30 ) );
 		return $out;
@@ -94,15 +94,37 @@ final class Cleanup {
 		}
 	}
 
-	/** Remove bodies and payloads of finished rows (log_bodies is off). */
-	private static function clear_bodies(): int {
+	/**
+	 * Remove bodies and payloads of finished rows (log_bodies is off).
+	 *
+	 * @param float $deadline Time to stop.
+	 */
+	private static function clear_bodies( float $deadline ): int {
 		global $wpdb;
-		return (int) $wpdb->query(
-			$wpdb->prepare(
-				"UPDATE %i SET body = NULL, payload = NULL WHERE ( body IS NOT NULL OR payload IS NOT NULL ) AND status IN ('sent','failed','skipped','cancelled')",
-				MessageRepository::table()
-			)
-		);
+		$done = 0;
+		do {
+			$ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT id FROM %i WHERE ( body IS NOT NULL OR payload LIKE %s ) AND status IN ('sent','failed','skipped','cancelled') LIMIT %d",
+					MessageRepository::table(),
+					'%"body":%',
+					self::BATCH
+				)
+			);
+			foreach ( array_map( 'intval', $ids ) as $id ) {
+				$row = MessageRepository::find( $id );
+				MessageRepository::update(
+					$id,
+					[
+						'body'    => null,
+						'payload' => $row ? Queue::reduced( (string) $row['channel'], (array) $row['payload'] ) : null,
+					]
+				);
+				++$done;
+			}
+			$full = count( $ids ) >= self::BATCH;
+		} while ( $full && microtime( true ) < $deadline );
+		return $done;
 	}
 
 	/**

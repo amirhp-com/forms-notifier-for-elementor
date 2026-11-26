@@ -8,9 +8,11 @@
 namespace AmirhpCom\FormsNotifier\Channels\Push;
 
 use AmirhpCom\FormsNotifier\Channels\AbstractChannel;
+use AmirhpCom\FormsNotifier\Channels\PartsResume;
 use AmirhpCom\FormsNotifier\Core\Http;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Registry;
+use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Template\Extras;
@@ -140,16 +142,21 @@ final class NtfyChannel extends AbstractChannel {
 			if ( ! $parts ) {
 				return $this->fail( __( 'The message is empty.', 'forms-notifier-for-elementor' ), true );
 			}
-			$ids  = [];
-			$last = count( $parts ) - 1;
+			$resume = new PartsResume( $message, $parts );
+			$result = $this->ok();
+			$last   = count( $parts ) - 1;
 			foreach ( $parts as $i => $part ) {
+				if ( $resume->has( $i ) ) {
+					continue;
+				}
 				$result = $this->post( $topic, $part, $message, $i === $last );
 				if ( ! $result->ok ) {
-					return $result->with_meta( [ 'parts_sent' => $i ] );
+					return $result->with_meta( [ 'parts_sent' => $resume->count() ] );
 				}
-				$ids[] = $result->remote_id;
+				$resume->add( $i, $result->remote_id );
 			}
-			$result->remote_id = implode( ',', array_filter( $ids ) );
+			$resume->done();
+			$result->remote_id = $resume->remote_ids();
 			return $result;
 		} catch ( \Throwable $e ) {
 			return $this->fail( Logger::clean( $e->getMessage() ) );
@@ -173,7 +180,7 @@ final class NtfyChannel extends AbstractChannel {
 			'markdown' => true,
 		];
 		if ( $message->subject !== '' ) {
-			$body['title'] = mb_strcut( $message->subject, 0, 250, 'UTF-8' );
+			$body['title'] = Text::cut_bytes( $message->subject, 250 );
 		}
 		if ( $priority >= 1 && $priority <= 5 && $priority !== 3 ) {
 			$body['priority'] = $priority;
@@ -229,7 +236,7 @@ final class NtfyChannel extends AbstractChannel {
 		$limit = (int) floor( self::LIMIT / $ratio * 0.9 );
 		$out   = [];
 		foreach ( Registry::formatter( 'markdown' )->split( $text, max( 500, $limit ) ) as $part ) {
-			$out[] = mb_strcut( $part, 0, self::LIMIT, 'UTF-8' );
+			$out[] = Text::cut_bytes( $part, self::LIMIT );
 		}
 		return $out;
 	}

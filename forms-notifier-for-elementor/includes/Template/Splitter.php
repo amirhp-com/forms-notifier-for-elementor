@@ -7,6 +7,8 @@
 
 namespace AmirhpCom\FormsNotifier\Template;
 
+use AmirhpCom\FormsNotifier\Core\Text;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -48,7 +50,7 @@ final class Splitter {
 	 * @return string[]
 	 */
 	public static function split_html( string $html, int $limit, ?callable $length = null ): array {
-		$html   = mb_scrub( $html, 'UTF-8' );
+		$html   = Text::scrub( $html );
 		$length = $length ?? [ self::class, 'chars' ];
 		$whole  = self::whole( $html, $limit, $length );
 		if ( $whole !== null ) {
@@ -76,7 +78,7 @@ final class Splitter {
 	 * @return string[]
 	 */
 	public static function split_plain( string $text, int $limit, ?callable $length = null ): array {
-		$text   = mb_scrub( $text, 'UTF-8' );
+		$text   = Text::scrub( $text );
 		$length = $length ?? [ self::class, 'chars' ];
 		$whole  = self::whole( $text, $limit, $length );
 		if ( $whole !== null ) {
@@ -102,7 +104,7 @@ final class Splitter {
 	 * @return string[]
 	 */
 	public static function split_marks( string $text, int $limit, callable $length, array $grammar ): array {
-		$text  = mb_scrub( $text, 'UTF-8' );
+		$text  = Text::scrub( $text );
 		$whole = self::whole( $text, $limit, $length );
 		if ( $whole !== null ) {
 			return $whole;

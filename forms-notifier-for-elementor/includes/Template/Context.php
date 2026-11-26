@@ -41,6 +41,9 @@ final class Context {
 	/** @var array resolved attachment policy; [] = the one of the channel and form */
 	public array $policy = [];
 
+	/** @var array|null file links of the message, resolved once; null = resolve them when a tag needs them */
+	public ?array $links = null;
+
 	/**
 	 * Context of a submission.
 	 *

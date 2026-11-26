@@ -205,7 +205,7 @@ trait CustomRequest {
 			return $this->outcome( $r, false, '', $error );
 		}
 		if ( $contains !== '' && strpos( (string) $r['body'], $contains ) === false ) {
-			return $this->outcome( $r, false, '', __( 'The answer does not contain the expected text.', 'forms-notifier-for-elementor' ) );
+			return $this->outcome( $r, false, '', __( 'The answer does not contain the expected text.', 'forms-notifier-for-elementor' ), null, true );
 		}
 		if ( $path !== '' ) {
 			$value = $this->dig( $r['json'], $path );
@@ -213,7 +213,7 @@ trait CustomRequest {
 				$value = $value ? 'true' : 'false';
 			}
 			if ( ! is_scalar( $value ) || (string) $value !== $this->option( 'success_value' ) ) {
-				return $this->outcome( $r, false, '', __( 'The answer does not have the expected value.', 'forms-notifier-for-elementor' ) );
+				return $this->outcome( $r, false, '', __( 'The answer does not have the expected value.', 'forms-notifier-for-elementor' ), null, true );
 			}
 		}
 		return $this->outcome( $r, true, $this->first_text( $r['json'], [ 'id', 'message_id', 'messageId', 'data.id' ] ) );

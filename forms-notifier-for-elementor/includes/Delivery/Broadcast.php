@@ -7,6 +7,7 @@
 
 namespace AmirhpCom\FormsNotifier\Delivery;
 
+use AmirhpCom\FormsNotifier\Channels\Bot\Commands;
 use AmirhpCom\FormsNotifier\Contracts\ChannelInterface;
 use AmirhpCom\FormsNotifier\Core\I18n;
 use AmirhpCom\FormsNotifier\Core\Logger;
@@ -105,6 +106,21 @@ final class Broadcast {
 	}
 
 	/**
+	 * Language of a receiver without one: that of the linked WordPress user, else the default.
+	 *
+	 * @param string $channel Channel id.
+	 * @param string $address Address.
+	 */
+	private static function user_lang( string $channel, string $address ): string {
+		$chat = explode( '/', $address )[0];
+		// Only a private chat belongs to one person, whose id it has.
+		if ( ! in_array( $channel, [ 'telegram', 'bale' ], true ) || ! preg_match( '/^[1-9]\d{0,19}$/', $chat ) ) {
+			return I18n::default_lang();
+		}
+		return Commands::language( $channel, [ 'id' => $chat ] );
+	}
+
+	/**
 	 * Rendered message for one receiver.
 	 *
 	 * @param ChannelInterface $channel  Channel.
@@ -115,7 +131,7 @@ final class Broadcast {
 	 */
 	private static function message( ChannelInterface $channel, array $receiver, string $purpose, callable $content, array $meta ): Message {
 		$lang = (string) ( $receiver['lang'] ?? '' );
-		$lang = $lang === '' ? I18n::default_lang() : $lang;
+		$lang = $lang === '' ? self::user_lang( $channel->id(), (string) $receiver['address'] ) : $lang;
 
 		return I18n::with_language(
 			$lang,

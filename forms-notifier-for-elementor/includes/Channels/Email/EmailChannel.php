@@ -12,6 +12,7 @@ use AmirhpCom\FormsNotifier\Attachments\Storage;
 use AmirhpCom\FormsNotifier\Channels\AbstractChannel;
 use AmirhpCom\FormsNotifier\Core\I18n;
 use AmirhpCom\FormsNotifier\Core\Logger;
+use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Model\Delivery;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
@@ -180,6 +181,8 @@ final class EmailChannel extends AbstractChannel {
 			if ( $to === '' ) {
 				return $this->fail( __( 'The email address is not valid.', 'forms-notifier-for-elementor' ), true );
 			}
+			// Files over the limit become links of this send only; the caller's message stays as it is.
+			$message = clone $message;
 			$files   = $this->attach( $message );
 			$subject = self::line( $message->subject );
 			if ( $subject === '' ) {
@@ -268,7 +271,7 @@ final class EmailChannel extends AbstractChannel {
 				$used        += $size;
 				continue;
 			}
-			$url = $file->id ? Storage::link( $file, 30 ) : $file->url;
+			$url = $file->id ? Storage::link( $file, Settings::int( 'attachments.link_ttl_days', 30 ) ) : $file->url;
 			if ( $url !== '' ) {
 				$message->links[] = [
 					'name' => $file->name,

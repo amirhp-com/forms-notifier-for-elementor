@@ -48,6 +48,10 @@ final class ProviderChain {
 				return $result->with_meta( [ 'chain' => $tried ] );
 			}
 			$failures[] = $result;
+			if ( ! empty( $result->meta['ambiguous'] ) ) {
+				// The gateway may have taken the message: another one must not send it again.
+				break;
+			}
 		}
 
 		if ( ! $failures ) {
@@ -57,6 +61,7 @@ final class ProviderChain {
 			return $failures[0]->with_meta( [ 'chain' => $tried ] );
 		}
 
+		$ambiguous = ! empty( end( $failures )->meta['ambiguous'] );
 		$permanent = true;
 		$retry     = 0;
 		$errors    = [];
@@ -71,9 +76,10 @@ final class ProviderChain {
 				$retry = $retry === 0 ? $failure->retry_after : min( $retry, $failure->retry_after );
 			}
 		}
-		$result              = SendResult::failure( $failures[0]->provider, implode( ' | ', $errors ), $permanent, implode( "\n", $responses ), $failures[0]->http_code );
+		$result              = SendResult::failure( $failures[0]->provider, implode( ' | ', $errors ), $permanent || $ambiguous, implode( "\n", $responses ), $failures[0]->http_code );
 		$result->retry_after = $retry;
-		return $result->with_meta( [ 'chain' => $tried ] );
+		$result->with_meta( [ 'chain' => $tried ] );
+		return $ambiguous ? $result->with_meta( [ 'ambiguous' => true ] ) : $result;
 	}
 
 	/**

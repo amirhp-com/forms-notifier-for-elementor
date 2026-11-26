@@ -309,4 +309,21 @@ final class WebhookTest extends TestCase {
 		$this->assertTrue( count( $json['fields'] ) >= 4 );
 		$this->assertTrue( isset( HttpMock::last()['headers']['x-fnfe-signature'] ) );
 	}
+
+
+	// Review B, M9.
+
+	public function test_delivery_id_survives_a_new_rendering(): void {
+		$this->endpoint();
+		HttpMock::expect( 'POST', '~^https://hook\.example\.com/~', 'ok' );
+		$first                     = $this->message();
+		$first->meta['message_id'] = 55;
+		$this->send( $first );
+		$id                         = HttpMock::last()['json']['delivery'];
+		$second                     = $this->message();
+		$second->meta['message_id'] = 55;
+		$this->send( $second );
+		$this->assertSame( $id, HttpMock::last()['json']['delivery'] );
+		$this->assertSame( $id, HttpMock::last()['headers']['x-fnfe-delivery'] );
+	}
 }

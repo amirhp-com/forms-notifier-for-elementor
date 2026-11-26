@@ -78,7 +78,7 @@ final class ClickSend extends AbstractSmsProvider {
 		$status = $this->text_at( $r['json'], 'data.messages.0.status' );
 		$ok     = $this->dig( $r['json'], 'response_code' ) === 'SUCCESS' && $status === 'SUCCESS';
 		$error  = $status !== '' && $status !== 'SUCCESS' ? $status : $this->first_text( $r['json'], [ 'response_msg', 'response_code' ] );
-		return $this->outcome( $r, $ok, $this->text_at( $r['json'], 'data.messages.0.message_id' ), $error, $status === '' ? null : in_array( $status, self::PERMANENT, true ) );
+		return $this->outcome( $r, $ok, $this->text_at( $r['json'], 'data.messages.0.message_id' ), $error, $status === '' ? null : in_array( $status, self::PERMANENT, true ), ( $status !== '' && $status !== 'SUCCESS' ) || ! in_array( $this->dig( $r['json'], 'response_code' ), [ null, 'SUCCESS' ], true ) );
 	}
 
 	/** Headers. */

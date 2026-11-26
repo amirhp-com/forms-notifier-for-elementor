@@ -316,4 +316,35 @@ final class ReportsTest extends TestCase {
 		SubmissionRepository::delete( $s->id );
 		$this->assertNull( MessageRepository::find( $id ) );
 	}
+
+
+	// Review B, I5.
+
+	public function test_a_late_time_is_not_skipped_by_hourly_ticks(): void {
+		Settings::set_many( [ 'digest.time' => '23:30', 'digest.skip_empty' => false ] );
+		$start = $this->at( '2026-03-10 00:05' );
+		for ( $hour = 0; $hour < 30; $hour++ ) {
+			$this->freeze( $start + $hour * HOUR_IN_SECONDS );
+			Digest::tick();
+		}
+		$this->assertCount( 1, FakeChannel::$sent, 'the digest of 10 March, sent at 00:05 on 11 March' );
+		$this->assertSame( '2026-03-10', State::get( 'digest_last' ) );
+	}
+
+	public function test_a_quiet_evening_does_not_lose_the_digest(): void {
+		Settings::set_many( [ 'digest.time' => '22:00', 'digest.skip_empty' => false ] );
+		$this->submission( '2026-03-09 12:00' );
+		$this->submission( '2026-03-10 12:00' );
+		$this->freeze( $this->at( '2026-03-10 21:05' ) );
+		Digest::tick();
+		$this->assertCount( 0, FakeChannel::$sent );
+		// The next visitor comes after midnight.
+		$this->freeze( $this->at( '2026-03-11 00:05' ) );
+		Digest::tick();
+		$this->assertCount( 1, FakeChannel::$sent );
+		$this->assertContains( '1|', FakeChannel::$sent[0]->body, 'the period is 10 March' );
+		$this->freeze( $this->at( '2026-03-11 01:05' ) );
+		Digest::tick();
+		$this->assertCount( 1, FakeChannel::$sent );
+	}
 }

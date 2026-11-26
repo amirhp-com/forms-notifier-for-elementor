@@ -7,12 +7,14 @@
 
 namespace AmirhpCom\FormsNotifier\Delivery;
 
+use AmirhpCom\FormsNotifier\Channels\Bot\BotClient;
 use AmirhpCom\FormsNotifier\Core\Lock;
 use AmirhpCom\FormsNotifier\Core\Logger;
 use AmirhpCom\FormsNotifier\Core\Registry;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Model\Message;
 use AmirhpCom\FormsNotifier\Model\SendResult;
+use AmirhpCom\FormsNotifier\Model\Submission;
 use AmirhpCom\FormsNotifier\Repository\FormRepository;
 use AmirhpCom\FormsNotifier\Repository\MessageRepository;
 use AmirhpCom\FormsNotifier\Repository\SubmissionRepository;
@@ -21,6 +23,12 @@ defined( 'ABSPATH' ) || exit;
 
 /** Sends one claimed row and stores the outcome. */
 final class Worker {
+
+	/** Seconds one send may take before another process may take the row over. */
+	private const SEND_TTL = 900;
+
+	/** Stored instead of an answer the database refuses. */
+	private const UNREADABLE = 'The answer could not be stored.';
 
 	/**
 	 * Process a claimed row.
@@ -46,28 +54,53 @@ final class Worker {
 			return self::skip( $row, $message, $problem );
 		}
 
-		MessageRepository::update( $id, [ 'attempts' => $attempt ] );
+		$counted = MessageRepository::update(
+			$id,
+			[
+				'attempts'         => $attempt,
+				'locked_until_gmt' => Queue::gmt( self::SEND_TTL ),
+			]
+		);
+		if ( ! $counted ) {
+			// An attempt that cannot be counted could be repeated without end.
+			Logger::error( 'queue', 'An attempt could not be stored, so the message was not sent.', [ 'message' => $id ] );
+			return SendResult::failure( $message->channel, __( 'Sending was interrupted.', 'forms-notifier-for-elementor' ) );
+		}
 		$row['attempts']             = $attempt;
 		$message->meta['message_id'] = $id;
 		$message->meta['attempt']    = $attempt;
 
-		$result = self::deliver( $message );
-		if ( ! $result->ok ) {
-			$moved = self::migrate( $message, $result );
-			if ( $moved !== '' ) {
-				$row['recipient']            = $moved;
-				$message->recipient->address = $moved;
-				MessageRepository::update(
-					$id,
-					[
-						'recipient' => $moved,
-						'payload'   => $message->to_array(),
-					]
-				);
-				$result = self::deliver( $message );
-			}
+		$address = $message->recipient->address;
+		$result  = self::send( $message );
+		if ( $message->recipient->address !== $address ) {
+			$row['recipient']     = $message->recipient->address;
+			$payload              = $row['payload'];
+			$payload['recipient'] = $message->recipient->to_array();
+			MessageRepository::update(
+				$id,
+				[
+					'recipient' => $message->recipient->address,
+					'payload'   => $payload,
+				]
+			);
 		}
 		return self::store( $row, $result, $message );
+	}
+
+	/**
+	 * Send, and once more when the chat moved to a new id. The message then holds the new address; stored receivers are
+	 * updated by the channel.
+	 *
+	 * @param Message $m Message.
+	 */
+	public static function send( Message $m ): SendResult {
+		$result = self::deliver( $m );
+		$moved  = $result->ok ? '' : self::moved( $m, $result );
+		if ( $moved === '' ) {
+			return $result;
+		}
+		$m->recipient->address = $moved;
+		return self::deliver( $m );
 	}
 
 	/**
@@ -156,25 +189,55 @@ final class Worker {
 	 * @param Message|null $message Message when it is known.
 	 */
 	public static function finalize( array $row, ?Message $message = null ): void {
-		if ( ! $message && is_array( $row['payload'] ) && $row['payload'] ) {
-			$message = Message::from_array( $row['payload'] );
+		$payload = (array) $row['payload'];
+		if ( ! $message && $payload ) {
+			$message = Message::from_array( $payload );
 		}
 		if ( ! Settings::bool( 'privacy.log_bodies', true ) ) {
 			MessageRepository::update(
 				(int) $row['id'],
 				[
 					'body'    => null,
-					'payload' => null,
+					'payload' => Queue::reduced( (string) $row['channel'], $payload ),
 				]
 			);
+		} elseif ( isset( $payload['meta']['submission'] ) ) {
+			// Only a backup channel needed it.
+			unset( $payload['meta']['submission'] );
+			MessageRepository::update( (int) $row['id'], [ 'payload' => $payload ] );
 		}
 		if ( (int) $row['submission_id'] ) {
 			if ( $row['purpose'] === 'admin' ) {
 				self::update_submission( (int) $row['submission_id'] );
 			}
 		} elseif ( $message ) {
-			Cleanup::release_files( $message->attachments );
+			$s = self::carried( $message );
+			Cleanup::release_files( array_merge( $message->attachments, $s ? $s->files : [] ) );
 		}
+	}
+
+	/**
+	 * Store a result; a text the database refuses must not cost the status, or the message would be sent again.
+	 *
+	 * @param int   $id    Row id.
+	 * @param array $patch Columns.
+	 */
+	public static function save( int $id, array $patch ): bool {
+		if ( MessageRepository::update( $id, $patch ) ) {
+			return true;
+		}
+		Logger::warning( 'queue', self::UNREADABLE, [ 'message' => $id ] );
+		$note = [
+			'response'  => self::UNREADABLE,
+			'error'     => ( $patch['error'] ?? '' ) === '' ? '' : self::UNREADABLE,
+			'remote_id' => '',
+			'provider'  => '',
+		];
+		if ( MessageRepository::update( $id, array_merge( $patch, $note ) ) ) {
+			return true;
+		}
+		$status = array_intersect_key( $patch, array_flip( [ 'status', 'sent_gmt', 'next_attempt_gmt', 'lock_token', 'locked_until_gmt' ] ) );
+		return MessageRepository::update( $id, $status );
 	}
 
 	/**
@@ -201,7 +264,11 @@ final class Worker {
 		if ( $final ) {
 			$patch['next_attempt_gmt'] = null;
 		}
-		MessageRepository::update( $id, $patch );
+		if ( ! self::own( $row ) ) {
+			Logger::warning( 'queue', 'A message took too long and was taken over by another process.', [ 'message' => $id ] );
+			return $result;
+		}
+		self::save( $id, $patch );
 
 		$stored = MessageRepository::find( $id );
 		if ( ! $stored ) {
@@ -211,7 +278,8 @@ final class Worker {
 			do_action( 'fnfe_message_sent', $stored, $result );
 		} else {
 			do_action( 'fnfe_message_failed', $stored, $result, $final );
-			Alerts::on_failure( $stored, $result, $final );
+			// A process that died on the way reported nothing, so the first stored error counts as the first failure.
+			Alerts::on_failure( $stored, $result, $final, (string) $row['error'] === '' );
 			if ( $final ) {
 				self::fallback( $stored, $message );
 			}
@@ -248,12 +316,37 @@ final class Worker {
 	}
 
 	/**
+	 * Make sure the row still belongs to this process. A row that was released but not taken by another process is
+	 * taken back: its message was just sent.
+	 *
+	 * @param array $row Claimed row.
+	 */
+	private static function own( array $row ): bool {
+		global $wpdb;
+		if ( (string) $row['lock_token'] === '' ) {
+			return true;
+		}
+		$done = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE %i SET status = 'sending', lock_token = %s, locked_until_gmt = %s WHERE id = %d AND ( ( status = 'sending' AND lock_token = %s ) OR ( status IN ('queued','retry') AND lock_token = '' ) )",
+				MessageRepository::table(),
+				bin2hex( random_bytes( 16 ) ),
+				Queue::gmt( MINUTE_IN_SECONDS ),
+				(int) $row['id'],
+				(string) $row['lock_token']
+			)
+		);
+		// Not zero rows but an error: the result must not get lost.
+		return $done === false || (int) $done === 1;
+	}
+
+	/**
 	 * Message of a row.
 	 *
 	 * @param array $row Row.
 	 */
 	private static function message( array $row ): ?Message {
-		if ( ! $row['payload'] ) {
+		if ( Queue::is_reduced( (array) $row['payload'] ) ) {
 			return Queue::rebuild( $row );
 		}
 		$message          = Message::from_array( $row['payload'] );
@@ -262,24 +355,61 @@ final class Worker {
 	}
 
 	/**
-	 * Follow a chat that moved to another id.
+	 * Address of a chat that moved to another id.
 	 *
 	 * @param Message    $message Message.
 	 * @param SendResult $result  Failed result.
 	 * @return string new address, '' when nothing moved
 	 */
-	private static function migrate( Message $message, SendResult $result ): string {
-		$new = $result->meta['migrate_to_chat_id'] ?? $result->meta['migrate_to'] ?? '';
-		$new = is_scalar( $new ) ? (string) $new : '';
-		if ( ! preg_match( '/^-?\d{3,20}$/', $new ) ) {
+	private static function moved( Message $message, SendResult $result ): string {
+		$new    = $result->meta['migrate_to'] ?? '';
+		$new    = is_scalar( $new ) ? (string) $new : '';
+		$parsed = BotClient::parse_address( $message->recipient->address );
+		if ( ! preg_match( '/^-?\d{3,20}$/D', $new ) || ! $parsed || $parsed['chat'] === $new ) {
 			return '';
 		}
-		$parts = explode( '/', $message->recipient->address, 2 );
-		if ( $parts[0] === $new || $parts[0] === '' ) {
-			return '';
+		return BotClient::format_address( $new, $parsed['thread'] );
+	}
+
+	/**
+	 * Unsaved submission that travels with a message.
+	 *
+	 * @param Message $message Message.
+	 */
+	private static function carried( Message $message ): ?Submission {
+		$data = $message->meta['submission'] ?? null;
+		return is_array( $data ) && $data ? Submission::from_array( $data ) : null;
+	}
+
+	/**
+	 * Rows of a submission on one channel. Unsaved submissions are recognised by their uuid.
+	 *
+	 * @param int    $submission_id Submission id, 0 = unsaved.
+	 * @param string $uuid          Uuid.
+	 * @param string $channel       Channel id.
+	 * @return array[]
+	 */
+	private static function rows_on( int $submission_id, string $uuid, string $channel ): array {
+		global $wpdb;
+		if ( $submission_id ) {
+			$rows = MessageRepository::for_submission( $submission_id );
+		} else {
+			$ids  = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT id FROM %i WHERE submission_id = 0 AND channel = %s AND purpose = 'admin' AND payload LIKE %s ORDER BY id ASC",
+					MessageRepository::table(),
+					$channel,
+					'%' . $wpdb->esc_like( '"uuid":"' . $uuid . '"' ) . '%'
+				)
+			);
+			$rows = array_filter( array_map( [ MessageRepository::class, 'find' ], array_map( 'intval', $ids ) ) );
 		}
-		ChatMigration::apply( $message->channel, $parts[0], $new );
-		return $new . ( isset( $parts[1] ) ? '/' . $parts[1] : '' );
+		return array_filter(
+			$rows,
+			static function ( array $row ) use ( $channel ): bool {
+				return $row['channel'] === $channel && $row['purpose'] === 'admin';
+			}
+		);
 	}
 
 	/**
@@ -291,41 +421,45 @@ final class Worker {
 	private static function fallback( array $row, ?Message $message ): void {
 		$sid    = (int) $row['submission_id'];
 		$target = Settings::str( 'channels.' . $row['channel'] . '.fallback' );
-		if ( $row['purpose'] !== 'admin' || ! $sid || $target === '' || $target === $row['channel'] ) {
+		if ( $row['purpose'] !== 'admin' || $target === '' || $target === $row['channel'] ) {
 			return;
 		}
-		if ( $message && ! empty( $message->meta['fallback_of'] ) ) {
+		// A fallback has no fallback. The message may be unknown here, the parent row is not.
+		if ( (int) $row['parent_id'] || ( $message && ! empty( $message->meta['fallback_of'] ) ) ) {
+			return;
+		}
+		$s    = $sid || ! $message ? null : self::carried( $message );
+		$uuid = $s ? $s->uuid : '';
+		if ( ! $sid && $uuid === '' ) {
 			return;
 		}
 		if ( Dispatcher::problem( Registry::channel( $target ) ) !== '' ) {
 			return;
 		}
 
-		$lock = 'fallback_' . $sid . '_' . $target;
+		$lock = 'fallback_' . ( $sid ? $sid : $uuid ) . '_' . $target;
 		if ( ! Lock::acquire( $lock, 120 ) ) {
 			return;
 		}
 		try {
 			$reached = [];
-			foreach ( MessageRepository::for_submission( $sid ) as $other ) {
-				if ( $other['channel'] !== $target || $other['purpose'] !== 'admin' ) {
-					continue;
-				}
+			foreach ( self::rows_on( $sid, $uuid, $target ) as $other ) {
 				if ( $other['parent_id'] ) {
 					return;
 				}
 				if ( ! in_array( $other['status'], [ 'skipped', 'cancelled' ], true ) ) {
-					$reached[ $other['recipient'] ] = true;
+					$reached[ (string) ( $other['payload']['recipient']['address'] ?? $other['recipient'] ) ] = true;
 				}
 			}
-			$s = SubmissionRepository::find( $sid );
+			$s = $s ?? SubmissionRepository::find( $sid );
 			if ( ! $s ) {
 				return;
 			}
 			$form = FormRepository::config( $s->form_id );
 			foreach ( Resolver::fallback( $target, $s, $form ) as $delivery ) {
 				// Receivers that already have this submission on that channel are not told twice.
-				if ( isset( $reached[ Queue::shown_address( $target, $delivery->recipient->address ) ] ) ) {
+				$address = $delivery->recipient->address;
+				if ( isset( $reached[ $address ] ) || isset( $reached[ Queue::shown_address( $target, $address ) ] ) ) {
 					continue;
 				}
 				Dispatcher::enqueue( $delivery, $s, $form, QuietHours::delay( $target, $form ), [ 'fallback_of' => (int) $row['id'] ] );
