@@ -38,7 +38,7 @@ final class HelpTopics {
 			'group' => 'start',
 			'body'  => '<p>' . esc_html__( 'Files are copied into a protected folder under names nobody can guess. Links in messages are signed, can expire, and always go through the plugin.', 'forms-notifier-for-elementor' ) . '</p>'
 				. '<p>' . esc_html__( 'Choose in the settings, per channel, per form or in the Elementor editor whether files are sent, linked, both, or left out. A file that is too large for a channel becomes a link.', 'forms-notifier-for-elementor' ) . '</p>'
-				. '<p>' . esc_html__( 'The folder is closed with an .htaccess file. On nginx, deny access to the folder fnfe-files in your uploads directory as well.', 'forms-notifier-for-elementor' ) . '</p>',
+				. '<p>' . esc_html__( 'The folder is closed with an .htaccess file, which only Apache and LiteSpeed read. Site Health (check "File storage") asks your web server whether the folder is really closed. On nginx, deny access to the folder fnfe-files in your uploads directory, or move the folder out of the public folder with the constant FNFE_FILES_DIR in wp-config.php.', 'forms-notifier-for-elementor' ) . '</p>',
 		];
 		return $topics;
 	}

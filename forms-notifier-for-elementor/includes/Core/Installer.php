@@ -7,6 +7,7 @@
 
 namespace AmirhpCom\FormsNotifier\Core;
 
+use AmirhpCom\FormsNotifier\Attachments\Storage;
 use AmirhpCom\FormsNotifier\Channels\Bot\BotClient;
 
 defined( 'ABSPATH' ) || exit;
@@ -130,14 +131,69 @@ final class Installer {
 		foreach ( [ 'fnfe_ui', 'fnfe_bot_ids' ] as $key ) {
 			delete_metadata( 'user', 0, $key, '', true );
 		}
-		self::delete_directory( self::storage_dir() );
+		self::delete_storage();
 		Settings::flush_cache();
 	}
 
-	/** Directory of stored files of the current site. */
-	private static function storage_dir(): string {
+	/**
+	 * Stored files of the current site. The default folder belongs to the plugin and goes completely. A folder moved
+	 * with FNFE_FILES_DIR may be shared: only the files the plugin creates are deleted there, then empty folders.
+	 * During uninstall the plugin is not loaded, so a fnfe_files_dir filter in a theme or plugin is not applied.
+	 */
+	private static function delete_storage(): void {
+		$default = Storage::default_base();
+		foreach ( Storage::roots() as $dir ) {
+			if ( $dir === $default ) {
+				self::delete_directory( $dir );
+			} else {
+				self::delete_own_files( $dir );
+			}
+		}
+	}
+
+	/**
+	 * Delete the files the storage creates inside a folder and its year/month folders, then the folders left empty.
+	 *
+	 * @param string $dir   Directory.
+	 * @param int    $depth 0 = root, 1 = year, 2 = month.
+	 */
+	private static function delete_own_files( string $dir, int $depth = 0 ): void {
+		if ( is_link( $dir ) || ! is_dir( $dir ) || in_array( untrailingslashit( wp_normalize_path( $dir ) ), self::protected_dirs(), true ) ) {
+			return;
+		}
+		foreach ( (array) scandir( $dir ) as $entry ) {
+			if ( $entry === '.' || $entry === '..' ) {
+				continue;
+			}
+			$path = $dir . '/' . $entry;
+			if ( is_dir( $path ) && ! is_link( $path ) ) {
+				if ( $depth < 2 && preg_match( $depth === 0 ? '/^\d{4}$/' : '/^\d{2}$/', (string) $entry ) ) {
+					self::delete_own_files( $path, $depth + 1 );
+				}
+			} elseif ( Storage::is_stored_name( (string) $entry, true ) ) {
+				wp_delete_file( $path );
+			}
+		}
+		$left = array_diff( (array) scandir( $dir ), [ '.', '..' ] );
+		if ( ! $left ) {
+			rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Empty storage folder; WP_Filesystem may need credentials here.
+		}
+	}
+
+	/**
+	 * Folders that are never removed, even when FNFE_FILES_DIR points at one of them.
+	 *
+	 * @return string[]
+	 */
+	private static function protected_dirs(): array {
 		$uploads = wp_upload_dir( null, false );
-		return trailingslashit( $uploads['basedir'] ) . 'fnfe-files';
+		$list    = [ ABSPATH, WP_CONTENT_DIR, (string) $uploads['basedir'], dirname( ABSPATH ) ];
+		return array_map(
+			static function ( $dir ) {
+				return untrailingslashit( wp_normalize_path( (string) $dir ) );
+			},
+			$list
+		);
 	}
 
 	/** Values that depend on the site at install time. */

@@ -43,6 +43,7 @@ final class SiteHealth implements ModuleInterface {
 		add_filter( 'debug_information', [ self::class, 'debug_information' ] );
 		add_action( 'wp_ajax_health-check-fnfe-bots', [ self::class, 'ajax_bots' ] );
 		add_action( 'rest_api_init', [ self::class, 'register_route' ] );
+		add_action( 'fnfe_settings_saved', [ Storage::class, 'forget_probe' ] );
 	}
 
 	/**
@@ -419,20 +420,31 @@ final class SiteHealth implements ModuleInterface {
 		return [ 'good', __( 'Deliveries of the last 24 hours look fine.', 'forms-notifier-for-elementor' ), 'log' ];
 	}
 
-	/** Stored files can be written and the directory is closed. */
+	/** Stored files can be written, and the web server does not hand them out by their direct address. */
 	private static function storage(): array {
 		if ( ! Settings::bool( 'attachments.keep_copy', true ) ) {
 			return [ 'good', __( 'Uploaded files are not copied.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
 		}
-		$dir    = Storage::dir();
+		$dir    = trailingslashit( Storage::base() );
 		$exists = is_dir( $dir );
 		if ( ! wp_is_writable( $exists ? $dir : self::nearest( $dir ) ) ) {
 			return [ 'critical', __( 'The folder for uploaded files is not writable.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
 		}
-		if ( $exists && ( ! is_file( $dir . 'index.php' ) || ! is_file( $dir . '.htaccess' ) ) ) {
+		if ( Storage::public_url() === '' ) {
+			return [ 'good', __( 'Uploaded files are kept outside the public folder.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
+		}
+		$dir = Storage::dir();
+		if ( ! is_file( $dir . 'index.php' ) || ! is_file( $dir . '.htaccess' ) ) {
 			return [ 'warning', __( 'The protection files of the upload folder are missing.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
 		}
-		return [ 'good', __( 'The folder for uploaded files is writable and closed.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
+		$open = Storage::is_exposed();
+		if ( $open === true ) {
+			return [ 'warning', __( 'Stored files can be opened by their direct address. The names cannot be guessed, but links then never expire. Close the folder on the web server or move it with FNFE_FILES_DIR.', 'forms-notifier-for-elementor' ), 'help' ];
+		}
+		if ( $open === false ) {
+			return [ 'good', __( 'The folder for uploaded files is writable and closed.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
+		}
+		return [ 'good', __( 'The folder for uploaded files is writable. Whether the web server closes it could not be tested.', 'forms-notifier-for-elementor' ), 'settings/attachments' ];
 	}
 
 	/**
@@ -476,9 +488,44 @@ final class SiteHealth implements ModuleInterface {
 				'label' => 'Forms Notifier',
 				'color' => $colors[ $status ],
 			],
-			'description' => '<p>' . esc_html( $check['message'] ) . '</p>',
+			'description' => '<p>' . esc_html( $check['message'] ) . '</p>' . ( $id === 'storage' && $status !== 'good' ? self::storage_steps() : '' ),
 			'actions'     => $link,
 			'test'        => 'fnfe_' . $id,
 		];
+	}
+
+	/** How to close the folder of stored files on the common web servers, as HTML. */
+	public static function storage_steps(): string {
+		$path = (string) wp_parse_url( Storage::public_url(), PHP_URL_PATH );
+		$path = $path === '' ? '/wp-content/uploads/' . Storage::FOLDER : $path;
+		$dir  = Storage::base();
+		$rows = [
+			[
+				'Apache',
+				/* translators: %s: folder on the disk */
+				sprintf( __( 'The .htaccess file in the folder closes it when the server allows overrides (AllowOverride All or AuthConfig). Otherwise add this to the site configuration, with the path of %s:', 'forms-notifier-for-elementor' ), $dir ),
+				'<Directory "' . $dir . '">' . "\n\tRequire all denied\n</Directory>",
+			],
+			[
+				'nginx',
+				__( 'nginx ignores .htaccess files. Add this to the server block of the site and reload nginx:', 'forms-notifier-for-elementor' ),
+				'location ^~ ' . trailingslashit( $path ) . " {\n\tdeny all;\n}",
+			],
+			[
+				'LiteSpeed',
+				__( 'LiteSpeed Enterprise reads the .htaccess file when overrides are on. OpenLiteSpeed does not: add a context for this address with access turned off in the WebAdmin console, then restart.', 'forms-notifier-for-elementor' ),
+				trailingslashit( $path ),
+			],
+			[
+				__( 'Any server', 'forms-notifier-for-elementor' ),
+				__( 'Move the folder out of the public folder in wp-config.php. Files stored before the move stay where they are and keep working.', 'forms-notifier-for-elementor' ),
+				"define( 'FNFE_FILES_DIR', '/path/outside/public_html/fnfe-files' );",
+			],
+		];
+		$html = '';
+		foreach ( $rows as $row ) {
+			$html .= '<p><strong>' . esc_html( $row[0] ) . '</strong>: ' . esc_html( $row[1] ) . '</p><pre><code>' . esc_html( $row[2] ) . '</code></pre>';
+		}
+		return $html;
 	}
 }

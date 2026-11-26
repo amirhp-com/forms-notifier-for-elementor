@@ -103,7 +103,7 @@ final class PathGuard {
 	public static function roots(): array {
 		$uploads = wp_upload_dir( null, false );
 		$base    = untrailingslashit( (string) $uploads['basedir'] );
-		$roots   = apply_filters( 'fnfe_allowed_file_roots', [ self::forms_dir(), $base . '/' . Storage::FOLDER, $base ] );
+		$roots   = apply_filters( 'fnfe_allowed_file_roots', array_merge( [ self::forms_dir() ], Storage::roots(), [ $base ] ) );
 
 		$out = [];
 		foreach ( is_array( $roots ) ? $roots : [] as $root ) {

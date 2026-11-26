@@ -71,8 +71,31 @@ final class Db {
 			}
 		);
 
+		self::closed_storage( true );
 		register_shutdown_function( [ self::class, 'restore' ] );
 		DbSchema::install();
+	}
+
+	/**
+	 * The storage check asks the web server whether the files folder is closed, and Stats::health() runs it for the
+	 * dashboard and the digest. During a run the cached answer is "closed"; tests of the probe switch this off.
+	 *
+	 * @param bool $on Answer from the cache.
+	 */
+	public static function closed_storage( bool $on ): void {
+		$hook = 'pre_transient_' . \AmirhpCom\FormsNotifier\Attachments\Storage::PROBE_CACHE;
+		remove_filter( $hook, [ self::class, 'closed_answer' ] );
+		if ( $on ) {
+			add_filter( $hook, [ self::class, 'closed_answer' ] );
+		}
+	}
+
+	/** Filter pre_transient_fnfe_files_exposed. */
+	public static function closed_answer(): array {
+		return [
+			'dir'  => md5( \AmirhpCom\FormsNotifier\Attachments\Storage::base() ),
+			'open' => false,
+		];
 	}
 
 	/** Drop the copies. */

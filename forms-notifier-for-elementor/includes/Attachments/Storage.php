@@ -21,10 +21,51 @@ final class Storage {
 	/** Folder inside the uploads directory. */
 	public const FOLDER = 'fnfe-files';
 
+	/** Transient with the cached answer of the probe. */
+	public const PROBE_CACHE = 'fnfe_files_exposed';
+
+	/** Name and content of the probe file. */
+	private const PROBE_FILE = 'probe.txt';
+	private const PROBE_TEXT = 'fnfe';
+
+	/** Storage root without trailing slash: constant FNFE_FILES_DIR, else filter fnfe_files_dir, else uploads/fnfe-files. */
+	public static function base(): string {
+		return self::resolve( defined( 'FNFE_FILES_DIR' ) ? constant( 'FNFE_FILES_DIR' ) : null );
+	}
+
+	/**
+	 * The storage root for a given value of the constant FNFE_FILES_DIR (null = not defined).
+	 *
+	 * @internal Used by base() and the tests.
+	 * @param mixed $constant Value of the constant.
+	 */
+	public static function resolve( $constant ): string {
+		$default = self::default_base();
+		$dir     = $default;
+		if ( is_string( $constant ) && $constant !== '' ) {
+			// Like the uploads folder: every site of a network but the main one gets its own subfolder.
+			$dir = is_multisite() && ! is_main_site() ? untrailingslashit( $constant ) . '/sites/' . get_current_blog_id() : $constant;
+		}
+		/**
+		 * Folder of stored files. The constant FNFE_FILES_DIR wins over the default; this filter wins over both.
+		 * Stream wrappers (scheme://) are refused.
+		 *
+		 * @param string $dir Absolute path.
+		 */
+		$dir = apply_filters( 'fnfe_files_dir', $dir );
+		$dir = is_string( $dir ) && $dir !== '' && ! preg_match( '#^[a-z][a-z0-9+.\-]*://#i', $dir ) && strpos( $dir, "\0" ) === false ? $dir : $default;
+		return untrailingslashit( wp_normalize_path( $dir ) );
+	}
+
+	/** The default folder uploads/fnfe-files, without trailing slash. Files stored there stay valid after a move. */
+	public static function default_base(): string {
+		$uploads = wp_upload_dir( null, false );
+		return untrailingslashit( wp_normalize_path( trailingslashit( (string) $uploads['basedir'] ) . self::FOLDER ) );
+	}
+
 	/** Absolute, trailing slash; created with index.php and .htaccess. */
 	public static function dir(): string {
-		$uploads = wp_upload_dir( null, false );
-		$dir     = trailingslashit( (string) $uploads['basedir'] ) . self::FOLDER . '/';
+		$dir = trailingslashit( self::base() );
 		if ( ! is_dir( $dir ) ) {
 			wp_mkdir_p( $dir );
 		}
@@ -34,6 +75,92 @@ final class Storage {
 			"<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n\tOrder allow,deny\n\tDeny from all\n</IfModule>\n"
 		);
 		return $dir;
+	}
+
+	/**
+	 * Address of the storage root on the web, '' when the folder is outside every public folder of WordPress.
+	 * Checked: uploads, wp-content, the WordPress folder.
+	 */
+	public static function public_url(): string {
+		$base    = self::base();
+		$uploads = wp_upload_dir( null, false );
+		$places  = [
+			[ (string) $uploads['basedir'], (string) $uploads['baseurl'] ],
+			[ WP_CONTENT_DIR, content_url() ],
+			[ ABSPATH, site_url() ],
+		];
+		foreach ( $places as $place ) {
+			$root = untrailingslashit( wp_normalize_path( $place[0] ) );
+			if ( $root !== '' && ( $base === $root || PathGuard::is_inside( $base, $root ) ) ) {
+				$rest = ltrim( substr( $base, strlen( $root ) ), '/' );
+				return untrailingslashit( trailingslashit( $place[1] ) . implode( '/', array_map( 'rawurlencode', explode( '/', $rest ) ) ) );
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Ask the web server whether a file of the folder can be opened by its direct address. The answer is cached for a
+	 * day (an hour when unclear); saving the settings forgets it.
+	 *
+	 * @return bool|null true = open, false = closed, null = outside the public folders or not testable
+	 */
+	public static function is_exposed(): ?bool {
+		$url = self::public_url();
+		if ( $url === '' ) {
+			return null;
+		}
+		$key    = md5( self::base() );
+		$cached = get_transient( self::PROBE_CACHE );
+		if ( is_array( $cached ) && ( $cached['dir'] ?? '' ) === $key && array_key_exists( 'open', $cached ) ) {
+			return is_bool( $cached['open'] ) ? $cached['open'] : null;
+		}
+
+		$open = null;
+		$dir  = self::dir();
+		self::write( $dir . self::PROBE_FILE, self::PROBE_TEXT );
+		if ( is_file( $dir . self::PROBE_FILE ) ) {
+			$response = wp_remote_get(
+				$url . '/' . self::PROBE_FILE,
+				[
+					'timeout'     => 3,
+					'redirection' => 0,
+					// Same as the loopback requests of WordPress: a local certificate is often self-signed.
+					'sslverify'   => (bool) apply_filters( 'https_local_ssl_verify', false ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core filter of loopback requests.
+				]
+			);
+			if ( ! is_wp_error( $response ) ) {
+				$code = (int) wp_remote_retrieve_response_code( $response );
+				if ( $code === 200 ) {
+					$open = trim( (string) wp_remote_retrieve_body( $response ) ) === self::PROBE_TEXT ? true : null;
+				} elseif ( in_array( $code, [ 401, 403, 404 ], true ) ) {
+					$open = false;
+				}
+			}
+		}
+		set_transient(
+			self::PROBE_CACHE,
+			[
+				'dir'  => $key,
+				'open' => $open,
+			],
+			$open === null ? HOUR_IN_SECONDS : DAY_IN_SECONDS
+		);
+		return $open;
+	}
+
+	/** Forget the answer of the probe (settings saved, folder changed). */
+	public static function forget_probe(): void {
+		delete_transient( self::PROBE_CACHE );
+	}
+
+	/**
+	 * Folders that can hold stored files: base() and the default folder, without trailing slash.
+	 *
+	 * @return string[]
+	 */
+	public static function roots(): array {
+		return array_values( array_unique( [ self::base(), self::default_base() ] ) );
 	}
 
 	/**
@@ -57,6 +184,7 @@ final class Storage {
 			return null;
 		}
 		self::write( $dir . 'index.php', "<?php\n// Silence is golden.\n" );
+		self::write( dirname( $dir ) . '/index.php', "<?php\n// Silence is golden.\n" );
 
 		$target = $dir . Crypto::token( 16 ) . ( $ext === '' ? '' : '.' . $ext );
 		if ( ! copy( $file->path, $target ) ) {
@@ -75,7 +203,7 @@ final class Storage {
 	}
 
 	/**
-	 * Delete a stored file; only files inside dir().
+	 * Delete a stored file; only files inside roots().
 	 *
 	 * @param Attachment $file File.
 	 */
@@ -84,7 +212,7 @@ final class Storage {
 	}
 
 	/**
-	 * The path is a file of the storage folder.
+	 * The path is a file of the storage folder, or of the default folder when the storage was moved.
 	 *
 	 * @param string $path Path.
 	 */
@@ -92,11 +220,17 @@ final class Storage {
 		if ( $path === '' || preg_match( '#^[a-z][a-z0-9+.\-]*://#i', $path ) ) {
 			return false;
 		}
-		$uploads = wp_upload_dir( null, false );
-		$dir     = realpath( trailingslashit( (string) $uploads['basedir'] ) . self::FOLDER );
-		$real    = realpath( $path );
-		return is_string( $dir ) && is_string( $real ) && is_file( $real )
-			&& PathGuard::is_inside( wp_normalize_path( $real ), untrailingslashit( wp_normalize_path( $dir ) ) );
+		$real = realpath( $path );
+		if ( ! is_string( $real ) || ! is_file( $real ) ) {
+			return false;
+		}
+		foreach ( self::roots() as $root ) {
+			$dir = realpath( $root );
+			if ( is_string( $dir ) && PathGuard::is_inside( wp_normalize_path( $real ), untrailingslashit( wp_normalize_path( $dir ) ) ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -152,30 +286,41 @@ final class Storage {
 	}
 
 	/**
-	 * Files of the storage folder older than some seconds.
+	 * Files of the storage folders (roots()) older than some seconds.
 	 *
 	 * @param int $seconds Age.
 	 * @param int $limit   Most paths.
 	 * @return string[]
 	 */
 	public static function older_files( int $seconds, int $limit = 500 ): array {
-		$uploads = wp_upload_dir( null, false );
-		$dir     = trailingslashit( (string) $uploads['basedir'] ) . self::FOLDER;
-		if ( ! is_dir( $dir ) ) {
-			return [];
-		}
 		$before = time() - $seconds;
 		$out    = [];
-		$files  = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ) );
-		foreach ( $files as $file ) {
-			if ( $file->isFile() && ! $file->isLink() && preg_match( '/^[a-f0-9]{32}(\.[a-z0-9]+)?$/', $file->getFilename() ) && $file->getMTime() < $before ) {
-				$out[] = $file->getPathname();
-				if ( count( $out ) >= $limit ) {
-					break;
+		foreach ( self::roots() as $dir ) {
+			if ( ! is_dir( $dir ) ) {
+				continue;
+			}
+			$files = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ) );
+			foreach ( $files as $file ) {
+				if ( $file->isFile() && ! $file->isLink() && self::is_stored_name( $file->getFilename() ) && $file->getMTime() < $before ) {
+					$out[] = $file->getPathname();
+					if ( count( $out ) >= $limit ) {
+						return $out;
+					}
 				}
 			}
 		}
 		return $out;
+	}
+
+	/**
+	 * A file name the storage creates: a stored copy, or one of the protection and probe files.
+	 *
+	 * @param string $name     File name.
+	 * @param bool   $own_too  Also accept index.php, .htaccess and the probe file.
+	 */
+	public static function is_stored_name( string $name, bool $own_too = false ): bool {
+		return preg_match( '/^[a-f0-9]{32}(\.[a-z0-9]+)?$/', $name ) === 1
+			|| ( $own_too && in_array( $name, [ 'index.php', '.htaccess', self::PROBE_FILE ], true ) );
 	}
 
 	/**

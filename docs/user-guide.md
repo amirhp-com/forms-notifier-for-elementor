@@ -113,11 +113,26 @@ Add **Forms Notifier** under "Actions After Submit" to set, in the editor: notif
 
 Settings, Attachments: **off**, **send links**, **send the files**, or **both**; file types (all, images, a list of extensions), largest file and number of files. Per channel, per form and in the editor the rule can differ. A file too large for a channel becomes a link.
 
-**Keep a protected copy** stores files in `wp-content/uploads/fnfe-files` under names nobody can guess. Download links are signed and can expire (**Download links expire after**). On nginx also deny direct access to that folder:
+**Keep a protected copy** stores files in `wp-content/uploads/fnfe-files` under names nobody can guess. Download links are signed and can expire (**Download links expire after**). The folder carries an `.htaccess` that closes it on Apache and LiteSpeed. Tools, Site Health, **File storage** asks your web server once a day whether a file of the folder can still be opened by its direct address, and shows how to close it when it can:
 
-```nginx
-location ^~ /wp-content/uploads/fnfe-files/ { deny all; }
-```
+- **Apache**: works when the site allows `.htaccess` overrides. If not, add to the site configuration:
+  ```apache
+  <Directory "/path/to/wp-content/uploads/fnfe-files">
+  	Require all denied
+  </Directory>
+  ```
+- **nginx** ignores `.htaccess`. Add to the server block and reload:
+  ```nginx
+  location ^~ /wp-content/uploads/fnfe-files/ { deny all; }
+  ```
+- **LiteSpeed Enterprise** reads the `.htaccess`. **OpenLiteSpeed** does not: in WebAdmin add a context for `/wp-content/uploads/fnfe-files/` with access off, then restart.
+- **Any server**, also managed hosting without access to the server configuration: move the folder out of the public folder in `wp-config.php`:
+  ```php
+  define( 'FNFE_FILES_DIR', '/path/outside/public_html/fnfe-files' );
+  ```
+  Files stored before stay in the old folder and keep working until they are cleaned up. The plugin does not move them, and they should not be moved by hand: the database keeps the full path of each file.
+
+When the folder is closed or outside the public folder, Site Health shows the check as good. When the server could not be asked (for example a loopback request is blocked), it says so instead of claiming the folder is closed.
 
 ## Submissions
 

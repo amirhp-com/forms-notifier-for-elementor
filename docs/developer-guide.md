@@ -836,9 +836,19 @@ add_filter( 'fnfe_attachments', function ( $result, $message, $submission ) {
 }, 10, 3 );
 ```
 
+#### `fnfe_files_dir`
+
+`string $dir`. Absolute folder of stored files, without trailing slash. The default is `fnfe-files` in the uploads folder; the constant `FNFE_FILES_DIR` replaces the default and this filter wins over both. Stream wrappers (`scheme://`) are refused. Files stored before a change stay where they are: they are still served, cleaned up and deleted, because the default folder stays an allowed one. They are not moved. The filter is not applied during uninstall (the plugin is not loaded then), so a folder chosen with the filter is not emptied by "Delete all data": use the constant for that.
+
+```php
+add_filter( 'fnfe_files_dir', function ( $dir ) {
+	return '/srv/private/fnfe-files/site-' . get_current_blog_id();
+} );
+```
+
 #### `fnfe_allowed_file_roots`
 
-`string[] $folders`. Folders files may be read from. The default is the upload folder of Elementor forms, the folder `fnfe-files` and the uploads folder.
+`string[] $folders`. Folders files may be read from. The default is the upload folder of Elementor forms, the storage folder (`fnfe_files_dir`), the default folder `fnfe-files` and the uploads folder.
 
 ```php
 add_filter( 'fnfe_allowed_file_roots', function ( $folders ) {
@@ -1633,6 +1643,12 @@ Every secret can be set in `wp-config.php`. The name is `FNFE_` plus the setting
 define( 'FNFE_CHANNELS_TELEGRAM_TOKEN', '123456789:ABC-DEF' );
 ```
 
+Set by you, in `wp-config.php`:
+
+| Constant | |
+|---|---|
+| `FNFE_FILES_DIR` | Absolute folder for stored files, best outside the public folder: `define( 'FNFE_FILES_DIR', '/home/site/private/fnfe-files' );`. Every site of a network but the main one gets the subfolder `sites/<id>`. Files stored before are not moved and keep working. Uninstall with "Delete all data" removes only the files the plugin created there (stored copies, `index.php`, `.htaccess`, `probe.txt`) and the empty year and month folders. |
+
 Defined by the plugin: `FNFE_VERSION`, `FNFE_DB_VERSION`, `FNFE_FILE`, `FNFE_DIR`, `FNFE_URL`, `FNFE_BASENAME`, `FNFE_MIN_PHP`, `FNFE_MIN_WP`.
 
 Respected constants of WordPress: `DISABLE_WP_CRON`, `SCRIPT_DEBUG`, `WP_DEBUG_LOG` (only with "Detailed system log").
@@ -1667,4 +1683,4 @@ Six tables, each with the prefix of WordPress in front. Dates are UTC. JSON is s
 | `fnfe_digest_tick` | cron, hourly | Digest when it is due |
 | `fnfe_cleanup` | cron, daily | Retention |
 
-Stored files are in `fnfe-files` inside the uploads folder. Nothing is deleted when the plugin is removed unless "Delete all data when the plugin is deleted" is on.
+Stored files are in `fnfe-files` inside the uploads folder, or in the folder of `FNFE_FILES_DIR` / `fnfe_files_dir`, under `<year>/<month>/<32 hex characters>.<ext>`, with `index.php` in every level, an `.htaccess` and `probe.txt` (the Site Health check requests it once a day to learn whether the web server hands out the folder; transient `fnfe_files_exposed`, forgotten when the settings are saved). Nothing is deleted when the plugin is removed unless "Delete all data when the plugin is deleted" is on.
