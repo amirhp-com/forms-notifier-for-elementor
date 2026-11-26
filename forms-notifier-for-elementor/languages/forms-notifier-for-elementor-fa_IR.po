@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Forms Notifier for Elementor 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/forms-notifier-for-elementor\n"
-"POT-Creation-Date: 2026-11-26T07:28:55+00:00\n"
+"POT-Creation-Date: 2026-11-26T07:34:38+00:00\n"
 "PO-Revision-Date: 2026-11-26T07:10:52+00:00\n"
 "Last-Translator: Amirhossein Hosseinpour\n"
 "Language-Team: Persian\n"
@@ -132,7 +132,7 @@ msgstr "شروع کار"
 msgid "Templates & tags"
 msgstr "قالب‌ها و برچسب‌ها"
 
-#: includes/Admin/HelpContent.php:120 includes/Channels/Bot/BotModule.php:114
+#: includes/Admin/HelpContent.php:120 includes/Channels/Bot/BotModule.php:115
 #: includes/MiniApp/Module.php:265
 msgid "Bots and Mini App"
 msgstr "ربات‌ها و مینی‌اپ"
@@ -906,7 +906,7 @@ msgid "Applies the choice above. Run it again after you change the token or the 
 msgstr "انتخاب بالا را اعمال می‌کند. پس از تغییر توکن یا نشانی سایت، دوباره اجرایش کنید."
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:120
-#: includes/Channels/Bot/BotModule.php:133
+#: includes/Channels/Bot/BotModule.php:134
 #: assets/js/admin/screens/miniapp.js:22
 msgid "Connect"
 msgstr "اتصال"
@@ -1138,127 +1138,127 @@ msgstr "حجم فایل بیشتر از %1$s است و بارگذاری نمی�
 msgid "The server does not have enough memory to upload this file."
 msgstr "حافظه سرور برای بارگذاری این فایل کافی نیست."
 
-#: includes/Channels/Bot/BotModule.php:127
+#: includes/Channels/Bot/BotModule.php:128
 msgid "Connect a bot"
 msgstr "اتصال ربات"
 
-#: includes/Channels/Bot/BotModule.php:129
+#: includes/Channels/Bot/BotModule.php:130
 msgid "The same steps work for Telegram and Bale."
 msgstr "مراحل برای تلگرام و بله یکسان است."
 
-#: includes/Channels/Bot/BotModule.php:131
+#: includes/Channels/Bot/BotModule.php:132
 msgid "Create the bot"
 msgstr "ساخت ربات"
 
-#: includes/Channels/Bot/BotModule.php:131
+#: includes/Channels/Bot/BotModule.php:132
 msgid "Open @BotFather in Telegram (or @botfather in Bale), create a bot and copy its token. Keep the token secret: whoever has it controls the bot."
 msgstr "در تلگرام ‎@BotFather (یا در بله ‎@botfather) را باز کنید، یک ربات بسازید و توکن آن را کپی کنید. توکن را محرمانه نگه دارید: هر کس آن را داشته باشد ربات را در اختیار دارد."
 
-#: includes/Channels/Bot/BotModule.php:132
+#: includes/Channels/Bot/BotModule.php:133
 msgid "Enter the token"
 msgstr "وارد کردن توکن"
 
-#: includes/Channels/Bot/BotModule.php:132
+#: includes/Channels/Bot/BotModule.php:133
 msgid "Open the channel in the plugin, paste the token, press \"Test connection\" and save. The token is stored encrypted. It can also be set in wp-config.php:"
 msgstr "کانال را در افزونه باز کنید، توکن را بچسبانید، «آزمایش اتصال» را بزنید و ذخیره کنید. توکن رمزنگاری‌شده ذخیره می‌شود. می‌توانید آن را در wp-config.php هم تعریف کنید:"
 
-#: includes/Channels/Bot/BotModule.php:133
+#: includes/Channels/Bot/BotModule.php:134
 msgid "Press \"Connect\". On a site with a public HTTPS address the messenger calls the site (webhook). Otherwise the site asks the messenger for news every minute, which needs a working WordPress cron."
 msgstr "«اتصال» را بزنید. اگر سایت نشانی عمومی HTTPS داشته باشد، پیام‌رسان خودش سایت را فرا می‌خواند (وب‌هوک). در غیر این صورت سایت هر دقیقه از پیام‌رسان خبر تازه را می‌پرسد و برای این کار کران وردپرس باید درست کار کند."
 
-#: includes/Channels/Bot/BotModule.php:134
+#: includes/Channels/Bot/BotModule.php:135
 msgid "Choose receivers"
 msgstr "انتخاب گیرنده‌ها"
 
-#: includes/Channels/Bot/BotModule.php:134
+#: includes/Channels/Bot/BotModule.php:135
 msgid "Find the chats as described in the next topic and add them as receivers. Then send a test."
 msgstr "گفت‌وگوها را مطابق موضوع بعدی پیدا کنید و آن‌ها را به‌عنوان گیرنده اضافه کنید. سپس یک پیام آزمایشی بفرستید."
 
-#: includes/Channels/Bot/BotModule.php:138
+#: includes/Channels/Bot/BotModule.php:139
 msgid "Find chats and topics"
 msgstr "پیدا کردن گفت‌وگوها و تاپیک‌ها"
 
-#: includes/Channels/Bot/BotModule.php:140
+#: includes/Channels/Bot/BotModule.php:141
 msgid "A messenger does not list the chats of a bot. The plugin learns them from the messages the bot sees."
 msgstr "پیام‌رسان فهرست گفت‌وگوهای ربات را در اختیار نمی‌گذارد. افزونه آن‌ها را از پیام‌هایی که ربات می‌بیند یاد می‌گیرد."
 
-#: includes/Channels/Bot/BotModule.php:142
+#: includes/Channels/Bot/BotModule.php:143
 msgid "A person"
 msgstr "یک فرد"
 
-#: includes/Channels/Bot/BotModule.php:142
+#: includes/Channels/Bot/BotModule.php:143
 msgid "The person opens the bot and presses Start. A bot cannot write to somebody who has not done that."
 msgstr "فرد ربات را باز می‌کند و «شروع» را می‌زند. ربات نمی‌تواند به کسی که این کار را نکرده پیام بدهد."
 
-#: includes/Channels/Bot/BotModule.php:143
+#: includes/Channels/Bot/BotModule.php:144
 msgid "A group"
 msgstr "یک گروه"
 
-#: includes/Channels/Bot/BotModule.php:143
+#: includes/Channels/Bot/BotModule.php:144
 msgid "Add the bot to the group and send /id there. A bot that is not an admin only sees commands, so an ordinary message is not enough."
 msgstr "ربات را به گروه اضافه کنید و آنجا ‎/id بفرستید. رباتی که مدیر نیست فقط فرمان‌ها را می‌بیند، پس پیام معمولی کافی نیست."
 
-#: includes/Channels/Bot/BotModule.php:144
+#: includes/Channels/Bot/BotModule.php:145
 msgid "A topic in a Telegram group"
 msgstr "یک تاپیک در گروه تلگرام"
 
-#: includes/Channels/Bot/BotModule.php:144
+#: includes/Channels/Bot/BotModule.php:145
 msgid "Send /id once inside each topic, or make the bot an admin. Messages to the group itself go to the topic \"General\"."
 msgstr "در هر تاپیک یک بار ‎/id بفرستید یا ربات را مدیر گروه کنید. پیام‌هایی که به خود گروه فرستاده می‌شوند به تاپیک «General» می‌روند."
 
-#: includes/Channels/Bot/BotModule.php:145
+#: includes/Channels/Bot/BotModule.php:146
 msgid "A channel"
 msgstr "یک کانال"
 
-#: includes/Channels/Bot/BotModule.php:145
+#: includes/Channels/Bot/BotModule.php:146
 msgid "Telegram: add the bot as an admin and publish one post. Bale does not report channels: add the bot as an admin and type the @username or the id of the channel."
 msgstr "تلگرام: ربات را مدیر کانال کنید و یک پست منتشر کنید. بله کانال‌ها را گزارش نمی‌دهد: ربات را مدیر کانال کنید و ‎@username یا شناسه کانال را بنویسید."
 
-#: includes/Channels/Bot/BotModule.php:146
+#: includes/Channels/Bot/BotModule.php:147
 msgid "By hand"
 msgstr "دستی"
 
-#: includes/Channels/Bot/BotModule.php:146
+#: includes/Channels/Bot/BotModule.php:147
 msgid "These forms are accepted as an address:"
 msgstr "این قالب‌ها به‌عنوان نشانی پذیرفته می‌شوند:"
 
-#: includes/Channels/Bot/BotModule.php:150
+#: includes/Channels/Bot/BotModule.php:151
 msgid "Bot commands and admins"
 msgstr "فرمان‌ها و مدیران ربات"
 
-#: includes/Channels/Bot/BotModule.php:155
+#: includes/Channels/Bot/BotModule.php:156
 msgid "Greeting. Also used by the link that connects an admin."
 msgstr "خوشامدگویی. پیوندی که یک مدیر را متصل می‌کند هم از همین استفاده می‌کند."
 
-#: includes/Channels/Bot/BotModule.php:156
+#: includes/Channels/Bot/BotModule.php:157
 msgid "Id of the chat and the address to enter as a receiver."
 msgstr "شناسه گفت‌وگو و نشانی‌ای که باید به‌عنوان گیرنده وارد شود."
 
-#: includes/Channels/Bot/BotModule.php:157
+#: includes/Channels/Bot/BotModule.php:158
 msgid "List of commands."
 msgstr "فهرست فرمان‌ها."
 
-#: includes/Channels/Bot/BotModule.php:158
+#: includes/Channels/Bot/BotModule.php:159
 msgid "Forms with their number of submissions (admins)."
 msgstr "فرم‌ها همراه با تعداد ارسالی‌هایشان (مدیران)."
 
-#: includes/Channels/Bot/BotModule.php:159
+#: includes/Channels/Bot/BotModule.php:160
 msgid "Latest submissions, 10 at most (admins)."
 msgstr "آخرین ارسالی‌ها، حداکثر ۱۰ مورد (مدیران)."
 
-#: includes/Channels/Bot/BotModule.php:160
+#: includes/Channels/Bot/BotModule.php:161
 msgid "Submissions and messages of today and the last 7 days (admins)."
 msgstr "ارسالی‌ها و پیام‌های امروز و ۷ روز گذشته (مدیران)."
 
-#: includes/Channels/Bot/BotModule.php:161
+#: includes/Channels/Bot/BotModule.php:162
 msgid "Opens the Mini App (admins)."
 msgstr "مینی‌اپ را باز می‌کند (مدیران)."
 
-#: includes/Channels/Bot/BotModule.php:162
+#: includes/Channels/Bot/BotModule.php:163
 msgid "In a group, admin commands are answered only when the group is a receiver."
 msgstr "در گروه، فرمان‌های مدیریتی فقط وقتی پاسخ داده می‌شوند که گروه گیرنده باشد."
 
-#: includes/Channels/Bot/BotModule.php:163
+#: includes/Channels/Bot/BotModule.php:164
 msgid "To make somebody an admin, open the bot screen, choose a WordPress user and send that person the link. It works once and for 15 minutes."
 msgstr "برای مدیر کردن یک نفر، صفحه ربات را باز کنید، یک کاربر وردپرس را انتخاب کنید و پیوند را برای او بفرستید. پیوند فقط یک بار و تا ۱۵ دقیقه کار می‌کند."
 
@@ -4937,6 +4937,11 @@ msgstr "این درگاه وضعیتش را گزارش نمی‌دهد."
 msgid "This gateway cannot send a test."
 msgstr "این درگاه نمی‌تواند پیام آزمایشی بفرستد."
 
+#: includes/Rest/Controller.php:276 assets/js/admin/fields.js:415
+#: assets/js/admin/widgets/rules.js:66
+msgid ", "
+msgstr "، "
+
 #: includes/Rest/FilesController.php:66
 msgid "Too many downloads. Try again in a minute."
 msgstr "دانلودها بیش از حد بود. یک دقیقه دیگر دوباره امتحان کنید."
@@ -5828,7 +5833,7 @@ msgstr "تیره"
 
 #: assets/js/admin/app.js:63 assets/js/miniapp/app.js:824
 msgid "Theme"
-msgstr "پوسته"
+msgstr "حالت نمایش"
 
 #: assets/js/admin/app.js:71
 msgid "Help for this screen"
@@ -5844,7 +5849,7 @@ msgstr "تغییرات ذخیره‌نشده"
 
 #: assets/js/admin/app.js:88
 msgid "Discard"
-msgstr "کنار گذاشتن"
+msgstr "لغو تغییرات"
 
 #. translators: %s: number of changes
 #: assets/js/admin/app.js:103
@@ -6190,10 +6195,6 @@ msgstr "بازگردانی"
 #: assets/js/admin/fields.js:375
 msgid "Show or hide"
 msgstr "نمایش یا پنهان کردن"
-
-#: assets/js/admin/fields.js:415 assets/js/admin/widgets/rules.js:66
-msgid ", "
-msgstr "، "
 
 #. translators: %s: position of the item
 #: assets/js/admin/fields.js:418
@@ -7221,7 +7222,7 @@ msgstr "نوع فرم"
 
 #: assets/js/admin/screens/forms.js:74
 msgid "Notifies"
-msgstr "اعلان"
+msgstr "اعلان‌رسانی"
 
 #: assets/js/admin/screens/forms.js:77
 msgid "Last one"
@@ -7345,7 +7346,7 @@ msgstr "نوع پیام"
 
 #: assets/js/admin/screens/log.js:75
 msgid "Caused by"
-msgstr "به دلیل"
+msgstr "منشأ"
 
 #: assets/js/admin/screens/log.js:77 assets/js/admin/screens/log.js:215
 msgid "Attempts"

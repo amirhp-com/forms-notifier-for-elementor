@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-26T07:29:02+00:00\n"
+"POT-Creation-Date: 2026-11-26T07:34:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Domain: forms-notifier-for-elementor\n"
 
@@ -166,7 +166,7 @@ msgid "Templates & tags"
 msgstr ""
 
 #: includes/Admin/HelpContent.php:120
-#: includes/Channels/Bot/BotModule.php:114
+#: includes/Channels/Bot/BotModule.php:115
 #: includes/MiniApp/Module.php:265
 msgid "Bots and Mini App"
 msgstr ""
@@ -963,7 +963,7 @@ msgid "Applies the choice above. Run it again after you change the token or the 
 msgstr ""
 
 #: includes/Channels/Bot/AbstractUpdatesChannel.php:120
-#: includes/Channels/Bot/BotModule.php:133
+#: includes/Channels/Bot/BotModule.php:134
 #: assets/js/admin/screens/miniapp.js:22
 msgid "Connect"
 msgstr ""
@@ -1204,127 +1204,127 @@ msgstr ""
 msgid "The server does not have enough memory to upload this file."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:127
+#: includes/Channels/Bot/BotModule.php:128
 msgid "Connect a bot"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:129
+#: includes/Channels/Bot/BotModule.php:130
 msgid "The same steps work for Telegram and Bale."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:131
+#: includes/Channels/Bot/BotModule.php:132
 msgid "Create the bot"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:131
+#: includes/Channels/Bot/BotModule.php:132
 msgid "Open @BotFather in Telegram (or @botfather in Bale), create a bot and copy its token. Keep the token secret: whoever has it controls the bot."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:132
+#: includes/Channels/Bot/BotModule.php:133
 msgid "Enter the token"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:132
+#: includes/Channels/Bot/BotModule.php:133
 msgid "Open the channel in the plugin, paste the token, press \"Test connection\" and save. The token is stored encrypted. It can also be set in wp-config.php:"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:133
+#: includes/Channels/Bot/BotModule.php:134
 msgid "Press \"Connect\". On a site with a public HTTPS address the messenger calls the site (webhook). Otherwise the site asks the messenger for news every minute, which needs a working WordPress cron."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:134
+#: includes/Channels/Bot/BotModule.php:135
 msgid "Choose receivers"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:134
+#: includes/Channels/Bot/BotModule.php:135
 msgid "Find the chats as described in the next topic and add them as receivers. Then send a test."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:138
+#: includes/Channels/Bot/BotModule.php:139
 msgid "Find chats and topics"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:140
+#: includes/Channels/Bot/BotModule.php:141
 msgid "A messenger does not list the chats of a bot. The plugin learns them from the messages the bot sees."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:142
+#: includes/Channels/Bot/BotModule.php:143
 msgid "A person"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:142
+#: includes/Channels/Bot/BotModule.php:143
 msgid "The person opens the bot and presses Start. A bot cannot write to somebody who has not done that."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:143
+#: includes/Channels/Bot/BotModule.php:144
 msgid "A group"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:143
+#: includes/Channels/Bot/BotModule.php:144
 msgid "Add the bot to the group and send /id there. A bot that is not an admin only sees commands, so an ordinary message is not enough."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:144
+#: includes/Channels/Bot/BotModule.php:145
 msgid "A topic in a Telegram group"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:144
+#: includes/Channels/Bot/BotModule.php:145
 msgid "Send /id once inside each topic, or make the bot an admin. Messages to the group itself go to the topic \"General\"."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:145
+#: includes/Channels/Bot/BotModule.php:146
 msgid "A channel"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:145
+#: includes/Channels/Bot/BotModule.php:146
 msgid "Telegram: add the bot as an admin and publish one post. Bale does not report channels: add the bot as an admin and type the @username or the id of the channel."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:146
+#: includes/Channels/Bot/BotModule.php:147
 msgid "By hand"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:146
+#: includes/Channels/Bot/BotModule.php:147
 msgid "These forms are accepted as an address:"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:150
+#: includes/Channels/Bot/BotModule.php:151
 msgid "Bot commands and admins"
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:155
+#: includes/Channels/Bot/BotModule.php:156
 msgid "Greeting. Also used by the link that connects an admin."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:156
+#: includes/Channels/Bot/BotModule.php:157
 msgid "Id of the chat and the address to enter as a receiver."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:157
+#: includes/Channels/Bot/BotModule.php:158
 msgid "List of commands."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:158
+#: includes/Channels/Bot/BotModule.php:159
 msgid "Forms with their number of submissions (admins)."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:159
+#: includes/Channels/Bot/BotModule.php:160
 msgid "Latest submissions, 10 at most (admins)."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:160
+#: includes/Channels/Bot/BotModule.php:161
 msgid "Submissions and messages of today and the last 7 days (admins)."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:161
+#: includes/Channels/Bot/BotModule.php:162
 msgid "Opens the Mini App (admins)."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:162
+#: includes/Channels/Bot/BotModule.php:163
 msgid "In a group, admin commands are answered only when the group is a receiver."
 msgstr ""
 
-#: includes/Channels/Bot/BotModule.php:163
+#: includes/Channels/Bot/BotModule.php:164
 msgid "To make somebody an admin, open the bot screen, choose a WordPress user and send that person the link. It works once and for 15 minutes."
 msgstr ""
 
@@ -5083,6 +5083,12 @@ msgstr ""
 msgid "This gateway cannot send a test."
 msgstr ""
 
+#: includes/Rest/Controller.php:276
+#: assets/js/admin/fields.js:415
+#: assets/js/admin/widgets/rules.js:66
+msgid ", "
+msgstr ""
+
 #: includes/Rest/FilesController.php:66
 msgid "Too many downloads. Try again in a minute."
 msgstr ""
@@ -6409,11 +6415,6 @@ msgstr ""
 
 #: assets/js/admin/fields.js:375
 msgid "Show or hide"
-msgstr ""
-
-#: assets/js/admin/fields.js:415
-#: assets/js/admin/widgets/rules.js:66
-msgid ", "
 msgstr ""
 
 #. translators: %s: position of the item
