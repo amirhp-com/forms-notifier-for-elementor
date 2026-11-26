@@ -347,4 +347,22 @@ final class ReportsTest extends TestCase {
 		Digest::tick();
 		$this->assertCount( 1, FakeChannel::$sent );
 	}
+
+	public function test_health_lines_follow_the_language_of_each_receiver(): void {
+		Settings::overlay( [ 'miniapp.enabled' => true ] );
+		$this->filter( 'home_url', static function ( $url ) { return str_replace( 'https://', 'http://', $url ); }, 99 );
+		$this->filter( 'gettext', static function ( $translation, $text, $domain ) {
+			return $domain === 'forms-notifier-for-elementor' && strpos( get_locale(), 'fa' ) === 0 ? 'FA ' . $text : $translation;
+		}, 10, 3 );
+		$data = Digest::data();
+		$https = array_values( array_filter( $data['health'], static function ( $c ) { return $c['id'] === 'https'; } ) )[0];
+		$this->assertNotSame( 'good', $https['status'] );
+		$this->assertSame( 0, strpos( $https['message'], 'Bot webhooks' ), 'collected in English' );
+
+		$fa = \AmirhpCom\FormsNotifier\Core\I18n::with_language( 'fa', static function () use ( $data ) { return Digest::tags( $data ); } );
+		$this->assertContains( 'FA Bot webhooks', $fa['digest.health'] );
+		$this->assertContains( 'Bot webhooks', Digest::tags( $data )['digest.health'] );
+		$this->assertNotContains( 'FA ', Digest::tags( $data )['digest.health'] );
+		Settings::clear_overlay();
+	}
 }

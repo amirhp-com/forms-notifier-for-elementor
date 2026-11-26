@@ -13,6 +13,7 @@ use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\State;
 use AmirhpCom\FormsNotifier\Core\Text;
 use AmirhpCom\FormsNotifier\Core\Urls;
+use AmirhpCom\FormsNotifier\Health\SiteHealth;
 use AmirhpCom\FormsNotifier\Model\SendResult;
 use AmirhpCom\FormsNotifier\Rest\Controller;
 use AmirhpCom\FormsNotifier\Template\DefaultTemplates;
@@ -178,7 +179,7 @@ final class Digest {
 		$health = [];
 		foreach ( (array) ( $data['health'] ?? [] ) as $check ) {
 			if ( ( $check['status'] ?? 'good' ) !== 'good' ) {
-				$health[] = (string) $check['message'];
+				$health[] = self::health_message( (array) $check );
 			}
 		}
 
@@ -194,6 +195,22 @@ final class Digest {
 			'digest.queue'       => number_format_i18n( (int) ( $data['queue'] ?? 0 ) ),
 			'digest.url'         => Urls::admin(),
 		];
+	}
+
+	/**
+	 * Text of a health check in the active language. The data is collected once for every receiver, so a known check
+	 * is run again here when the language of this message is another one.
+	 *
+	 * @param array $check Item of SiteHealth::checks().
+	 */
+	private static function health_message( array $check ): string {
+		$message = (string) ( $check['message'] ?? '' );
+		$id      = (string) ( $check['id'] ?? '' );
+		if ( $id === '' || ! class_exists( SiteHealth::class ) || ! array_key_exists( $id, SiteHealth::labels() ) ) {
+			return $message;
+		}
+		$again = SiteHealth::check( $id );
+		return $again['status'] === ( $check['status'] ?? '' ) && $again['message'] !== '' ? $again['message'] : $message;
 	}
 
 	/**

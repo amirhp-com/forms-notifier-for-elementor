@@ -221,7 +221,7 @@ final class SiteHealth implements ModuleInterface {
 	}
 
 	/** Checks: id => label. */
-	private static function labels(): array {
+	public static function labels(): array {
 		return [
 			'forms'      => __( 'Form builder', 'forms-notifier-for-elementor' ),
 			'channels'   => __( 'Channels', 'forms-notifier-for-elementor' ),
