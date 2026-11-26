@@ -61,8 +61,7 @@
 		/** One plain sentence about a rule. */
 		function sentence( rule ) {
 			const when = rule.conditions.length
-				/* translators: %s: conditions such as: Plan is "vip" */
-				? sprintf( __( 'When %s', 'forms-notifier-for-elementor' ), and( rule.conditions.map( ( c ) => subjectLabel( c.field ) + ' ' + ( OPS()[ c.op ] || c.op ) + ( c.op === 'empty' || c.op === 'not_empty' ? '' : /* translators: %s: value of a condition */ ' ' + sprintf( __( '"%s"', 'forms-notifier-for-elementor' ), c.value || '?' ) ) ), rule.match === 'any' ) )
+				? sprintf( /* translators: %s: conditions such as: Plan is "vip" */ __( 'When %s', 'forms-notifier-for-elementor' ), and( rule.conditions.map( ( c ) => subjectLabel( c.field ) + ' ' + ( OPS()[ c.op ] || c.op ) + ( c.op === 'empty' || c.op === 'not_empty' ? '' : /* translators: %s: value of a condition */ ' ' + sprintf( __( '"%s"', 'forms-notifier-for-elementor' ), c.value || '?' ) ) ), rule.match === 'any' ) )
 				: __( 'Always', 'forms-notifier-for-elementor' );
 			const names = rule.channels.map( ui.channelLabel ).join( __( ', ', 'forms-notifier-for-elementor' ) );
 			const count = Object.keys( rule.receivers || {} ).reduce( ( sum, id ) => sum + ( rule.channels.indexOf( id ) > -1 ? rule.receivers[ id ].length : 0 ), 0 );

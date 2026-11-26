@@ -195,8 +195,7 @@
 				return __( 'Nothing is waiting', 'forms-notifier-for-elementor' );
 			}
 			return queue && queue.next_run && new Date( queue.next_run ) > new Date()
-				/* translators: %s: relative time */
-				? sprintf( __( 'Next run %s', 'forms-notifier-for-elementor' ), fmt.relative( queue.next_run ) )
+				? sprintf( /* translators: %s: relative time */ __( 'Next run %s', 'forms-notifier-for-elementor' ), fmt.relative( queue.next_run ) )
 				: __( 'Waiting for the next run', 'forms-notifier-for-elementor' );
 		}
 

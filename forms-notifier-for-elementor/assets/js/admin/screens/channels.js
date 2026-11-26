@@ -44,10 +44,8 @@
 							go();
 						} else {
 							window.fnfe.toast( on
-								/* translators: %s: channel name */
-								? sprintf( __( '%s is on.', 'forms-notifier-for-elementor' ), meta.label )
-								/* translators: %s: channel name */
-								: sprintf( __( '%s is off.', 'forms-notifier-for-elementor' ), meta.label ), 'success' );
+								? sprintf( /* translators: %s: channel name */ __( '%s is on.', 'forms-notifier-for-elementor' ), meta.label )
+								: sprintf( /* translators: %s: channel name */ __( '%s is off.', 'forms-notifier-for-elementor' ), meta.label ), 'success' );
 						}
 					}, ui.fail );
 				},
@@ -85,8 +83,7 @@
 			};
 			const search = ui.Search( { value: shell.query.q || '', placeholder: __( 'Search channels', 'forms-notifier-for-elementor' ), wait: 150, onSearch: ( text ) => shell.setQuery( { q: text }, true ) } );
 			const on = ( boot.channels || [] ).filter( ( item ) => item.enabled ).length;
-			/* translators: %s: number of channels */
-			shell.header( { title: __( 'Channels', 'forms-notifier-for-elementor' ), sub: on ? sprintf( _n( '%s channel is on', '%s channels are on', on, 'forms-notifier-for-elementor' ), fmt.number( on ) ) : __( 'Choose where form submissions go.', 'forms-notifier-for-elementor' ), actions: search } );
+			shell.header( { title: __( 'Channels', 'forms-notifier-for-elementor' ), sub: on ? sprintf( /* translators: %s: number of channels */ _n( '%s channel is on', '%s channels are on', on, 'forms-notifier-for-elementor' ), fmt.number( on ) ) : __( 'Choose where form submissions go.', 'forms-notifier-for-elementor' ), actions: search } );
 			container.appendChild( list );
 			draw();
 			const off = bus.on( 'channels', draw );

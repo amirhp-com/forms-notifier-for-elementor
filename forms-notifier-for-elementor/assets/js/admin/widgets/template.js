@@ -164,10 +164,8 @@
 			mount( meter, frag(
 				last.limit ? h( 'span', { class: [ 'fnfe-meter', ratio >= 1 ? 'is-over' : ratio > 0.8 ? 'is-near' : '' ], 'aria-hidden': 'true' }, h( 'i', { style: { width: Math.round( ratio * 100 ) + '%' } } ) ) : null,
 				h( 'span', null, last.limit
-					/* translators: %1$s: used characters, %2$s: allowed characters */
-					? sprintf( __( '%1$s of %2$s characters', 'forms-notifier-for-elementor' ), fmt.number( last.length ), fmt.number( last.limit ) )
-					/* translators: %s: number of characters */
-					: sprintf( _n( '%s character', '%s characters', last.length, 'forms-notifier-for-elementor' ), fmt.number( last.length ) ) ),
+					? sprintf( /* translators: %1$s: used characters, %2$s: allowed characters */ __( '%1$s of %2$s characters', 'forms-notifier-for-elementor' ), fmt.number( last.length ), fmt.number( last.limit ) )
+					: sprintf( /* translators: %s: number of characters */ _n( '%s character', '%s characters', last.length, 'forms-notifier-for-elementor' ), fmt.number( last.length ) ) ),
 				/* translators: %s: number of messages */
 				parts > 1 ? ui.Badge( sprintf( _n( '%s message', '%s messages', parts, 'forms-notifier-for-elementor' ), fmt.number( parts ) ), 'info' ) : null
 			) );
@@ -237,8 +235,7 @@
 			head[ 1 ],
 			fmt.number( vars )
 		) + ' ' + ( rest
-			/* translators: %s: normal text */
-			? sprintf( __( 'Gateways without patterns send: %s', 'forms-notifier-for-elementor' ), rest )
+			? sprintf( /* translators: %s: normal text */ __( 'Gateways without patterns send: %s', 'forms-notifier-for-elementor' ), rest )
 			: __( 'Gateways without patterns are skipped: there is no normal text below "---".', 'forms-notifier-for-elementor' ) );
 	}
 

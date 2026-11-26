@@ -100,8 +100,7 @@
 		root.classList.toggle( 'has-savebar', !! state );
 		if ( state ) {
 			saveText.textContent = state.count
-				/* translators: %s: number of changes */
-				? sprintf( _n( '%s unsaved change', '%s unsaved changes', state.count, 'forms-notifier-for-elementor' ), fmt.number( state.count ) )
+				? sprintf( /* translators: %s: number of changes */ _n( '%s unsaved change', '%s unsaved changes', state.count, 'forms-notifier-for-elementor' ), fmt.number( state.count ) )
 				: __( 'Unsaved changes', 'forms-notifier-for-elementor' );
 		}
 		router.guard( state ? leave : null );

@@ -146,14 +146,12 @@
 		const provider = { wpml: 'WPML', polylang: 'Polylang' }[ boot.i18n && boot.i18n.provider ] || ( boot.i18n && boot.i18n.provider ) || '';
 		const out = h( 'div', null );
 		const button = ui.Button( { label: __( 'Register texts for translation', 'forms-notifier-for-elementor' ), icon: 'globe', disabled: ! provider, onClick: () => api.post( 'strings/sync' ).then( ( data ) => mount( out, data.ok
-			/* translators: %s: number of texts */
-			? ui.Callout( 'success', sprintf( _n( '%s text is ready to translate.', '%s texts are ready to translate.', data.registered, 'forms-notifier-for-elementor' ), fmt.number( data.registered ) ) )
+			? ui.Callout( 'success', sprintf( /* translators: %s: number of texts */ _n( '%s text is ready to translate.', '%s texts are ready to translate.', data.registered, 'forms-notifier-for-elementor' ), fmt.number( data.registered ) ) )
 			: ui.Callout( 'warning', __( 'No translation plugin is active. Reload this page.', 'forms-notifier-for-elementor' ) ) ), ( error ) => mount( out, ui.Callout( 'danger', error.message ) ) ) } );
 		return ui.Card( {
 			title: __( 'Translations', 'forms-notifier-for-elementor' ),
 			desc: provider
-				/* translators: %s: WPML or Polylang */
-				? sprintf( __( 'Makes your message texts, subjects and buttons available in %s. This happens by itself; use it when a text is missing there.', 'forms-notifier-for-elementor' ), provider )
+				? sprintf( /* translators: %s: WPML or Polylang */ __( 'Makes your message texts, subjects and buttons available in %s. This happens by itself; use it when a text is missing there.', 'forms-notifier-for-elementor' ), provider )
 				: __( 'For sites with WPML or Polylang. None of them is active here.', 'forms-notifier-for-elementor' ),
 			actions: button,
 		}, out );
