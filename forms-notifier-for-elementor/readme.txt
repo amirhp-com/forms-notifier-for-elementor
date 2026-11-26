@@ -37,7 +37,7 @@ Documentation: https://github.com/amirhp-com/forms-notifier-for-elementor/tree/m
 
 = Requirements =
 
-* WordPress 6.5 or newer, PHP 7.4 or newer with the mbstring extension.
+* WordPress 6.5 or newer, PHP 7.4 or newer. The mbstring extension is recommended (without it only Latin letters change case).
 * Elementor. The form widget of Elementor Pro, its atomic form or the form of Hello Plus.
 * HTTPS for bot webhooks and the Mini App. Without it the bots check for news every minute.
 
