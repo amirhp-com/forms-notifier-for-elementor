@@ -44,7 +44,7 @@ final class FormConfig {
 				'name'      => '',
 				'country'   => '',
 				'sensitive' => [],
-				'exclude'   => [],
+				'exclude'   => [], // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude -- Field ids left out of messages, not a query argument.
 				'labels'    => [],
 			],
 			'quiet_hours' => 'inherit',
