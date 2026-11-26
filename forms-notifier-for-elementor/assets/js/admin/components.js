@@ -525,7 +525,7 @@
 				'table',
 				{ class: 'fnfe-table fnfe-table--plain' },
 				h( 'thead', null, h( 'tr', null, columns.map( ( col ) => h( 'th', { scope: 'col' }, col.label ) ) ) ),
-				h( 'tbody', null, rows.map( ( row ) => h( 'tr', null, columns.map( ( col ) => h( 'td', { dir: 'auto' }, row[ col.key ] === undefined || typeof row[ col.key ] === 'object' ? '' : String( row[ col.key ] ) ) ) ) ) )
+				h( 'tbody', null, rows.map( ( row ) => h( 'tr', null, columns.map( ( col ) => h( 'td', { class: 'fnfe-latin', dir: 'auto' }, row[ col.key ] === undefined || typeof row[ col.key ] === 'object' ? '' : String( row[ col.key ] ) ) ) ) ) )
 			) ) : null
 		);
 	}

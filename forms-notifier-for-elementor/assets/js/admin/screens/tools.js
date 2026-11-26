@@ -121,31 +121,49 @@
 		};
 		mount( body, ui.Skeleton( 'rows', 4 ) );
 		load();
-		return ui.Card( { title: __( 'System log', 'forms-notifier-for-elementor' ), desc: __( 'What the plugin did in the background.', 'forms-notifier-for-elementor' ), flush: true, actions: ui.Button( { label: __( 'Clear', 'forms-notifier-for-elementor' ), icon: 'trash', size: 's', variant: 'ghost', class: 'is-danger', onClick: () => ui.confirm( { title: __( 'Clear the system log?', 'forms-notifier-for-elementor' ), text: __( 'The message log is not affected.', 'forms-notifier-for-elementor' ), confirm: __( 'Clear', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'logs' ).then( load, ui.fail ) ) } ) }, h( 'div', { class: 'fnfe-toolbar fnfe-toolbar--card' }, bar, h( 'span', { class: 'fnfe-grow' } ), ui.Search( { onSearch( text ) {
+		const card = ui.Card( { title: __( 'System log', 'forms-notifier-for-elementor' ), desc: __( 'What the plugin did in the background.', 'forms-notifier-for-elementor' ), flush: true, actions: ui.Button( { label: __( 'Clear', 'forms-notifier-for-elementor' ), icon: 'trash', size: 's', variant: 'ghost', class: 'is-danger', onClick: () => ui.confirm( { title: __( 'Clear the system log?', 'forms-notifier-for-elementor' ), text: __( 'The message log is not affected.', 'forms-notifier-for-elementor' ), confirm: __( 'Clear', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'logs' ).then( load, ui.fail ) ) } ) }, h( 'div', { class: 'fnfe-toolbar fnfe-toolbar--card' }, bar, h( 'span', { class: 'fnfe-grow' } ), ui.Search( { onSearch( text ) {
 			state.search = text;
 			state.page = 1;
 			load();
 		} } ) ), body );
+		card.reload = load;
+		return card;
 	}
 
-	function dangerCard() {
+	function dangerCard( after ) {
 		const row = ( title, text, button ) => h( 'li', null, h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', null, title ), h( 'small', null, text ) ), button );
 		const list = h( 'ul', { class: 'fnfe-feed fnfe-feed--plain' } );
-		list.appendChild( row( __( 'Delete all system log entries', 'forms-notifier-for-elementor' ), __( 'Messages and submissions stay.', 'forms-notifier-for-elementor' ), ui.Button( { label: __( 'Delete', 'forms-notifier-for-elementor' ), variant: 'danger', size: 's', onClick: () => ui.confirm( { title: __( 'Delete all system log entries?', 'forms-notifier-for-elementor' ), confirm: __( 'Delete', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'logs' ).then( () => window.fnfe.toast( __( 'System log deleted.', 'forms-notifier-for-elementor' ), 'success' ), ui.fail ) ) } ) ) );
+		list.appendChild( row( __( 'Delete all system log entries', 'forms-notifier-for-elementor' ), __( 'Messages and submissions stay.', 'forms-notifier-for-elementor' ), ui.Button( { label: __( 'Delete', 'forms-notifier-for-elementor' ), variant: 'danger', size: 's', onClick: () => ui.confirm( { title: __( 'Delete all system log entries?', 'forms-notifier-for-elementor' ), confirm: __( 'Delete', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'logs' ).then( () => {
+			window.fnfe.toast( __( 'System log deleted.', 'forms-notifier-for-elementor' ), 'success' );
+			after();
+		}, ui.fail ) ) } ) ) );
 		ui.hasRoute( '/app/revoke' ).then( ( yes ) => yes && list.appendChild( row( __( 'Sign out of the mini app everywhere', 'forms-notifier-for-elementor' ), __( 'Every admin signs in again the next time they open it.', 'forms-notifier-for-elementor' ), ui.Button( { label: __( 'Sign out all', 'forms-notifier-for-elementor' ), variant: 'danger', size: 's', onClick: () => ui.confirm( { title: __( 'End all mini app sessions?', 'forms-notifier-for-elementor' ), confirm: __( 'Sign out all', 'forms-notifier-for-elementor' ), danger: true } ).then( ( ok ) => ok && api.post( 'app/revoke' ).then( () => window.fnfe.toast( __( 'All sessions ended.', 'forms-notifier-for-elementor' ), 'success' ), ui.fail ) ) } ) ) ) );
 		return ui.Card( { title: __( 'Danger zone', 'forms-notifier-for-elementor' ), flush: true, class: 'fnfe-card--danger' }, list );
+	}
+
+	/** Texts for WPML or Polylang. */
+	function stringsCard() {
+		const provider = { wpml: 'WPML', polylang: 'Polylang' }[ boot.i18n && boot.i18n.provider ] || ( boot.i18n && boot.i18n.provider ) || '';
+		const out = h( 'div', null );
+		const button = ui.Button( { label: __( 'Register texts for translation', 'forms-notifier-for-elementor' ), icon: 'globe', disabled: ! provider, onClick: () => api.post( 'strings/sync' ).then( ( data ) => mount( out, data.ok
+			/* translators: %s: number of texts */
+			? ui.Callout( 'success', sprintf( _n( '%s text is ready to translate.', '%s texts are ready to translate.', data.registered, 'forms-notifier-for-elementor' ), fmt.number( data.registered ) ) )
+			: ui.Callout( 'warning', __( 'No translation plugin is active. Reload this page.', 'forms-notifier-for-elementor' ) ) ), ( error ) => mount( out, ui.Callout( 'danger', error.message ) ) ) } );
+		return ui.Card( {
+			title: __( 'Translations', 'forms-notifier-for-elementor' ),
+			desc: provider
+				/* translators: %s: WPML or Polylang */
+				? sprintf( __( 'Makes your message texts, subjects and buttons available in %s. This happens by itself; use it when a text is missing there.', 'forms-notifier-for-elementor' ), provider )
+				: __( 'For sites with WPML or Polylang. None of them is active here.', 'forms-notifier-for-elementor' ),
+			actions: button,
+		}, out );
 	}
 
 	function optional() {
 		const el = h( 'div', null );
 		const elementor = h( 'div', null );
 		ui.canImport().then( ( yes ) => yes && mount( elementor, ui.Card( { title: __( 'Elementor submissions', 'forms-notifier-for-elementor' ), desc: __( 'Copy the submissions Elementor Pro collected before you used this plugin.', 'forms-notifier-for-elementor' ), actions: ui.Button( { label: __( 'Import…', 'forms-notifier-for-elementor' ), icon: 'database', onClick: () => ui.importDialog() } ) }, null ) ) );
-		if ( boot.i18n && boot.i18n.provider ) {
-			ui.hasRoute( '/strings/sync' ).then( ( yes ) => yes && mount( el, ui.Card( { title: __( 'Translations', 'forms-notifier-for-elementor' ), desc: __( 'Make all texts of this plugin available to the translation plugin.', 'forms-notifier-for-elementor' ), actions: ui.Button( { label: __( 'Register texts for translation', 'forms-notifier-for-elementor' ), icon: 'globe', onClick: () => api.post( 'strings/sync' ).then( ( data ) => {
-				/* translators: %s: number of texts */
-				window.fnfe.toast( sprintf( _n( '%s text registered.', '%s texts registered.', data.registered, 'forms-notifier-for-elementor' ), fmt.number( data.registered ) ), 'success' );
-			}, ui.fail ) } ) }, null ) ) );
-		}
+		ui.hasRoute( '/strings/sync' ).then( ( yes ) => yes && mount( el, stringsCard() ) );
 		return [ elementor, el ];
 	}
 
@@ -154,7 +172,8 @@
 		cap: 'manage',
 		render( container, params, shell ) {
 			shell.header( { title: __( 'Tools', 'forms-notifier-for-elementor' ), crumbs: [ { label: __( 'Settings', 'forms-notifier-for-elementor' ), path: 'settings' }, { label: __( 'Tools', 'forms-notifier-for-elementor' ) } ], help: 'troubleshooting' } );
-			mount( container, h( 'div', { class: 'fnfe-split' }, h( 'div', { class: 'fnfe-split__side' }, ui.settingsNav( 'tools' ) ), h( 'div', { class: 'fnfe-split__main' }, h( 'div', { class: 'fnfe-duo' }, exportCard(), importCard() ), optional(), logCard( shell ), systemCard(), dangerCard() ) ) );
+			const log = logCard( shell );
+			mount( container, h( 'div', { class: 'fnfe-split' }, h( 'div', { class: 'fnfe-split__side' }, ui.settingsNav( 'tools' ) ), h( 'div', { class: 'fnfe-split__main' }, h( 'div', { class: 'fnfe-duo' }, exportCard(), importCard() ), optional(), log, systemCard(), dangerCard( log.reload ) ) ) );
 			return null;
 		},
 	} );

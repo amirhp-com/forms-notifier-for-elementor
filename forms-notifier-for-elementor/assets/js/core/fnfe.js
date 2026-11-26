@@ -619,7 +619,7 @@
 				value /= 1024;
 				unit++;
 			}
-			return new Intl.NumberFormat( locale(), { style: 'unit', unit: units[ unit ], unitDisplay: 'short', maximumFractionDigits: value < 10 && unit ? 1 : 0 } ).format( value );
+			return new Intl.NumberFormat( locale(), { style: 'unit', unit: units[ unit ], unitDisplay: locale().indexOf( 'fa' ) === 0 ? 'long' : 'short', maximumFractionDigits: value < 10 && unit ? 1 : 0 } ).format( value );
 		},
 		relative( iso ) {
 			const date = toDate( iso );

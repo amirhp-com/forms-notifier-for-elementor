@@ -174,6 +174,8 @@
 
 			function pick() {
 				const results = h( 'div', { class: 'fnfe-picklist' }, ui.Skeleton( 'rows', 4 ) );
+				// Asking the messenger for new chats is for people who may change the connection.
+				const manages = !! ( boot.user && boot.user.caps && boot.user.caps.manage );
 				const load = ( search ) => fields.runAction( { channel: channel, id: 'receiver_options' }, ctx, { search: search || '', type: '', page: 1 } ).then( ( result ) => {
 					const options = result.rows || [];
 					if ( ! options.length ) {
@@ -182,7 +184,7 @@
 							small: true,
 							title: search ? __( 'No matches', 'forms-notifier-for-elementor' ) : ( kind === 'endpoint' ? __( 'No endpoints yet', 'forms-notifier-for-elementor' ) : __( 'No chats found yet', 'forms-notifier-for-elementor' ) ),
 							text: result.message || ( kind === 'endpoint' ? __( 'Add an endpoint first and save.', 'forms-notifier-for-elementor' ) : __( 'Send /start to the bot, or add it to a group and send /id there. Then search again.', 'forms-notifier-for-elementor' ) ),
-							actions: kind === 'endpoint' ? null : ui.Button( { label: __( 'Search again', 'forms-notifier-for-elementor' ), icon: 'refresh', size: 's', onClick: () => poll() } ),
+							actions: kind === 'endpoint' || search ? null : ui.Button( { label: __( 'Search again', 'forms-notifier-for-elementor' ), icon: 'refresh', size: 's', onClick: () => poll() } ),
 						} ) );
 						return;
 					}
@@ -204,10 +206,24 @@
 						nodes.push( h( 'div', { class: 'fnfe-picklist__row' }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( glyphOf( { address: option.address, meta: option.meta }, kind ), 18 ) ), h( 'div', { class: 'fnfe-receiver__text' }, h( 'span', { class: 'fnfe-receiver__label fnfe-latin', dir: 'auto' }, option.label ), h( 'span', { class: 'fnfe-receiver__sub' }, ui.mono( option.address ), option.hint ? h( 'span', { dir: 'auto' }, option.hint ) : null ) ), button ) );
 					} );
 					mount( results, nodes );
-				}, ( error ) => mount( results, ui.ErrorState( error, () => load( search ) ) ) );
-				const poll = () => window.fnfe.api.post( 'bots/' + channel + '/poll' ).then( () => load( '' ), () => load( '' ) );
+				}, ( error ) => {
+					if ( error.status !== 403 ) {
+						mount( results, ui.ErrorState( error, () => load( search ) ) );
+						return;
+					}
+					bar.hidden = true;
+					mount( results, ui.Empty( {
+						icon: 'lock',
+						small: true,
+						title: kind === 'endpoint' ? __( 'You cannot see the endpoints', 'forms-notifier-for-elementor' ) : __( 'You cannot see the chats of this bot', 'forms-notifier-for-elementor' ),
+						text: kind === 'endpoint' ? __( 'Ask an administrator of this site to add this receiver.', 'forms-notifier-for-elementor' ) : __( 'You can still type the address. An administrator of this site can tell you the chat id.', 'forms-notifier-for-elementor' ),
+						actions: kind === 'endpoint' ? null : ui.Button( { label: __( 'Type it', 'forms-notifier-for-elementor' ), icon: 'edit', size: 's', onClick: () => select( 'type' ) } ),
+					} ) );
+				} );
+				const poll = () => ! manages ? load( '' ) : window.fnfe.api.post( 'bots/' + channel + '/poll' ).then( () => load( '' ), () => load( '' ) );
+				const bar = h( 'div', { class: 'fnfe-toolbar' }, ui.Search( { onSearch: load, label: __( 'Search', 'forms-notifier-for-elementor' ) } ), kind === 'endpoint' ? null : ui.Button( { label: __( 'Refresh', 'forms-notifier-for-elementor' ), icon: 'refresh', size: 's', onClick: poll } ) );
 				load( '' );
-				return frag( h( 'div', { class: 'fnfe-toolbar' }, ui.Search( { onSearch: load, label: __( 'Search', 'forms-notifier-for-elementor' ) } ), kind === 'endpoint' ? null : ui.Button( { label: __( 'Refresh', 'forms-notifier-for-elementor' ), icon: 'refresh', size: 's', onClick: poll } ) ), results );
+				return frag( bar, results );
 			}
 
 			function typed() {
@@ -249,9 +265,20 @@
 				} ) ) : ui.Empty( { icon: 'tag', small: true, text: __( 'This form has no field that fits.', 'forms-notifier-for-elementor' ) } );
 			}
 
+			const select = ( tab ) => {
+				if ( strip ) {
+					strip.set( tab );
+				}
+				show( tab );
+				const input = panel.querySelector( 'input' );
+				if ( input ) {
+					input.focus();
+				}
+			};
 			const show = ( tab ) => mount( panel, { pick: pick, type: typed, field: fromField }[ tab ]() );
-			if ( tabs.length > 1 ) {
-				body.appendChild( ui.Tabs( { tabs: tabs, active: tabs[ 0 ].id, onSelect: show, panel: panel } ) );
+			const strip = tabs.length > 1 ? ui.Tabs( { tabs: tabs, active: tabs[ 0 ].id, onSelect: show, panel: panel } ) : null;
+			if ( strip ) {
+				body.appendChild( strip );
 			}
 			body.appendChild( panel );
 			if ( tabs.length ) {

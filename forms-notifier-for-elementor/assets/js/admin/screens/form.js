@@ -16,6 +16,23 @@
 	];
 
 	const ROUTE = { enabled: 'inherit', receivers_mode: 'inherit', receivers: [], template_mode: 'inherit', template: { _: '' }, subject: { _: '' }, buttons_mode: 'inherit', buttons: [], options: {} };
+	const typeLabel = ( type ) => ( {
+		text: __( 'Text', 'forms-notifier-for-elementor' ),
+		textarea: __( 'Long text', 'forms-notifier-for-elementor' ),
+		email: __( 'Email', 'forms-notifier-for-elementor' ),
+		tel: __( 'Phone', 'forms-notifier-for-elementor' ),
+		number: __( 'Number', 'forms-notifier-for-elementor' ),
+		url: __( 'Link', 'forms-notifier-for-elementor' ),
+		date: __( 'Date', 'forms-notifier-for-elementor' ),
+		time: __( 'Time', 'forms-notifier-for-elementor' ),
+		select: __( 'List', 'forms-notifier-for-elementor' ),
+		radio: __( 'One choice', 'forms-notifier-for-elementor' ),
+		checkbox: __( 'Checkboxes', 'forms-notifier-for-elementor' ),
+		acceptance: __( 'Consent', 'forms-notifier-for-elementor' ),
+		upload: __( 'File', 'forms-notifier-for-elementor' ),
+		password: __( 'Password', 'forms-notifier-for-elementor' ),
+		hidden: __( 'Hidden value', 'forms-notifier-for-elementor' ),
+	}[ type ] || type );
 	const object = ( value ) => ( value && typeof value === 'object' && ! Array.isArray( value ) ? value : {} );
 
 	const onOff = () => [
@@ -156,7 +173,7 @@
 						ui.Card( { title: __( 'Who hears about it', 'forms-notifier-for-elementor' ), flush: true, actions: h( 'a', { class: 'fnfe-more', href: '#/forms/' + id + '/channels' }, __( 'Change', 'forms-notifier-for-elementor' ), icon( 'chevron-end', 16 ) ) }, active.length ? h( 'ul', { class: 'fnfe-feed' }, active.map( line ) ) : ui.Empty( { icon: 'channels', small: true, text: __( 'No channel is active for this form.', 'forms-notifier-for-elementor' ) } ) ),
 						ui.Card( { title: __( 'Same settings as another form', 'forms-notifier-for-elementor' ), desc: __( 'For translations of one page: link them and configure only one.', 'forms-notifier-for-elementor' ) }, linkPicker() )
 					),
-					ui.Card( { title: __( 'Fields', 'forms-notifier-for-elementor' ), desc: __( 'Copy a tag into a message text.', 'forms-notifier-for-elementor' ), flush: true }, data.fields.length ? h( 'ul', { class: 'fnfe-fieldlist' }, data.fields.map( ( field ) => h( 'li', null, h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, field.label || field.id ), h( 'small', null, field.type ) ), ui.mono( '{field:' + field.id + '}' ), ui.CopyButton( '{field:' + field.id + '}', __( 'Copy tag', 'forms-notifier-for-elementor' ) ) ) ) ) : ui.Empty( { icon: 'list', small: true, text: __( 'No fields are known yet. Scan for forms again.', 'forms-notifier-for-elementor' ) } ) )
+					ui.Card( { title: __( 'Fields', 'forms-notifier-for-elementor' ), desc: __( 'Copy a tag into a message text.', 'forms-notifier-for-elementor' ), flush: true }, data.fields.length ? h( 'ul', { class: 'fnfe-fieldlist' }, data.fields.map( ( field ) => h( 'li', null, h( 'span', { class: 'fnfe-feed__text' }, h( 'strong', { dir: 'auto' }, field.label || field.id ), h( 'small', null, typeLabel( field.type ) ) ), ui.mono( '{field:' + field.id + '}' ), ui.CopyButton( '{field:' + field.id + '}', __( 'Copy tag', 'forms-notifier-for-elementor' ) ) ) ) ) : ui.Empty( { icon: 'list', small: true, text: __( 'No fields are known yet. Scan for forms again.', 'forms-notifier-for-elementor' ) } ) )
 				)
 			);
 		}

@@ -80,7 +80,7 @@
 			];
 			shell.header( {
 				title: s.form_name || __( 'Submission', 'forms-notifier-for-elementor' ),
-				sub: h( 'span', { class: 'fnfe-inline' }, ui.Status( s.status ), h( 'span', null, s.created_local ) ),
+				sub: h( 'span', { class: 'fnfe-inline' }, ui.Status( s.status ), h( 'time', { datetime: s.created, title: s.created_local }, fmt.date( s.created ) ) ),
 				crumbs: [ { label: __( 'Submissions', 'forms-notifier-for-elementor' ), path: 'submissions' }, { label: h( 'bdi', { class: 'fnfe-latin', dir: 'ltr' }, '#' + id ) } ],
 				help: 'submissions',
 				actions: tools,

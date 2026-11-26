@@ -170,7 +170,7 @@
 					stat( { label: __( 'Submissions', 'forms-notifier-for-elementor' ), value: data.submissions || 0, before: before.submissions, series: series, key: 'submissions', href: '#/submissions' } ),
 					stat( { label: __( 'Delivered', 'forms-notifier-for-elementor' ), value: messages.sent || 0, before: before.sent, series: series, key: 'sent', tone: 'ok', href: '#/log?status=sent' } ),
 					stat( { label: __( 'Failed', 'forms-notifier-for-elementor' ), value: messages.failed || 0, before: before.failed, series: series, key: 'failed', tone: messages.failed ? 'bad' : '', href: '#/log?status=failed' } ),
-					stat( { label: __( 'In queue', 'forms-notifier-for-elementor' ), value: pending, href: '#/log?status=queued', note: data.queue && data.queue.next_run && pending ? /* translators: %s: relative time */ sprintf( __( 'Next run %s', 'forms-notifier-for-elementor' ), fmt.relative( data.queue.next_run ) ) : __( 'Nothing is waiting', 'forms-notifier-for-elementor' ) } )
+					stat( { label: __( 'In queue', 'forms-notifier-for-elementor' ), value: pending, href: '#/log?status=queued', note: queueNote( data.queue, pending ) } )
 				),
 				map
 			) );
@@ -185,8 +185,27 @@
 				}
 			}
 			const items = data.health || [];
-			mount( health, items.length ? items.map( ( item ) => healthPill( item ) ) : null );
+			const bad = items.filter( ( item ) => item.status !== 'good' );
+			mount( health, items.length ? bad.map( ( item ) => healthPill( item ) ).concat( items.length > bad.length ? healthSummary( items.filter( ( item ) => item.status === 'good' ) ) : [] ) : null );
 			extra.sent = Math.max( extra.sent, messages.sent || 0 );
+		}
+
+		function queueNote( queue, pending ) {
+			if ( ! pending ) {
+				return __( 'Nothing is waiting', 'forms-notifier-for-elementor' );
+			}
+			return queue && queue.next_run && new Date( queue.next_run ) > new Date()
+				/* translators: %s: relative time */
+				? sprintf( __( 'Next run %s', 'forms-notifier-for-elementor' ), fmt.relative( queue.next_run ) )
+				: __( 'Waiting for the next run', 'forms-notifier-for-elementor' );
+		}
+
+		/** Checks without findings share one pill. */
+		function healthSummary( good ) {
+			const button = h( 'button', { type: 'button', class: 'fnfe-health__pill', 'aria-haspopup': 'dialog', onClick() {
+				ui.popover( button, h( 'div', { class: 'fnfe-health__pop' }, h( 'ul', null, good.map( ( item ) => h( 'li', null, icon( 'check', 14 ), item.label ) ) ) ), { role: 'dialog' } );
+			} }, h( 'span', { class: 'fnfe-dot fnfe-dot--ok', 'aria-hidden': 'true' } ), /* translators: %s: number of checks */ sprintf( _n( '%s check is fine', '%s checks are fine', good.length, 'forms-notifier-for-elementor' ), fmt.number( good.length ) ) );
+			return button;
 		}
 
 		function healthPill( item ) {

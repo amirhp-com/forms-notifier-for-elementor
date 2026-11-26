@@ -85,6 +85,21 @@
 
 	const visible = ( field, get ) => listOf( field.show_if ).every( ( condition ) => test( condition, get ) );
 
+	/**
+	 * Values as a row of a repeater sees them: the keys of its own fields first, with their defaults
+	 * while the row has no value. Every other path belongs to the form around it.
+	 */
+	const rowGet = ( field, row, outer ) => ( path ) => {
+		const key = String( path );
+		const own = key.indexOf( field.key + '.' ) === 0 ? key.slice( field.key.length + 1 ) : key;
+		const sub = listOf( field.fields ).find( ( item ) => item.key === own );
+		if ( sub || own === 'id' || own === 'enabled' ) {
+			return row[ own ] === undefined && sub ? sub.default : row[ own ];
+		}
+		return outer( key );
+	};
+	fields.rowGet = rowGet;
+
 	/* ------------------------------------------------------ Simple inputs */
 
 	const LTR_TYPES = [ 'url', 'email', 'tel', 'number', 'time', 'code' ];
@@ -408,12 +423,9 @@
 		};
 		const draw = () => {
 			mount( list, rows.map( ( row, i ) => {
-				const get = ( path ) => {
-					const own = String( path ).split( '.' ).pop();
-					return Object.prototype.hasOwnProperty.call( row, path ) ? row[ path ] : ( ( field.fields || [] ).some( ( sub ) => sub.key === own ) ? row[ own ] : ctx.get( path ) );
-				};
+				const get = rowGet( field, row, ctx.get );
 				const grid = h( 'div', { class: 'fnfe-grid' } );
-				const head = h( 'span', null, titleOf( row, i ) );
+				const head = h( 'span', { class: 'fnfe-latin', dir: 'auto' }, titleOf( row, i ) );
 				const items = ( field.fields || [] ).map( ( sub ) => {
 					const el = fields.render( sub, row[ sub.key ] === undefined ? clone( sub.default ) : row[ sub.key ], ( next ) => {
 						row[ sub.key ] = next;
@@ -495,7 +507,9 @@
 
 	fields.register( 'heading', ( field ) => h( 'div', { class: 'fnfe-subhead' }, h( 'h3', null, field.label ), field.desc ? h( 'p', null, safeHtml( field.desc ) ) : null ) );
 
-	fields.register( 'notice', ( field ) => ui.Callout( field.level || 'info', h( 'div', null, safeHtml( field.desc || field.label ) ), field.label && field.desc ? { title: field.label } : {} ) );
+	/* A label that is a whole sentence reads as text, not as a title. */
+	const sentence = ( field ) => !! field.desc && String( field.label ).length > 70;
+	fields.register( 'notice', ( field ) => ui.Callout( field.level || 'info', h( 'div', null, sentence( field ) ? h( 'p', null, ui.tx( field.label ) ) : null, safeHtml( field.desc || field.label ) ), field.label && field.desc && ! sentence( field ) ? { title: ui.tx( field.label ) } : {} ) );
 
 	/** Run the action a field describes, with the unsaved values it asks for. */
 	fields.runAction = ( action, ctx, params ) => {

@@ -80,7 +80,7 @@
 			ui.confirm( { /* translators: %s: chat name */ title: sprintf( __( 'Forget %s?', 'forms-notifier-for-elementor' ), chat.topic_name || chat.title || chat.chat_id ), text: __( 'It disappears from this list until the bot hears from it again. Receivers you already added keep working.', 'forms-notifier-for-elementor' ), confirm: __( 'Forget', 'forms-notifier-for-elementor' ), danger: true } ).then( ( yes ) => yes && api.del( 'bots/' + platform + '/chats/' + chat.id ).then( load, ui.fail ) );
 		}
 
-		const name = ( chat ) => h( 'div', { class: [ 'fnfe-chatcell', chat.thread_id ? 'is-topic' : '' ] }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( chat.thread_id ? 'topic' : TYPE_ICON[ chat.type ] || 'chat', 18 ) ), h( 'span', null, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, chat.thread_id ? chat.topic_name || chat.title : chat.title || chat.username || chat.chat_id ), h( 'small', null, chat.thread_id ? h( 'bdi', null, chat.title ) : typeName( chat.type ), chat.username ? ui.mono( '@' + chat.username ) : null ) ) );
+		const name = ( chat ) => h( 'div', { class: [ 'fnfe-chatcell', chat.thread_id ? 'is-topic' : '' ] }, h( 'span', { class: 'fnfe-receiver__icon' }, icon( chat.thread_id ? 'topic' : TYPE_ICON[ chat.type ] || 'chat', 18 ) ), h( 'span', null, h( 'strong', { class: 'fnfe-latin', dir: 'auto' }, chat.thread_id ? chat.topic_name || chat.title : chat.title || chat.username || chat.chat_id ), h( 'small', null, chat.thread_id ? h( 'bdi', null, chat.title ) : h( 'span', null, typeName( chat.type ) ), chat.username ? ui.mono( '@' + chat.username ) : null ) ) );
 
 		function load() {
 			mount( list, ui.Skeleton( 'rows', 5 ) );
@@ -135,32 +135,60 @@
 
 		function link() {
 			let timer = 0;
+			let closed = false;
+			let polling = false;
+			const stop = () => {
+				closed = true;
+				window.clearTimeout( timer );
+			};
 			const body = h( 'div', null, ui.Skeleton( 'form', 2 ) );
 			const before = known.map( ( item ) => String( item.uid ) );
 			const dialog = ui.Modal( {
 				title: __( 'Link your account', 'forms-notifier-for-elementor' ),
 				lead: ui.Tile( platform ),
 				body: body,
-				onClose: () => window.clearInterval( timer ),
+				onClose: stop,
 				footer: [ ui.Button( { label: __( 'Close', 'forms-notifier-for-elementor' ), variant: 'ghost', onClick: () => dialog.close() } ) ],
 			} );
+			/* Without a webhook nothing arrives by itself, so every round asks the messenger first. A failed round is tried again. */
+			const note = h( 'p', { class: 'fnfe-field__error', role: 'alert', hidden: true } );
+			const round = () => ( polling ? api.post( 'bots/' + platform + '/poll' ).then( ( answer ) => {
+				note.hidden = answer.ok !== false || ! answer.message;
+				note.textContent = note.hidden ? '' : answer.message;
+			}, () => {} ) : Promise.resolve() ).then( () => ( closed ? null : api.get( 'bots/' + platform + '/admins' ) ) ).then( ( now ) => {
+				const fresh = now && now.items.find( ( item ) => before.indexOf( String( item.uid ) ) === -1 );
+				if ( fresh && ! closed ) {
+					stop();
+					/* translators: %s: name of a person */
+					mount( body, ui.Callout( 'success', sprintf( __( '%s is linked and can use the bot now.', 'forms-notifier-for-elementor' ), fresh.name || fresh.uid ) ) );
+					load();
+				}
+			}, () => {} ).then( wait );
+			const wait = () => {
+				if ( ! closed ) {
+					timer = window.setTimeout( () => ( document.hidden ? wait() : round() ), 3000 );
+				}
+			};
 			api.post( 'bots/' + platform + '/link', {} ).then( ( data ) => {
+				if ( closed ) {
+					return;
+				}
 				const status = h( 'div', { class: 'fnfe-waiting', role: 'status' }, h( 'i', { 'aria-hidden': 'true' } ), __( 'Waiting for you to press Start in the bot…', 'forms-notifier-for-elementor' ) );
 				mount( body, frag(
 					h( 'p', null, __( 'Open this link on the device where you use the messenger and press Start. It works once and for 15 minutes.', 'forms-notifier-for-elementor' ) ),
 					h( 'div', { class: 'fnfe-copyline' }, ui.mono( data.url ), ui.CopyButton( data.url ) ),
 					h( 'p', null, ui.Button( { label: __( 'Open the bot', 'forms-notifier-for-elementor' ), icon: 'external', href: data.url, target: '_blank', variant: 'primary' } ) ),
-					status
+					status,
+					note
 				) );
-				timer = window.setInterval( () => api.get( 'bots/' + platform + '/admins' ).then( ( now ) => {
-					const fresh = now.items.find( ( item ) => before.indexOf( String( item.uid ) ) === -1 );
-					if ( fresh ) {
-						window.clearInterval( timer );
-						/* translators: %s: name of a person */
-						mount( body, ui.Callout( 'success', sprintf( __( '%s is linked and can use the bot now.', 'forms-notifier-for-elementor' ), fresh.name || fresh.uid ) ) );
-						load();
+				api.get( 'bots/' + platform + '/status' ).then( ( info ) => {
+					polling = info.mode === 'polling';
+					if ( info.mode === 'off' && ! closed ) {
+						status.hidden = true;
+						note.hidden = false;
+						note.textContent = __( 'The bot does not receive messages, so it cannot see that you pressed Start. Turn this on under Connection first.', 'forms-notifier-for-elementor' );
 					}
-				}, () => {} ), 3000 );
+				}, () => {} ).then( wait );
 			}, ( error ) => mount( body, ui.ErrorState( error ) ) );
 		}
 
@@ -223,7 +251,7 @@
 			}
 			const failed = hook.last_error || '';
 			mount( body, frag(
-				failed ? ui.Callout( 'danger', h( 'div', null, h( 'p', { dir: 'auto' }, failed ), hook.last_error_date ? h( 'p', null, ui.Time( hook.last_error_date ) ) : null ), { title: __( 'The messenger reported a webhook error', 'forms-notifier-for-elementor' ) } ) : null,
+				failed ? ui.Callout( 'danger', h( 'div', null, h( 'p', { class: 'fnfe-latin', dir: 'auto' }, failed ), hook.last_error_date ? h( 'p', null, ui.Time( hook.last_error_date ) ) : null ), { title: __( 'The messenger reported a webhook error', 'forms-notifier-for-elementor' ) } ) : null,
 				ui.Card( {
 					title: me.name || __( 'Bot', 'forms-notifier-for-elementor' ),
 					desc: me.username ? h( 'a', { href: botLink( platform, me.username ), target: '_blank', rel: 'noopener noreferrer' }, ui.mono( '@' + me.username ) ) : null,

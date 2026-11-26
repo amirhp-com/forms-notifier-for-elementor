@@ -17,11 +17,12 @@
 	font-display: swap;
 }
 
-/* Text uses Persian digits; codes, addresses and identifiers keep Latin digits. */
+/* Text uses Persian digits; inputs, codes, addresses, phone numbers and identifiers keep Latin digits. */
 .fnfe-root[data-font="fa"] {
 	--fnfe-font: "Dastkhat FaNum", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
 	--fnfe-font-latin: "Dastkhat", -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
-	--fnfe-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Dastkhat", monospace;
+	--fnfe-font-mono: "Dastkhat", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--fnfe-font-code: ui-monospace, SFMono-Regular, Menlo, Consolas, "Dastkhat", monospace;
 	--fnfe-text-xs: 12.5px;
 	--fnfe-text-s: 13.5px;
 	--fnfe-text-m: 15px;

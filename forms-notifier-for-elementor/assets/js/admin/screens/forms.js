@@ -7,7 +7,7 @@
 	const { __, _x, _n, sprintf } = wp.i18n;
 	const { h, mount, frag, boot, api, ui, fmt, router } = window.fnfe;
 
-	ui.sourceLabel = ( id ) => ( ( boot.sources || [] ).find( ( item ) => item.id === id ) || { label: id } ).label;
+	ui.sourceLabel = ( id ) => ( ( boot.sources || [] ).find( ( item ) => item.id === id ) || { label: id === 'api' ? __( 'Custom code', 'forms-notifier-for-elementor' ) : id } ).label;
 
 	/** Whether the form notifies, in words. */
 	ui.formState = ( form ) => {

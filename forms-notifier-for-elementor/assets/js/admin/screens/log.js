@@ -209,7 +209,7 @@
 				onRow: ( row ) => sheet( row.id ),
 				columns: [
 					{ label: __( 'Status', 'forms-notifier-for-elementor' ), render: ( row ) => ui.Status( row.status ) },
-					{ label: __( 'Receiver', 'forms-notifier-for-elementor' ), primary: true, render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'button', { type: 'button', class: 'fnfe-linkbtn fnfe-latin', dir: 'auto', onClick: () => sheet( row.id ) }, row.recipient_label || row.recipient || '–' ), row.recipient_label && row.recipient ? h( 'small', null, ui.mono( row.recipient ) ) : null, row.error ? h( 'small', { class: 'fnfe-errtext', dir: 'auto', title: row.error }, row.error ) : null ) },
+					{ label: __( 'Receiver', 'forms-notifier-for-elementor' ), primary: true, class: 'fnfe-table__grow', render: ( row ) => h( 'div', { class: 'fnfe-cell2' }, h( 'button', { type: 'button', class: 'fnfe-linkbtn fnfe-latin', dir: 'auto', onClick: () => sheet( row.id ) }, row.recipient_label || row.recipient || '–' ), row.recipient_label && row.recipient ? h( 'small', null, ui.mono( row.recipient ) ) : null, row.error ? h( 'small', { class: 'fnfe-errtext', dir: 'auto', title: row.error }, row.error ) : null ) },
 					{ label: __( 'Channel', 'forms-notifier-for-elementor' ), render: ( row ) => h( 'span', { class: 'fnfe-channelchip' }, ui.Tile( row.channel, 's' ), h( 'span', null, row.channel_label, row.purpose === 'admin' ? null : h( 'small', null, purposeLabel( row.purpose ) ) ) ) },
 					{ label: __( 'Form', 'forms-notifier-for-elementor' ), class: 'fnfe-table__clip', render: ( row ) => ( row.submission_id ? h( 'a', { href: '#/submissions/' + row.submission_id, dir: 'auto' }, row.form_name || '#' + row.submission_id ) : h( 'bdi', null, row.form_name || '–' ) ) },
 					{ label: __( 'Attempts', 'forms-notifier-for-elementor' ), class: 'fnfe-col-lg', render: ( row ) => ui.Pips( row.attempts, row.max_attempts, row.status ) },
@@ -240,7 +240,8 @@
 			}
 			return api.get( 'messages', Object.assign( { page: state.page, per_page: PER_PAGE }, filters() ) ).then( ( data ) => {
 				draw( data );
-				updated.textContent = __( 'Updated just now', 'forms-notifier-for-elementor' );
+				/* translators: %s: time of day */
+				updated.textContent = sprintf( __( 'Updated at %s', 'forms-notifier-for-elementor' ), fmt.date( new Date(), { timeStyle: 'medium' } ) );
 			}, ( error ) => mount( list, ui.ErrorState( error, () => load() ) ) );
 		}
 
