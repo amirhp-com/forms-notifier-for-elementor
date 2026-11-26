@@ -52,25 +52,15 @@ No. Every form notifies by default. Under Settings, General you can limit this t
 
 Put a small forwarder between the site and the messenger, for example a free Cloudflare Worker. The channel screen has a step-by-step guide and the code.
 
-= Why is my group not in the list of chats? =
-
-A bot only knows chats it heard from. Add the bot to the group and send /id there.
-
-= Messages stay in the queue. =
-
-Background tasks need WordPress cron. Press Run queue now on the Log screen; if that works, set up a real cron job or choose "Immediately" under Settings, General.
-
-= Where are tokens stored? =
-
-Encrypted in the database. They can also be defined as constants in wp-config.php.
-
 = Are uploaded files public? =
 
-Files are copied into the folder fnfe-files in your uploads folder under random names nobody can guess, and links in messages are signed, can expire and go through the plugin. Apache closes the folder with the .htaccess file the plugin writes. nginx ignores that file: add `location ^~ /wp-content/uploads/fnfe-files/ { deny all; }`, or move the folder out of the public folder with `define( 'FNFE_FILES_DIR', '/path/outside/public_html/fnfe-files' );` in wp-config.php. Files stored before a move are not moved and keep working. Site Health (File storage) tells you whether your server really closes the folder.
+Files are kept in uploads/fnfe-files under random names; links in messages are signed and can expire. Apache closes the folder with the plugin's .htaccess. nginx ignores it: add `location ^~ /wp-content/uploads/fnfe-files/ { deny all; }`, or move the folder with `define( 'FNFE_FILES_DIR', '/path/outside/public_html/fnfe-files' );` in wp-config.php (older files stay and keep working). Site Health, File storage, tells you whether your server really closes the folder.
 
 = What happens when I delete the plugin? =
 
 Your data is kept unless "Delete all data when the plugin is deleted" is switched on under Settings, Privacy.
+
+More answers: https://github.com/amirhp-com/forms-notifier-for-elementor/blob/main/docs/faq.md
 
 == Screenshots ==
 
