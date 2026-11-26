@@ -85,4 +85,25 @@ final class TextTest extends TestCase {
 			$this->assertFalse( Text::bool( $value ) );
 		}
 	}
+
+	public function test_local_digits_only_change_prose(): void {
+		$cases = [
+			'ارسالی‌ها: 2، ناموفق: 10'                       => 'ارسالی‌ها: ۲، ناموفق: ۱۰',
+			'12 (+20%) 1.5 10:30 1404/09/05'                   => '۱۲ (+۲۰%) ۱.۵ ۱۰:۳۰ ۱۴۰۴/۰۹/۰۵',
+			'see https://example.com/a?id=12#/log/3 now 3'      => 'see https://example.com/a?id=12#/log/3 now ۳',
+			'tg://resolve?domain=x&start=12 and www.x.com/12 4' => 'tg://resolve?domain=x&start=12 and www.x.com/12 ۴',
+			'mail a12@example.com 5'                           => 'mail a12@example.com ۵',
+			'<a href="https://t.me/x?start=12">open 3</a>'     => '<a href="https://t.me/x?start=12">open ۳</a>',
+			'<code>-1001234567</code> <pre>7</pre> `8` 9'      => '<code>-1001234567</code> <pre>7</pre> `8` ۹',
+			'call +98 912 345 6789, 09123456789 or -1001234567 at 1' => 'call +98 912 345 6789, 09123456789 or -1001234567 at ۱',
+			'123456:ABC-def A-1234 fnfe_12 x2 #12 @bot2 /last 5' => '123456:ABC-def A-1234 fnfe_12 x2 #12 @bot2 /last ۵',
+			'۱۲ and ٣ stay'                                    => '۱۲ and ٣ stay',
+		];
+		foreach ( $cases as $in => $out ) {
+			$this->assertSame( $out, Text::local_digits( $in, 'fa_IR' ), $in );
+		}
+		$this->assertSame( '۷', Text::local_digits( '7', 'fa' ) );
+		$this->assertSame( 'Sent: 7', Text::local_digits( 'Sent: 7', 'en_US' ) );
+		$this->assertSame( 'Sent: 7', Text::local_digits( 'Sent: 7', '' ) );
+	}
 }

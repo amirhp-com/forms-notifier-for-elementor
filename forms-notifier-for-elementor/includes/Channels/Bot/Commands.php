@@ -318,7 +318,7 @@ final class Commands {
 		foreach ( $forms['items'] as $form ) {
 			$name = $form['name'] === '' ? '#' . $form['id'] : $form['name'];
 			/* translators: %1$s: form name, %2$s: number of submissions */
-			$lines[] = sprintf( __( '%1$s: %2$s', 'forms-notifier-for-elementor' ), self::esc( $name ), number_format_i18n( $form['submissions_count'] ) );
+			$lines[] = sprintf( __( '%1$s: %2$s', 'forms-notifier-for-elementor' ), self::esc( $name ), self::number( (int) $form['submissions_count'] ) );
 			if ( Settings::bool( 'miniapp.enabled' ) ) {
 				$buttons[] = [ self::app_button( $platform, Text::truncate( $name, 60 ), 'form_' . $form['id'] ) ];
 			}
@@ -326,7 +326,7 @@ final class Commands {
 		$more = $forms['total'] - count( $forms['items'] );
 		if ( $more > 0 ) {
 			/* translators: %1$s: number of forms */
-			$lines[] = sprintf( _n( 'and %1$s more form', 'and %1$s more forms', $more, 'forms-notifier-for-elementor' ), number_format_i18n( $more ) );
+			$lines[] = sprintf( _n( 'and %1$s more form', 'and %1$s more forms', $more, 'forms-notifier-for-elementor' ), self::number( $more ) );
 		}
 		return [
 			'text'    => implode( "\n", $lines ),
@@ -397,13 +397,13 @@ final class Commands {
 			$blocks[] = '<b>' . $label . "</b>\n" . sprintf(
 				/* translators: %1$s: number of submissions, %2$s: messages sent, %3$s: messages failed */
 				__( 'Submissions: %1$s, sent: %2$s, failed: %3$s', 'forms-notifier-for-elementor' ),
-				number_format_i18n( (int) ( $stats['submissions'] ?? 0 ) ),
-				number_format_i18n( (int) ( $stats['messages']['sent'] ?? 0 ) ),
-				number_format_i18n( (int) ( $stats['messages']['failed'] ?? 0 ) )
+				self::number( (int) ( $stats['submissions'] ?? 0 ) ),
+				self::number( (int) ( $stats['messages']['sent'] ?? 0 ) ),
+				self::number( (int) ( $stats['messages']['failed'] ?? 0 ) )
 			);
 		}
 		/* translators: %1$s: number of messages */
-		$blocks[] = sprintf( __( 'Waiting in the queue: %1$s', 'forms-notifier-for-elementor' ), number_format_i18n( Queue::pending() ) );
+		$blocks[] = sprintf( __( 'Waiting in the queue: %1$s', 'forms-notifier-for-elementor' ), self::number( Queue::pending() ) );
 		return implode( "\n\n", $blocks );
 	}
 
@@ -585,6 +585,15 @@ final class Commands {
 		$thread = is_numeric( $message['message_thread_id'] ?? null ) ? (int) $message['message_thread_id'] : 0;
 		$topic  = ! empty( $message['is_topic_message'] ) || ( $message['chat']['type'] ?? '' ) === 'private';
 		return $thread > 1 && $topic ? $thread : 0;
+	}
+
+	/**
+	 * A count in the digits of the reply language.
+	 *
+	 * @param int $n Number.
+	 */
+	private static function number( int $n ): string {
+		return Text::local_digits( number_format_i18n( $n ), determine_locale() );
 	}
 
 	/** Site name. */

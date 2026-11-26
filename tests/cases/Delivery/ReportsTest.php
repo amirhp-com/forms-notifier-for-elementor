@@ -167,7 +167,8 @@ final class ReportsTest extends TestCase {
 		$rows = MessageRepository::query( [ 'purpose' => 'digest' ] )['items'];
 		$this->assertCount( 1, $rows );
 		$this->assertSame( [ 'sent', 'boss' ], [ $rows[0]['status'], $rows[0]['recipient'] ] );
-		$this->assertContains( '1|0|0|0|Form 1: 1', $rows[0]['body'] );
+		// The receiver follows the site language, which may write Persian digits.
+		$this->assertContains( '1|0|0|0|Form 1: 1', \AmirhpCom\FormsNotifier\Core\Text::en_digits( $rows[0]['body'] ) );
 		$this->assertSame( [ 1 ], $sent );
 		$this->assertSame( '2026-03-10', State::get( 'digest_last' ) );
 	}
@@ -342,7 +343,7 @@ final class ReportsTest extends TestCase {
 		$this->freeze( $this->at( '2026-03-11 00:05' ) );
 		Digest::tick();
 		$this->assertCount( 1, FakeChannel::$sent );
-		$this->assertContains( '1|', FakeChannel::$sent[0]->body, 'the period is 10 March' );
+		$this->assertContains( '1|', \AmirhpCom\FormsNotifier\Core\Text::en_digits( FakeChannel::$sent[0]->body ), 'the period is 10 March' );
 		$this->freeze( $this->at( '2026-03-11 01:05' ) );
 		Digest::tick();
 		$this->assertCount( 1, FakeChannel::$sent );
@@ -364,5 +365,19 @@ final class ReportsTest extends TestCase {
 		$this->assertContains( 'Bot webhooks', Digest::tags( $data )['digest.health'] );
 		$this->assertNotContains( 'FA ', Digest::tags( $data )['digest.health'] );
 		Settings::clear_overlay();
+	}
+
+	public function test_digest_numbers_use_persian_digits_in_persian(): void {
+		$data = [ 'frequency' => 'daily', 'from' => '2026-03-09', 'to' => '2026-03-09', 'submissions' => 12, 'sent' => 5, 'failed' => 0, 'queue' => 3, 'previous' => [ 'submissions' => 10, 'sent' => 10, 'failed' => 0 ], 'by_form' => [ [ 'name' => 'Form 2026', 'submissions' => 4 ] ] ];
+		$fa   = \AmirhpCom\FormsNotifier\Core\I18n::with_language( 'fa', static function () use ( $data ) { return Digest::tags( $data ); } );
+		$this->assertContains( '۱۲', $fa['digest.submissions'] );
+		$this->assertContains( '+۲۰', $fa['digest.submissions'] );
+		$this->assertSame( '۳', $fa['digest.queue'] );
+		$this->assertContains( '۴', $fa['digest.forms'] );
+		$this->assertContains( 'Form 2026', $fa['digest.forms'], 'names are left alone' );
+		$this->assertSame( Digest::tags( $data )['digest.url'], $fa['digest.url'] );
+		$en = Digest::tags( $data );
+		$this->assertContains( '12', $en['digest.submissions'] );
+		$this->assertSame( '3', $en['digest.queue'] );
 	}
 }

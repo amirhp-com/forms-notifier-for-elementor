@@ -134,6 +134,35 @@ final class Text {
 	}
 
 	/**
+	 * Digits of the language of a message: Persian digits when the language is Persian, the text as it is otherwise.
+	 * Only numbers in prose change. Never touched: links and anything with a scheme, email addresses, HTML tags,
+	 * <code>, <pre> and `code`, @names, /commands and #ids, words that mix Latin letters, digits, "_" or ":"
+	 * (tokens, ids, codes like A-1234 or 123:ABC), numbers after "+" and runs of 7 or more digits (phone numbers, chat
+	 * ids).
+	 *
+	 * @param string $text Text.
+	 * @param string $lang Language code or locale of the message, for example "fa" or "fa_IR".
+	 */
+	public static function local_digits( string $text, string $lang ): string {
+		if ( strncmp( strtolower( $lang ), 'fa', 2 ) !== 0 || ! preg_match( '/\d/', $text ) ) {
+			return $text;
+		}
+		$keep = '<code\b[^>]*>.*?</code>|<pre\b[^>]*>.*?</pre>|`[^`]*`|<[^>]*>'
+			. '|[a-z][a-z0-9+.\-]*://\S+|www\.\S+|\S+@\S+'
+			. '|(?<!\S)/[A-Za-z][\w@]*|#\d+|@\w+'
+			. '|[\w:\-]*(?:[A-Za-z_][\w:\-]*\d|\d[\w:\-]*[A-Za-z_])[\w:\-]*'
+			. '|\+\d[\d\s\-()]{6,18}\d|\d{7,}';
+		$out  = preg_replace_callback(
+			'~(' . $keep . ')|\d+~isu',
+			static function ( array $m ): string {
+				return isset( $m[1] ) && $m[1] !== '' ? $m[0] : str_replace( self::EN_DIGITS, self::FA_DIGITS, $m[0] );
+			},
+			$text
+		);
+		return is_string( $out ) ? $out : $text;
+	}
+
+	/**
 	 * Cut to a number of characters, the ellipsis included.
 	 *
 	 * @param string $s        Text.

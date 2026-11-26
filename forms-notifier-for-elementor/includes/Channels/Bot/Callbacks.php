@@ -171,7 +171,7 @@ final class Callbacks {
 			sprintf(
 				/* translators: %1$s: number of messages */
 				_n( '%1$s message is sent again.', '%1$s messages are sent again.', count( $ids ), 'forms-notifier-for-elementor' ),
-				number_format_i18n( count( $ids ) )
+				Text::local_digits( number_format_i18n( count( $ids ) ), determine_locale() )
 			),
 			false,
 			true,

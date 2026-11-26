@@ -172,14 +172,14 @@ final class Digest {
 				/* translators: %1$s: form name, %2$s: number of submissions */
 				__( '%1$s: %2$s', 'forms-notifier-for-elementor' ),
 				$name === '' ? __( 'Unnamed form', 'forms-notifier-for-elementor' ) : $name,
-				number_format_i18n( (int) ( $form['submissions'] ?? 0 ) )
+				self::number( (int) ( $form['submissions'] ?? 0 ) )
 			);
 		}
 
 		$health = [];
 		foreach ( (array) ( $data['health'] ?? [] ) as $check ) {
 			if ( ( $check['status'] ?? 'good' ) !== 'good' ) {
-				$health[] = self::health_message( (array) $check );
+				$health[] = Text::local_digits( self::health_message( (array) $check ), determine_locale() );
 			}
 		}
 
@@ -192,7 +192,7 @@ final class Digest {
 			'digest.failed'      => self::with_change( (int) ( $data['failed'] ?? 0 ), (int) ( $previous['failed'] ?? 0 ) ),
 			'digest.forms'       => $forms ? implode( "\n", $forms ) : '-',
 			'digest.health'      => $health ? implode( "\n", $health ) : __( 'Everything works.', 'forms-notifier-for-elementor' ),
-			'digest.queue'       => number_format_i18n( (int) ( $data['queue'] ?? 0 ) ),
+			'digest.queue'       => self::number( (int) ( $data['queue'] ?? 0 ) ),
 			'digest.url'         => Urls::admin(),
 		];
 	}
@@ -250,11 +250,18 @@ final class Digest {
 			return '';
 		}
 		if ( Controller::calendar() === 'jalali' && class_exists( Jalali::class ) ) {
-			$fa   = strncmp( determine_locale(), 'fa', 2 ) === 0;
-			$text = Jalali::format( 'j F Y', $day, $fa );
-			return $fa ? Text::fa_digits( $text ) : $text;
+			return Text::local_digits( Jalali::format( 'j F Y', $day, strncmp( determine_locale(), 'fa', 2 ) === 0 ), determine_locale() );
 		}
 		return (string) wp_date( (string) get_option( 'date_format' ), $day->getTimestamp() );
+	}
+
+	/**
+	 * A count in the digits of the message language.
+	 *
+	 * @param int $n Number.
+	 */
+	private static function number( int $n ): string {
+		return Text::local_digits( number_format_i18n( $n ), determine_locale() );
 	}
 
 	/**
@@ -264,7 +271,7 @@ final class Digest {
 	 * @param int $before Number of the previous period.
 	 */
 	private static function with_change( int $now, int $before ): string {
-		$text = number_format_i18n( $now );
+		$text = self::number( $now );
 		if ( $before <= 0 || $now === $before ) {
 			return $text;
 		}
@@ -273,6 +280,6 @@ final class Digest {
 			return $text;
 		}
 		/* translators: %1$s: number, %2$s: signed change in percent */
-		return sprintf( __( '%1$s (%2$s%%)', 'forms-notifier-for-elementor' ), $text, ( $percent > 0 ? '+' : '-' ) . number_format_i18n( abs( $percent ) ) );
+		return sprintf( __( '%1$s (%2$s%%)', 'forms-notifier-for-elementor' ), $text, ( $percent > 0 ? '+' : '-' ) . self::number( abs( $percent ) ) );
 	}
 }

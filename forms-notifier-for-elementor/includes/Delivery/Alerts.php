@@ -132,7 +132,7 @@ final class Alerts {
 					'alert.channel'   => $data['channel'],
 					'alert.recipient' => $data['recipient'],
 					'alert.error'     => $data['error'],
-					'alert.attempts'  => (string) $data['attempts'],
+					'alert.attempts'  => Text::local_digits( (string) $data['attempts'], determine_locale() ),
 					'alert.log_url'   => $data['log_url'],
 					'form_name'       => $data['form'],
 					'form_id'         => (string) (int) $row['form_id'],
@@ -245,11 +245,12 @@ final class Alerts {
 		if ( $count <= 0 ) {
 			return '';
 		}
-		return "\n\n" . sprintf(
+		$note = sprintf(
 			/* translators: %1$d: number of failures */
 			_n( 'And %1$d more failure was not reported individually.', 'And %1$d more failures were not reported individually.', $count, 'forms-notifier-for-elementor' ),
 			$count
 		);
+		return "\n\n" . Text::local_digits( $note, determine_locale() );
 	}
 
 	/**

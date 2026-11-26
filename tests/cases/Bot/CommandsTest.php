@@ -276,4 +276,20 @@ final class CommandsTest extends TestCase {
 		$this->assertFalse( Linking::can( 'telegram', '123', 'act' ) );
 		$this->assertFalse( Linking::can( 'telegram', '', 'view' ) );
 	}
+
+	public function test_numbers_in_persian_replies(): void {
+		$this->admin();
+		FormRepository::upsert( '45:a1b2c3d', [ 'name' => 'Contact', 'status' => 'active' ] );
+		$this->say( '/stats', [], [ 'language_code' => 'fa' ] );
+		$this->say( '/id', [], [ 'language_code' => 'fa' ] );
+		$this->say( '/stats', [], [ 'language_code' => 'en' ] );
+		$replies = $this->replies();
+		if ( Commands::language( 'telegram', [ 'id' => 111111, 'language_code' => 'fa' ] ) !== 'fa' ) {
+			return; // Persian is not available on this site.
+		}
+		$this->assertContains( '۰', $replies[0]['text'] );
+		$this->assertFalse( preg_match( '~: \d~', $replies[0]['text'] ) === 1, $replies[0]['text'] );
+		$this->assertContains( '<code>111111</code>', $replies[1]['text'], 'chat ids keep ASCII digits' );
+		$this->assertContains( ': 0', $replies[2]['text'] );
+	}
 }

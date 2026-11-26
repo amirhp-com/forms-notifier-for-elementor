@@ -71,7 +71,9 @@ final class AlertsTest extends TestCase {
 		$rows = $this->alerts();
 		$this->assertCount( 1, $rows );
 		$this->assertSame( [ 'second', 'boss', 'sent', $id, 1 ], [ $rows[0]['channel'], $rows[0]['recipient'], $rows[0]['status'], $rows[0]['parent_id'], $rows[0]['max_attempts'] ] );
-		$this->assertContains( 'ALERT Fake fake / Desk / Contact {field:x} / 42 / bad <b>{site_url}</b> / 1 / ', $rows[0]['body'] );
+		// The receiver follows the site language: the number of attempts may be written in Persian digits, ids never.
+		$this->assertContains( 'ALERT Fake fake / Desk / Contact {field:x} / 42 / bad <b>{site_url}</b> / ', $rows[0]['body'] );
+		$this->assertContains( ' / 1 / ', \AmirhpCom\FormsNotifier\Core\Text::en_digits( $rows[0]['body'] ) );
 		$this->assertContains( '#/log/' . $id, $rows[0]['body'] );
 	}
 
@@ -150,7 +152,7 @@ final class AlertsTest extends TestCase {
 		$this->failing( 'something else' );
 		$rows = $this->alerts();
 		$this->assertCount( 2, $rows );
-		$this->assertContains( '2', substr( $rows[1]['body'], strpos( $rows[1]['body'], '#/log/' ) + 8 ) );
+		$this->assertContains( '2', \AmirhpCom\FormsNotifier\Core\Text::en_digits( substr( $rows[1]['body'], strpos( $rows[1]['body'], '#/log/' ) + 8 ) ) );
 		$this->assertSame( 0, (int) State::get( 'alerts_suppressed' ) );
 
 		$this->freeze( self::NOW + 601 );
@@ -258,5 +260,13 @@ final class AlertsTest extends TestCase {
 		Ticker::tick();
 		$this->assertCount( 1, $this->alerts() );
 		\AmirhpCom\FormsNotifier\Core\Lock::release( 'queue' );
+	}
+
+	public function test_persian_alert_numbers_but_not_ids_or_errors() {
+		Settings::set( 'alerts.channels.second.receivers', [ Fixtures::receiver( 'boss', [ 'lang' => 'fa' ] ) ] );
+		$this->failing( 'HTTP 500 at 10:30', [ 'submission_id' => 42 ] );
+		$rows = $this->alerts();
+		$this->assertCount( 1, $rows );
+		$this->assertContains( '/ 42 / HTTP 500 at 10:30 / ۱ / ', $rows[0]['body'] );
 	}
 }
