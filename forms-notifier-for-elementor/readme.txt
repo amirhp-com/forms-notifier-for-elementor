@@ -74,16 +74,15 @@ Your data is kept unless "Delete all data when the plugin is deleted" is switche
 
 == Screenshots ==
 
-1. Dashboard with the delivery overview.
-2. Channels.
-3. Telegram channel with the chats the bot found.
-4. Settings of one form.
-5. Template editor with live preview.
-6. Message log.
-7. Mini App: overview.
-8. Mini App: submissions.
-9. Mini App: one submission.
-10. The Forms Notifier action in the Elementor editor.
+1. Dashboard: submissions, deliveries and failures per form and channel.
+2. Channels: messengers, SMS, email and automation, each switched on separately.
+3. Telegram chats, groups and topics the bot found, ready to use as receivers.
+4. Settings of one form: who hears about it and the tags of its fields.
+5. Message template with tags, a condition and a live preview.
+6. SMS gateways with a default gateway, backup gateways and routes by country.
+7. Saved submissions with search, statuses and CSV export.
+8. One submission with the delivery to every receiver.
+9. Message log with the answer of each service and retries.
 
 == External services ==
 
