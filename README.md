@@ -40,11 +40,8 @@ Download the zip of a [release](https://github.com/amirhp-com/forms-notifier-for
 ## Development
 
 ```bash
-bash tools/lint.sh             # php -l, coding standard, script checks
-php tools/check-docs.php       # every hook, route and command of the code is in the developer guide
 wp eval-file tests/run.php     # integration tests, on a site with the plugin active
 php tests/unit.php             # tests without WordPress
-bash tools/build-zip.sh        # dist/forms-notifier-for-elementor-<version>.zip
 ```
 
 ## فارسی
