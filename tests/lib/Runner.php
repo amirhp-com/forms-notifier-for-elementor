@@ -123,11 +123,23 @@ final class Runner {
 		echo sprintf( "%s %s (%d)\n", $bad ? 'FAIL' : 'ok  ', $label, count( $methods ) );
 	}
 
-	/** Copies of the plugin's own hooks, so a class cannot leak registrations into the next one. */
+	/** Hooks a class may register: the plugin's own and those of the translation plugins tests stand in for. */
+	private const HOOK_PREFIXES = [ 'fnfe_', 'wpml_', 'pll_' ];
+
+	private static function is_own_hook( string $name ): bool {
+		foreach ( self::HOOK_PREFIXES as $prefix ) {
+			if ( strncmp( $name, $prefix, strlen( $prefix ) ) === 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Copies of these hooks, so a class cannot leak registrations into the next one. */
 	private static function hooks(): array {
 		$out = [];
 		foreach ( $GLOBALS['wp_filter'] ?? [] as $name => $hook ) {
-			if ( strncmp( $name, 'fnfe_', 5 ) === 0 ) {
+			if ( self::is_own_hook( (string) $name ) ) {
 				$out[ $name ] = clone $hook;
 			}
 		}
@@ -136,7 +148,7 @@ final class Runner {
 
 	private static function restore_hooks( array $hooks ): void {
 		foreach ( array_keys( $GLOBALS['wp_filter'] ?? [] ) as $name ) {
-			if ( strncmp( $name, 'fnfe_', 5 ) === 0 ) {
+			if ( self::is_own_hook( (string) $name ) ) {
 				unset( $GLOBALS['wp_filter'][ $name ] );
 			}
 		}

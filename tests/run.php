@@ -19,8 +19,27 @@ if ( ! defined( 'FNFE_VERSION' ) ) {
 	foreach ( [ 'Assert', 'TestCase', 'HttpMock', 'Db', 'Fixtures', 'FakeChannel', 'Runner' ] as $file ) {
 		require_once __DIR__ . '/lib/' . $file . '.php';
 	}
+	$words   = [ 'verbose', '-v', 'skew' ];
 	$verbose = (bool) array_intersect( [ 'verbose', '-v' ], $args );
-	$filter  = (string) current( array_diff( $args, [ 'verbose', '-v' ] ) );
+	$filter  = (string) current( array_diff( $args, $words ) );
+
+	// Tests come from this tree, the code under test from the active plugin: both must be the same code.
+	$tree = dirname( __DIR__ ) . '/forms-notifier-for-elementor/';
+	if ( ! in_array( 'skew', $args, true ) && realpath( $tree ) !== realpath( FNFE_DIR ) ) {
+		$fingerprint = static function ( string $dir ): string {
+			$out = [];
+			foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir . 'includes', FilesystemIterator::SKIP_DOTS ) ) as $file ) {
+				if ( substr( $file->getFilename(), -4 ) === '.php' ) {
+					$out[ substr( $file->getPathname(), strlen( $dir ) ) ] = md5_file( $file->getPathname() );
+				}
+			}
+			ksort( $out );
+			return md5( serialize( $out ) );
+		};
+		if ( is_dir( $tree . 'includes' ) && $fingerprint( $tree ) !== $fingerprint( FNFE_DIR ) ) {
+			WP_CLI::error( 'The active plugin differs from this working tree: sync the plugin first (or add the word "skew" to run anyway).' );
+		}
+	}
 
 	AmirhpCom\FormsNotifier\Tests\Db::isolate();
 	AmirhpCom\FormsNotifier\Tests\HttpMock::install();
