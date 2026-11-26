@@ -273,7 +273,7 @@ abstract class Controller {
 			'lang'            => $s->lang,
 			'created'         => self::iso( $s->created_gmt ),
 			'created_local'   => self::local_datetime( $s->created_gmt ),
-			'preview'         => Text::truncate( implode( ', ', $preview ), 160 ),
+			'preview'         => Text::truncate( implode( __( ', ', 'forms-notifier-for-elementor' ), $preview ), 160 ),
 			'files_count'     => count( $s->files ),
 			'delivery_status' => (string) ( $s->meta['delivery_status'] ?? 'none' ),
 		];
