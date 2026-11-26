@@ -26,6 +26,8 @@ Besides the language rows, every default text is registered under the context **
 
 The plugin's `wpml-config.xml` declares no `admin-texts`: if WPML translated the option `fnfe_settings` itself, messages for receivers in another language would get the wrong text and saving a setting in a second language would overwrite the default text. Translate the texts in the plugin or under the context above.
 
+The file does declare the texts of the **Forms Notifier** action of the Elementor form widget: the message template and the text and link of each button. WPML lists them with the other texts of the page (Translation Editor), so a translated page sends its own template. Receivers and the other choices of the action are copied unchanged. The entry has its own name and matches the widget by type, so the texts WPML already translates in the form widget stay as they are.
+
 ## Translated pages
 
-Forms of translated pages appear as their own forms. Link a form to the form of the original page (Forms, the form, **Link**) so one form keeps the settings and every text has a version per language. The fields of the Elementor action are not translated by WPML; set per-language texts on the form screen instead.
+Forms of translated pages appear as their own forms. Link a form to the form of the original page (Forms, the form, **Link**) so one form keeps the settings and every text has a version per language. The template and buttons of the Elementor action are translated with the page in WPML (see above). With Polylang, which copies the page, edit them in the translated page, or set per-language texts on the form screen.

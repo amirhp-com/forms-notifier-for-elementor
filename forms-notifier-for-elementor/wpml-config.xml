@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Forms Notifier for Elementor registers its texts itself, by language-independent names, under the domain
+  Forms Notifier for Elementor registers its own texts by language-independent names under the domain
   "Forms Notifier for Elementor" (WPML, String Translation). They are registered when settings or a form are saved and by
   Tools, "Register texts for translation" or "wp fnfe strings sync".
 
@@ -9,7 +9,23 @@
    1. a message for a receiver with another language would get the wrong text,
    2. saving any setting in that language would store the translation as the default text.
 
-  No elementor-widgets entry either: an entry for the widget "form" replaces the one of WPML, and labels, buttons and
-  messages of the form would not be translated any more.
+  The texts of the "Forms Notifier" action of the Elementor form widget are declared below, so a translated page carries
+  its own template and button texts. The entry has its own name and matches the widget by its type: WPML keeps one entry
+  per name, so an entry named "form" would replace the one WPML ships for the form widget.
 -->
-<wpml-config></wpml-config>
+<wpml-config>
+	<elementor-widgets>
+		<widget name="fnfe-form-action">
+			<conditions>
+				<condition key="widgetType">form</condition>
+			</conditions>
+			<fields>
+				<field type="Forms Notifier: message template" editor_type="AREA">fnfe_template</field>
+			</fields>
+			<fields-in-item items_of="fnfe_buttons">
+				<field type="Forms Notifier: button text" editor_type="LINE">text</field>
+				<field type="Forms Notifier: button link or text" editor_type="LINE">value</field>
+			</fields-in-item>
+		</widget>
+	</elementor-widgets>
+</wpml-config>
