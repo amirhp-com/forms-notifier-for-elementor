@@ -82,12 +82,21 @@ final class Plugin {
 		do_action( 'fnfe_loaded' );
 	}
 
-	/** Before 6.7 WordPress does not load bundled translations just in time. */
+	/** Before 6.8 WordPress does not register the Domain Path of a plugin, so the bundled translations are not found. */
 	public static function load_textdomain(): void {
-		if ( version_compare( get_bloginfo( 'version' ), '6.7', '<' ) ) {
-			// phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Needed on 6.5 and 6.6 only.
+		if ( self::needs_textdomain( (string) get_bloginfo( 'version' ) ) ) {
+			// phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Needed on 6.5 to 6.7 only.
 			load_plugin_textdomain( 'forms-notifier-for-elementor', false, dirname( FNFE_BASENAME ) . '/languages' );
 		}
+	}
+
+	/**
+	 * WordPress registers the Domain Path of plugins by itself from 6.8 on.
+	 *
+	 * @param string $wp_version WordPress version.
+	 */
+	public static function needs_textdomain( string $wp_version ): bool {
+		return version_compare( $wp_version, '6.8', '<' );
 	}
 
 	/** Registry boot, then the recurring events. */

@@ -77,4 +77,33 @@ final class I18nTest extends TestCase {
 		$this->assertSame( $before, get_locale() );
 		$this->assertSame( $lang, I18n::current() );
 	}
+
+	public function test_bundled_translation_is_loaded_below_6_8(): void {
+		global $wp_version;
+		$this->assertTrue( \AmirhpCom\FormsNotifier\Plugin::needs_textdomain( '6.7.4' ) );
+		$this->assertTrue( \AmirhpCom\FormsNotifier\Plugin::needs_textdomain( '6.5' ) );
+		$this->assertFalse( \AmirhpCom\FormsNotifier\Plugin::needs_textdomain( '6.8' ) );
+		$this->assertFalse( \AmirhpCom\FormsNotifier\Plugin::needs_textdomain( '7.1.3' ) );
+
+		// Since 6.7 the function only registers the folder for just-in-time loading: record that call.
+		global $wp_textdomain_registry;
+		$registry = $wp_textdomain_registry;
+		$spy      = new class() extends \WP_Textdomain_Registry {
+			public $paths = [];
+			public function set_custom_path( $domain, $path ) {
+				$this->paths[ $domain ] = $path;
+				parent::set_custom_path( $domain, $path );
+			}
+		};
+		$version                = $wp_version;
+		$wp_version             = '6.7.4';
+		$wp_textdomain_registry = $spy;
+		try {
+			\AmirhpCom\FormsNotifier\Plugin::load_textdomain();
+		} finally {
+			$wp_version             = $version;
+			$wp_textdomain_registry = $registry;
+		}
+		$this->assertSame( WP_PLUGIN_DIR . '/' . dirname( FNFE_BASENAME ) . '/languages', $spy->paths['forms-notifier-for-elementor'] ?? null, 'registered on 6.7' );
+	}
 }
