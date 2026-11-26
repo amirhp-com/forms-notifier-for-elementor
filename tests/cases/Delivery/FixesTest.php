@@ -320,7 +320,9 @@ final class FixesTest extends TestCase {
 				return [ 'template' => 'x', 'subject' => '', 'extra' => [], 'data' => [] ];
 			} );
 			$ref = new \ReflectionMethod( Broadcast::class, 'user_lang' );
-			$ref->setAccessible( true );
+			if ( PHP_VERSION_ID < 80100 ) {
+				$ref->setAccessible( true );
+			}
 			$this->assertSame( 'en', $ref->invoke( null, 'telegram', '424242' ) );
 			$this->assertSame( \AmirhpCom\FormsNotifier\Core\I18n::default_lang(), $ref->invoke( null, 'telegram', '-100' ) );
 			$this->assertSame( [ \AmirhpCom\FormsNotifier\Core\I18n::default_lang() ], $langs );
