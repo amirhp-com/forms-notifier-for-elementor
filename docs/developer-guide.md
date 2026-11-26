@@ -614,7 +614,7 @@ add_filter( 'fnfe_submission_language', function ( $lang, $submission ) {
 
 #### `fnfe_client_ip`
 
-`string $ip`. Address of the visitor; the default is `REMOTE_ADDR`. Set it behind a reverse proxy, otherwise all visitors share one rate limit. Only trust a header your own proxy overwrites.
+`string $ip`. Address of the visitor: `REMOTE_ADDR`, or the header chosen under Settings, Advanced (`advanced.proxy_header`) behind a trusted reverse proxy. Use the filter for setups the setting does not cover. Only trust a header your own proxy overwrites.
 
 ```php
 add_filter( 'fnfe_client_ip', function ( $ip ) {

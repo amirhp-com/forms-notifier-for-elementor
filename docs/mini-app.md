@@ -33,7 +33,7 @@ A small app inside Telegram and Bale for the admins of a bot: overview of the si
 - Somebody who is not an admin sees their numeric id, so you can add them.
 - Removing an admin ends their session at once. A new bot token, or Tools, **Sign out all**, ends every session.
 - Data routes answer only with the token in `X-FNFE-Token`. File links in the app are signed and last one hour.
-- Sign-in attempts are limited to 20 per minute and address. Behind a reverse proxy set `fnfe_client_ip`.
+- Sign-in attempts are limited to 20 per minute and address. Behind a reverse proxy choose its header under Settings, Advanced.
 
 ## Start parameters
 
