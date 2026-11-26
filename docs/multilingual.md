@@ -30,4 +30,4 @@ The file does declare the texts of the **Forms Notifier** action of the Elemento
 
 ## Translated pages
 
-Forms of translated pages appear as their own forms. Link a form to the form of the original page (Forms, the form, **Link**) so one form keeps the settings and every text has a version per language. The template and buttons of the Elementor action are translated with the page in WPML (see above). With Polylang, which copies the page, edit them in the translated page, or set per-language texts on the form screen.
+Forms of translated pages appear as their own forms. Link a form to the form of the original page (Forms, the form, **Link**) so one form keeps the settings and every text has a version per language. The template and buttons of the Elementor action are translated with the page in WPML (see above). With Polylang every translated page has its own form widget: set them there, or set per-language texts on the form screen.
