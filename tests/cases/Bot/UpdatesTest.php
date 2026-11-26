@@ -372,4 +372,17 @@ final class UpdatesTest extends TestCase {
 		$this->assertSame( $before, count( HttpMock::requests( '~/setMyCommands$~' ) ) );
 		$this->assertCount( 1, HttpMock::requests( '~/deleteMyCommands$~' ) );
 	}
+
+	public function test_polling_is_scheduled_again_on_init_after_a_reactivation(): void {
+		$this->assertSame( 20, has_action( 'init', [ Updates::class, 'sync_schedule' ] ) );
+		State::set( 'bot.telegram.mode_effective', 'polling' );
+		Cron::clear_all(); // What deactivation does.
+		$this->assertFalse( (bool) wp_next_scheduled( Cron::POLL ) );
+		Updates::sync_schedule();
+		$this->assertTrue( (bool) wp_next_scheduled( Cron::POLL ) );
+		State::delete( 'bot.telegram.mode_effective' );
+		Updates::sync_schedule();
+		$this->assertFalse( (bool) wp_next_scheduled( Cron::POLL ) );
+		Cron::ensure_events();
+	}
 }

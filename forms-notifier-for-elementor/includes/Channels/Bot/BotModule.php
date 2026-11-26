@@ -27,7 +27,8 @@ final class BotModule implements ModuleInterface {
 	public function register(): void {
 		add_action( Cron::POLL, [ Updates::class, 'poll_all' ] );
 		add_action( Cron::DIGEST, [ Updates::class, 'check_webhooks' ], 30 );
-		add_action( 'admin_init', [ Updates::class, 'sync_schedule' ] );
+		// With the other recurring events, so polling comes back after a reactivation without a visit to wp-admin.
+		add_action( 'init', [ Updates::class, 'sync_schedule' ], 20 );
 		add_action( 'fnfe_settings_saved', [ self::class, 'on_settings_saved' ] );
 		add_action( 'update_option_' . Settings::SECRETS, [ self::class, 'on_secrets_changed' ], 10, 2 );
 		add_action( 'add_option_' . Settings::SECRETS, [ self::class, 'on_secrets_added' ], 10, 2 );
