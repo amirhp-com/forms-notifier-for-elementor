@@ -181,7 +181,9 @@ final class StorageTest extends TestCase {
 
 		touch( $old->path, time() - 3 * DAY_IN_SECONDS );
 		touch( $new->path, time() - 3 * DAY_IN_SECONDS );
-		$this->assertCount( 2, Storage::older_files( DAY_IN_SECONDS ), 'cleanup sees both folders' );
+		$older = array_map( 'wp_normalize_path', Storage::older_files( DAY_IN_SECONDS ) );
+		$this->assertContains( wp_normalize_path( $old->path ), $older, 'cleanup sees the old folder' );
+		$this->assertContains( wp_normalize_path( $new->path ), $older, 'cleanup sees the moved folder' );
 
 		$this->assertTrue( Storage::delete( $old ), 'a file of the old location can still be deleted' );
 		$this->assertTrue( Storage::delete( $new ) );
