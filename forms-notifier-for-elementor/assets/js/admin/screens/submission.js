@@ -7,6 +7,12 @@
 	const { __, sprintf, _n } = wp.i18n;
 	const { h, mount, icon, api, ui, fmt, bus, router } = window.fnfe;
 
+	/** Name of a language code, as the site lists it; the code when the site does not know it. */
+	function languageName( code ) {
+		const found = ( ( window.fnfe.boot.i18n && window.fnfe.boot.i18n.languages ) || [] ).find( ( lang ) => lang.code === code );
+		return found ? found.name : ui.mono( code );
+	}
+
 	function valueNode( field ) {
 		if ( field.redacted ) {
 			return h( 'span', { class: 'fnfe-muted' }, __( 'Not saved (sensitive field)', 'forms-notifier-for-elementor' ) );
@@ -96,7 +102,7 @@
 				ui.Card( { title: __( 'Where it came from', 'forms-notifier-for-elementor' ) }, h( 'dl', { class: 'fnfe-dl fnfe-dl--stack' },
 					line( __( 'Form', 'forms-notifier-for-elementor' ), s.form_id && shell.can( 'forms' ) ? h( 'a', { href: '#/forms/' + s.form_id, dir: 'auto' }, s.form_name ) : h( 'bdi', null, s.form_name ) ),
 					line( __( 'Page', 'forms-notifier-for-elementor' ), /^https?:\/\//i.test( meta.page_url || '' ) ? h( 'a', { href: meta.page_url, target: '_blank', rel: 'noopener noreferrer', dir: 'auto' }, meta.page_title || meta.page_url ) : meta.page_title ),
-					line( __( 'Language', 'forms-notifier-for-elementor' ), s.lang ? ui.mono( s.lang ) : '' ),
+					line( __( 'Language', 'forms-notifier-for-elementor' ), s.lang ? languageName( s.lang ) : '' ),
 					line( __( 'WordPress user', 'forms-notifier-for-elementor' ), meta.user_login ),
 					line( __( 'IP address', 'forms-notifier-for-elementor' ), meta.user_ip ? ui.mono( meta.user_ip ) : '' ),
 					line( __( 'Browser', 'forms-notifier-for-elementor' ), meta.user_agent ? h( 'span', { class: 'fnfe-ua fnfe-latin', dir: 'ltr' }, meta.user_agent ) : '' ),

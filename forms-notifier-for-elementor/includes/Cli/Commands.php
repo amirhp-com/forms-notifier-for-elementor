@@ -160,15 +160,17 @@ final class Commands {
 					sleep( 1 ); // Another scan may hold the lock.
 				}
 			} while ( ! $done && time() < $until );
-			unset( $total['done'] );
-			$parts = [];
-			foreach ( $total as $key => $value ) {
-				if ( is_scalar( $value ) ) {
-					$parts[] = $key . ': ' . $value;
-				}
-			}
-			/* translators: %1$s: list of numbers */
-			WP_CLI::success( sprintf( __( 'Scan finished. %1$s', 'forms-notifier-for-elementor' ), implode( ', ', $parts ) ) );
+			WP_CLI::success(
+				sprintf(
+					/* translators: %1$d: forms found, %2$d: new forms, %3$d: changed forms, %4$d: forms no longer on the site, %5$d: scanned documents */
+					__( 'Scan finished: %1$d forms found, %2$d new, %3$d changed, %4$d missing, %5$d documents scanned.', 'forms-notifier-for-elementor' ),
+					(int) ( $total['found'] ?? 0 ),
+					(int) ( $total['added'] ?? 0 ),
+					(int) ( $total['updated'] ?? 0 ),
+					(int) ( $total['missing'] ?? 0 ),
+					(int) ( $total['documents'] ?? 0 )
+				)
+			);
 			return;
 		}
 
