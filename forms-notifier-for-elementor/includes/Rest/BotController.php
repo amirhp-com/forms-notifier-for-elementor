@@ -232,6 +232,9 @@ final class BotController extends Controller {
 		if ( ! get_userdata( $user_id ) || ( is_multisite() && ! is_user_member_of_blog( $user_id ) && ! is_super_admin( $user_id ) ) ) {
 			return $this->error( 'unknown_user', __( 'Unknown user.', 'forms-notifier-for-elementor' ), 404 );
 		}
+		if ( ! Linking::may_link( $user_id ) ) {
+			return $this->error( 'user_not_allowed', __( 'This user may not read submissions, so the bot would not answer them.', 'forms-notifier-for-elementor' ), 400 );
+		}
 		$platform = (string) $request['platform'];
 		$link     = Linking::create( $platform, $user_id );
 		if ( $link['url'] === '' && Updates::identify( $platform ) === '' ) {

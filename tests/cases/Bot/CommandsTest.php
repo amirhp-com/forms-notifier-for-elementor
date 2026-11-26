@@ -18,7 +18,7 @@ final class CommandsTest extends TestCase {
 	private static $user = 0;
 
 	public static function setUpClass(): void {
-		self::$user = (int) wp_insert_user( [ 'user_login' => 'fnfe_bot_' . wp_generate_password( 8, false ), 'user_pass' => wp_generate_password(), 'display_name' => 'Nima & Co', 'role' => 'editor', 'locale' => 'en_US' ] );
+		self::$user = (int) wp_insert_user( [ 'user_login' => 'fnfe_bot_' . wp_generate_password( 8, false ), 'user_pass' => wp_generate_password(), 'display_name' => 'Nima & Co', 'role' => 'administrator', 'locale' => 'en_US' ] );
 	}
 
 	public static function tearDownClass(): void {

@@ -7,6 +7,7 @@
 
 namespace AmirhpCom\FormsNotifier\Channels\Bot;
 
+use AmirhpCom\FormsNotifier\Core\Capabilities;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\State;
 use AmirhpCom\FormsNotifier\Core\Text;
@@ -67,7 +68,7 @@ final class Linking {
 		delete_transient( 'fnfe_' . $code );
 
 		$user = get_userdata( (int) ( $entry['user'] ?? 0 ) );
-		if ( ! $user ) {
+		if ( ! $user || ! self::may_link( (int) $user->ID ) ) {
 			return null;
 		}
 		$rows  = self::admins( $platform );
@@ -116,13 +117,24 @@ final class Linking {
 	}
 
 	/**
-	 * Admin entry of a messenger user.
+	 * Admin entry of a messenger user that may act now. An entry linked to a WordPress user follows what that user may
+	 * do today: a user who lost the right to read submissions (or this site of a network) loses the bot as well.
 	 *
 	 * @param string $platform Platform.
 	 * @param string $uid      Messenger user id.
 	 */
 	public static function admin( string $platform, string $uid ): ?array {
-		return $uid === '' ? null : ( self::admins( $platform )[ $uid ] ?? null );
+		$admin = $uid === '' ? null : ( self::admins( $platform )[ $uid ] ?? null );
+		return $admin && $admin['wp_user'] > 0 && ! self::may_link( $admin['wp_user'] ) ? null : $admin;
+	}
+
+	/**
+	 * A WordPress user whose messenger account may be linked: one who may read submissions.
+	 *
+	 * @param int $user_id WordPress user.
+	 */
+	public static function may_link( int $user_id ): bool {
+		return $user_id > 0 && get_userdata( $user_id ) && Capabilities::can( Capabilities::SUBMISSIONS, $user_id );
 	}
 
 	/**

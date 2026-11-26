@@ -72,7 +72,7 @@ final class ChannelsController extends Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'action' ],
-				'permission_callback' => $this->can( Capabilities::MANAGE ),
+				'permission_callback' => [ $this, 'can_run_action' ],
 				'args'                => $id_arg + [
 					'action' => $this->string_arg( '', [], 'sanitize_key' ),
 					'params' => $this->object_arg(),
@@ -196,6 +196,23 @@ final class ChannelsController extends Controller {
 		}
 	}
 
+	/** Action that only reads, so people who edit forms can pick receivers with it. */
+	private const PICKER = 'receiver_options';
+
+	/**
+	 * Permission of the action route: managers run every action, people who edit forms the receivers picker.
+	 *
+	 * @param \WP_REST_Request $request Request.
+	 * @return true|\WP_Error
+	 */
+	public function can_run_action( \WP_REST_Request $request ) {
+		$manage = $this->can( Capabilities::MANAGE )();
+		if ( $manage === true || (string) $request['action'] !== self::PICKER ) {
+			return $manage;
+		}
+		return $this->can( Capabilities::FORMS )();
+	}
+
 	/**
 	 * Run an action of a channel.
 	 *
@@ -213,15 +230,39 @@ final class ChannelsController extends Controller {
 			return $this->error( 'unknown_action', __( 'Unknown action.', 'forms-notifier-for-elementor' ), 404 );
 		}
 
-		$this->apply_overlay( $request );
+		// Unsaved settings are for managers only.
+		if ( Capabilities::can( Capabilities::MANAGE ) ) {
+			$this->apply_overlay( $request );
+		}
 		try {
-			return rest_ensure_response( $this->action_result( $action( (array) $request['params'] ) ) );
+			$result = $this->action_result( $action( (array) $request['params'] ) );
+			if ( ! Capabilities::can( Capabilities::MANAGE ) ) {
+				$result = self::picker_result( $result );
+			}
+			return rest_ensure_response( $result );
 		} catch ( \Throwable $e ) {
 			Logger::error( 'action', $e->getMessage(), [ 'channel' => $channel->id() ] );
 			return $this->result( false, Logger::clean( $e->getMessage() ) );
 		} finally {
 			Settings::clear_overlay();
 		}
+	}
+
+	/**
+	 * Picker rows with the keys a receiver needs and nothing else.
+	 *
+	 * @param array $result ActionResult.
+	 */
+	private static function picker_result( array $result ): array {
+		$rows = [];
+		foreach ( (array) $result['rows'] as $row ) {
+			if ( is_array( $row ) ) {
+				$rows[] = array_intersect_key( $row, array_flip( [ 'address', 'label', 'group', 'hint', 'meta' ] ) );
+			}
+		}
+		$result['rows'] = $rows;
+		$result['html'] = '';
+		return $result;
 	}
 
 	/**

@@ -7,6 +7,7 @@
 
 namespace AmirhpCom\FormsNotifier\MiniApp;
 
+use AmirhpCom\FormsNotifier\Core\Capabilities;
 use AmirhpCom\FormsNotifier\Core\Settings;
 
 defined( 'ABSPATH' ) || exit;
@@ -81,7 +82,7 @@ final class Access {
 	}
 
 	/**
-	 * Admin entry of one user. An entry that is linked to a deleted WordPress user does not count.
+	 * Admin entry of one user. An entry linked to a WordPress user counts only while that user may read submissions.
 	 *
 	 * @param string $platform Platform.
 	 * @param string $user_id  Messenger user id.
@@ -89,7 +90,7 @@ final class Access {
 	private static function entry( string $platform, string $user_id ): ?array {
 		foreach ( self::admins( $platform ) as $entry ) {
 			if ( $entry['uid'] === $user_id ) {
-				return $entry['wp_user'] && ! get_userdata( $entry['wp_user'] ) ? null : $entry;
+				return $entry['wp_user'] && ! ( get_userdata( $entry['wp_user'] ) && Capabilities::can( Capabilities::SUBMISSIONS, $entry['wp_user'] ) ) ? null : $entry;
 			}
 		}
 		return null;

@@ -5,11 +5,11 @@ use AmirhpCom\FormsNotifier\Channels\Bot\BotModule;
 use AmirhpCom\FormsNotifier\Channels\Bot\ChatDiscovery;
 use AmirhpCom\FormsNotifier\Channels\Bot\Linking;
 use AmirhpCom\FormsNotifier\Channels\Bot\WorkerGuide;
-use AmirhpCom\FormsNotifier\Core\Cron;
+use AmirhpCom\FormsNotifier\Core\Capabilities; use AmirhpCom\FormsNotifier\Core\Cron;
 use AmirhpCom\FormsNotifier\Core\Registry;
 use AmirhpCom\FormsNotifier\Core\Settings;
 use AmirhpCom\FormsNotifier\Core\State;
-use AmirhpCom\FormsNotifier\Repository\ChatRepository;
+use AmirhpCom\FormsNotifier\MiniApp\Access; use AmirhpCom\FormsNotifier\Repository\ChatRepository;
 use AmirhpCom\FormsNotifier\Tests\Db;
 use AmirhpCom\FormsNotifier\Tests\Fixtures;
 use AmirhpCom\FormsNotifier\Tests\HttpMock;
@@ -151,6 +151,48 @@ final class RoutesTest extends TestCase {
 		$this->assertSame( self::$admin, $items[0]['wp_user'] );
 		$this->assertTrue( $this->call( 'DELETE', '/admins/111111' )->get_data()['ok'] );
 		$this->assertSame( 404, $this->call( 'DELETE', '/admins/111111' )->get_status() );
+	}
+
+	/** What a linked account may do follows the WordPress user, also after a demotion. */
+	public function test_linked_accounts_follow_the_user(): void {
+		$this->assertSame( 400, $this->call( 'POST', '/link', [ 'user_id' => self::$subscriber ] )->get_status() );
+		$code = Linking::create( 'telegram', self::$subscriber )['code'];
+		$this->assertNull( Linking::consume( 'telegram', $code, [ 'id' => 222222, 'first_name' => 'Sub' ] ) );
+
+		Settings::set( 'channels.telegram.admins', [ [ 'id' => 'e_1', 'uid' => '333333', 'name' => 'Was admin', 'wp_user' => self::$admin, 'perms' => [ 'view', 'act' ] ] ] );
+		$this->assertTrue( Linking::can( 'telegram', '333333', 'act' ) );
+		$this->assertSame( [ 'view', 'act' ], Access::perms( 'telegram', '333333' ) );
+		$this->filter( 'fnfe_capability', static function ( $cap, $plugin_cap ) { return $plugin_cap === Capabilities::SUBMISSIONS ? 'do_not_allow' : $cap; }, 10, 2 );
+		$this->assertFalse( Linking::can( 'telegram', '333333' ) );
+		$this->assertNull( Linking::admin( 'telegram', '333333' ) );
+		$this->assertSame( [], Access::perms( 'telegram', '333333' ) );
+		$this->assertCount( 1, Linking::admins( 'telegram' ), 'the entry stays and works again when the right comes back' );
+	}
+
+	/** People who may edit forms, and nothing else, pick chats from the list; nothing else of the channel is theirs. */
+	public function test_chat_picker_for_form_editors(): void {
+		ChatRepository::upsert( 'telegram', '-1001', 0, [ 'type' => 'supergroup', 'title' => 'Sales', 'status' => 'active' ] );
+		$this->filter( 'fnfe_capability', static function ( $cap, $plugin_cap ) { return $plugin_cap === Capabilities::FORMS ? 'read' : 'do_not_allow'; }, 10, 2 );
+		wp_set_current_user( self::$subscriber );
+		$run = static function ( string $action, array $body = [] ) {
+			$request = new \WP_REST_Request( 'POST', '/fnfe/v1/channels/telegram/action/' . $action );
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( (string) wp_json_encode( $body ) );
+			return rest_do_request( $request );
+		};
+		try {
+			$r = $run( 'receiver_options', [ 'params' => [ 'search' => '' ], 'values' => [ 'channels.telegram.api_base' => 'https://evil.example.com' ] ] );
+			$this->assertSame( 200, $r->get_status() );
+			$this->assertSame( [ '-1001' ], array_column( $r->get_data()['rows'], 'address' ) );
+			$this->assertSame( [ 'address', 'label', 'group', 'hint', 'meta' ], array_keys( $r->get_data()['rows'][0] ) );
+			foreach ( [ 'connect', 'disconnect', 'nope' ] as $action ) {
+				$this->assertSame( 403, $run( $action )->get_status(), $action );
+			}
+			$this->assertSame( 200, rest_do_request( new \WP_REST_Request( 'GET', '/fnfe/v1/bots/telegram/chats' ) )->get_status() );
+			$this->assertSame( 403, rest_do_request( new \WP_REST_Request( 'POST', '/fnfe/v1/bots/telegram/poll' ) )->get_status() );
+		} finally {
+			wp_set_current_user( 0 );
+		}
 	}
 
 	public function test_admins_through_settings(): void {
