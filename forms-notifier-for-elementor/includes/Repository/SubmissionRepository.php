@@ -242,7 +242,9 @@ final class SubmissionRepository extends Repository {
 	}
 
 	/**
-	 * Rows whose fields contain an email (privacy tools).
+	 * Rows sent by the owner of an email address (privacy tools): an email field or the field the form maps to the
+	 * submitter's email holds it, or another one-line field holds nothing else. An address someone mentions inside a
+	 * message does not make the submission theirs.
 	 *
 	 * @param string $email    Email address.
 	 * @param int    $page     Page number, from 1.
@@ -255,6 +257,7 @@ final class SubmissionRepository extends Repository {
 			return [];
 		}
 		$db      = self::db();
+		$mapped  = [];
 		$like    = '%' . $db->esc_like( $email ) . '%';
 		$pattern = '/(?<![A-Za-z0-9._%+\-])' . preg_quote( $email, '/' ) . '(?![A-Za-z0-9\-]|\.[A-Za-z0-9])/iu';
 		$skip    = ( max( 1, $page ) - 1 ) * max( 1, $per_page );
@@ -264,13 +267,16 @@ final class SubmissionRepository extends Repository {
 		// LIKE also finds longer addresses that end with this one; only whole addresses count.
 		do {
 			$rows = (array) $db->get_results(
-				$db->prepare( 'SELECT id, fields FROM %i WHERE id > %d AND fields LIKE %s ORDER BY id ASC LIMIT 200', self::table(), $last, $like ),
+				$db->prepare( 'SELECT id, form_id, fields FROM %i WHERE id > %d AND fields LIKE %s ORDER BY id ASC LIMIT 200', self::table(), $last, $like ),
 				ARRAY_A
 			);
 			foreach ( $rows as $row ) {
-				$last   = (int) $row['id'];
-				$values = implode( "\n", array_column( self::decode( $row['fields'] ), 'value' ) );
-				if ( ! preg_match( $pattern, $values ) ) {
+				$last = (int) $row['id'];
+				$form = (int) $row['form_id'];
+				if ( ! isset( $mapped[ $form ] ) ) {
+					$mapped[ $form ] = $form > 0 ? (string) FormRepository::config( $form )->get( 'fields.email', '' ) : '';
+				}
+				if ( ! self::owns_email( self::decode( $row['fields'] ), $email, $pattern, $mapped[ $form ] ) ) {
 					continue;
 				}
 				if ( $skip > 0 ) {
@@ -285,6 +291,32 @@ final class SubmissionRepository extends Repository {
 		} while ( isset( $rows[199] ) );
 
 		return $out;
+	}
+
+	/**
+	 * One of the fields names the address as the submitter's.
+	 *
+	 * @param array  $fields  Stored fields.
+	 * @param string $email   Address.
+	 * @param string $pattern Regex of the whole address.
+	 * @param string $mapped  Field mapped to the submitter's email, '' = none.
+	 */
+	private static function owns_email( array $fields, string $email, string $pattern, string $mapped ): bool {
+		foreach ( $fields as $id => $field ) {
+			if ( ! is_array( $field ) ) {
+				continue;
+			}
+			$value = is_scalar( $field['value'] ?? null ) ? (string) $field['value'] : '';
+			$type  = (string) ( $field['type'] ?? '' );
+			if ( $type === 'email' || ( $mapped !== '' && (string) ( $field['id'] ?? $id ) === $mapped ) ) {
+				if ( preg_match( $pattern, $value ) ) {
+					return true;
+				}
+			} elseif ( $type !== 'textarea' && strcasecmp( trim( $value ), $email ) === 0 ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

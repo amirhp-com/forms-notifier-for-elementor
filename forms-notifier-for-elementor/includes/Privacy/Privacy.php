@@ -192,7 +192,7 @@ final class Privacy implements ModuleInterface {
 				)
 				: __( 'Submissions are kept until they are deleted by us or until you ask us to delete them.', 'forms-notifier-for-elementor' );
 		} else {
-			$paragraphs[] = __( 'Forms you send are forwarded to us and not stored on this site.', 'forms-notifier-for-elementor' );
+			$paragraphs[] = __( 'Forms you send are forwarded to us. The submissions themselves are not stored on this site.', 'forms-notifier-for-elementor' );
 		}
 
 		$services = [];
@@ -215,6 +215,15 @@ final class Privacy implements ModuleInterface {
 				_n( 'A log of sent messages with their recipients is kept for %1$d day.', 'A log of sent messages with their recipients is kept for %1$d days.', $days, 'forms-notifier-for-elementor' ),
 				$days
 			);
+		}
+		if ( Settings::bool( 'privacy.log_bodies', true ) ) {
+			$paragraphs[] = $days > 0
+				? sprintf(
+					/* translators: %1$d: number of days */
+					_n( 'The text of each message, with the content of the form, is kept in the message log for %1$d day.', 'The text of each message, with the content of the form, is kept in the message log for %1$d days.', $days, 'forms-notifier-for-elementor' ),
+					$days
+				)
+				: __( 'The text of each message, with the content of the form, is kept in the message log until it is deleted.', 'forms-notifier-for-elementor' );
 		}
 
 		return '<p class="privacy-policy-tutorial">' . esc_html__( 'The text below follows the current settings of the plugin. Add the services you use and the reason you need the data.', 'forms-notifier-for-elementor' ) . '</p>'

@@ -112,5 +112,12 @@ final class PrivacyTest extends TestCase {
 		$this->assertContains( '30', $text );
 		$this->assertContains( 'Fake fake', $text );
 		$this->assertTrue( (bool) has_action( 'admin_init', [ Privacy::class, 'policy_content' ] ) );
+
+		// Not stored, but the message log keeps the text.
+		Settings::set_many( [ 'general.store_submissions' => false, 'privacy.retention_messages_days' => 14 ] );
+		$kept = sprintf( _n( 'The text of each message, with the content of the form, is kept in the message log for %1$d day.', 'The text of each message, with the content of the form, is kept in the message log for %1$d days.', 14, 'forms-notifier-for-elementor' ), 14 );
+		$this->assertContains( esc_html( $kept ), Privacy::policy_text() );
+		Settings::set( 'privacy.log_bodies', false );
+		$this->assertNotContains( esc_html( $kept ), Privacy::policy_text() );
 	}
 }

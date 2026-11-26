@@ -202,7 +202,9 @@ final class RepositoryTest extends TestCase {
 			return $this->submission( [ 'fields' => [ 'e' => Fixtures::field( 'e', $value, $type ) ] ] )->id;
 		};
 		$a = $mk( 'sara_x@example.com' );
-		$b = $mk( "Reach me:\nsara_x@example.com.", 'textarea' );
+		$b = $mk( ' sara_x@example.com ', 'text' );
+		$mk( "Please also tell sara_x@example.com.", 'textarea' );
+		$mk( 'ask sara_x@example.com', 'text' );
 		$mk( 'not-sara_x@example.com' );
 		$mk( 'sara_x@example.com.au' );
 		$mk( 'sarazx@example.com' );
@@ -211,6 +213,14 @@ final class RepositoryTest extends TestCase {
 		$this->assertSame( [ $b ], SubmissionRepository::ids_by_email( 'sara_x@example.com', 2, 1 ) );
 		$this->assertSame( [], SubmissionRepository::ids_by_email( 'sara_x@example.com', 4, 1 ) );
 		$this->assertSame( [], SubmissionRepository::ids_by_email( 'nope' ) );
+	}
+
+	public function test_ids_by_email_follows_the_mapped_field(): void {
+		$form = FormRepository::upsert( '45:a1b2c3d', [ 'name' => 'Contact' ] );
+		FormRepository::save_config( $form, [ 'fields' => [ 'email' => 'contact' ] ] );
+		$id = $this->submission( [ 'form_id' => $form, 'fields' => [ 'contact' => Fixtures::field( 'contact', 'Sara <sara_x@example.com>' ), 'note' => Fixtures::field( 'note', 'cc bob@example.com', 'textarea' ) ] ] )->id;
+		$this->assertSame( [ $id ], SubmissionRepository::ids_by_email( 'sara_x@example.com' ) );
+		$this->assertSame( [], SubmissionRepository::ids_by_email( 'bob@example.com' ) );
 	}
 
 	public function test_delete_removes_stored_files_only(): void {
