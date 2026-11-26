@@ -49,7 +49,7 @@ final class SubmissionImporter {
 		}
 
 		list( $where, $params ) = self::where( $form_key );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders -- $where holds literals and placeholders only.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where holds literals and placeholders only.
 		$rows = (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT e.post_id, e.element_id, MAX( e.form_name ) AS name, COUNT( e.id ) AS total, COUNT( s.known ) AS imported FROM %i e
@@ -100,7 +100,7 @@ final class SubmissionImporter {
 		}
 
 		list( $where, $params ) = self::where( $form_key );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders -- $where holds literals and placeholders only.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where holds literals and placeholders only.
 		$rows = (array) $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT e.* FROM %i e WHERE e.id > %d AND $where ORDER BY e.id ASC LIMIT %d",
@@ -237,15 +237,17 @@ final class SubmissionImporter {
 	}
 
 	/**
-	 * Files behind the URLs Elementor stored. They stay where they are.
+	 * Files behind the URLs Elementor stored. They stay where they are. Only files in Elementor's own upload folder count:
+	 * when a visitor sends no file, Elementor stores whatever text was posted for the field, so any other URL is typed.
 	 *
 	 * @param string $field_id Field id.
 	 * @param string $value    URLs joined with " , ".
 	 */
 	private static function files( string $field_id, string $value ): array {
 		$out = [];
-		foreach ( preg_split( '/\s+,\s+|,\s*(?=https?:)/', $value ) as $url ) {
-			$path = PathGuard::url_to_path( trim( $url ) );
+		$folder = PathGuard::forms_dir();
+		foreach ( $folder === '' ? [] : preg_split( '/\s+,\s+|,\s*(?=https?:)/', $value ) as $url ) {
+			$path = PathGuard::url_to_path( trim( $url ), $folder );
 			if ( $path !== '' ) {
 				$out[] = AttachmentFactory::make( $field_id, $path, trim( $url ) );
 			}

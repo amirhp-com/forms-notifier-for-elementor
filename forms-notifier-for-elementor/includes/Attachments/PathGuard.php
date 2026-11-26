@@ -103,8 +103,7 @@ final class PathGuard {
 	public static function roots(): array {
 		$uploads = wp_upload_dir( null, false );
 		$base    = untrailingslashit( (string) $uploads['basedir'] );
-		$forms   = apply_filters( 'elementor_pro/forms/upload_path', $base . '/elementor/forms' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- Elementor Pro filter.
-		$roots   = apply_filters( 'fnfe_allowed_file_roots', [ $forms, $base . '/' . Storage::FOLDER, $base ] );
+		$roots   = apply_filters( 'fnfe_allowed_file_roots', [ self::forms_dir(), $base . '/' . Storage::FOLDER, $base ] );
 
 		$out = [];
 		foreach ( is_array( $roots ) ? $roots : [] as $root ) {
@@ -142,6 +141,13 @@ final class PathGuard {
 		return false;
 	}
 
+	/** Folder in which Elementor Pro keeps uploads of forms (filter elementor_pro/forms/upload_path), not resolved. */
+	public static function forms_dir(): string {
+		$uploads = wp_upload_dir( null, false );
+		$forms   = apply_filters( 'elementor_pro/forms/upload_path', untrailingslashit( (string) $uploads['basedir'] ) . '/elementor/forms' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- Elementor Pro filter.
+		return is_string( $forms ) ? $forms : '';
+	}
+
 	/**
 	 * Extension deny-list. Filter: fnfe_denied_extensions.
 	 *
@@ -156,9 +162,10 @@ final class PathGuard {
 	/**
 	 * Map an uploads URL to a path, '' when it does not lead to a safe file inside the uploads directory.
 	 *
-	 * @param string $url URL.
+	 * @param string $url    URL.
+	 * @param string $within Directory the file must be in as well, '' = anywhere in uploads.
 	 */
-	public static function url_to_path( string $url ): string {
+	public static function url_to_path( string $url, string $within = '' ): string {
 		$uploads = wp_upload_dir( null, false );
 		$base    = trailingslashit( set_url_scheme( (string) $uploads['baseurl'], 'https' ) );
 		$url     = set_url_scheme( trim( $url ), 'https' );
@@ -174,6 +181,12 @@ final class PathGuard {
 		$real = realpath( $path );
 		if ( ! is_string( $root ) || ! is_string( $real ) || ! self::is_inside( wp_normalize_path( $real ), untrailingslashit( wp_normalize_path( $root ) ) ) ) {
 			return '';
+		}
+		if ( $within !== '' ) {
+			$inner = self::is_stream( $within ) ? false : realpath( $within );
+			if ( ! is_string( $inner ) || ! self::is_inside( wp_normalize_path( $real ), untrailingslashit( wp_normalize_path( $inner ) ) ) ) {
+				return '';
+			}
 		}
 		return self::is_safe( $path ) ? $path : '';
 	}

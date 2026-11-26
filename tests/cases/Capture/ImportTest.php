@@ -127,6 +127,19 @@ final class ImportTest extends TestCase {
 		$this->assertSame( 2, SubmissionImporter::status( $this->key() )['imported'] );
 	}
 
+	/** Elementor keeps the posted text of an upload field that got no file: a typed URL of another upload is no file. */
+	public function test_typed_upload_urls_are_not_files(): void {
+		$base = wp_upload_dir( null, false )['baseurl'];
+		wp_mkdir_p( Db::uploads() . '/woocommerce_uploads' );
+		wp_mkdir_p( Db::uploads() . '/elementor/forms' );
+		file_put_contents( Db::uploads() . '/woocommerce_uploads/book.pdf', 'x' );
+		file_put_contents( Db::uploads() . '/elementor/forms/real.pdf', 'x' );
+		$this->row( $this->fields( [ 'cv' => $base . '/woocommerce_uploads/book.pdf , ' . $base . '/elementor/forms/real.pdf' ] ) );
+		SubmissionImporter::import( $this->key() );
+		$s = SubmissionRepository::query()['items'][0];
+		$this->assertSame( [ 'real.pdf' ], array_map( static function ( $f ) { return $f->name; }, $s->files ) );
+	}
+
 	public function test_captured_submissions_are_not_imported_again(): void {
 		$id = $this->row( $this->fields() );
 		SubmissionRepository::insert( Fixtures::submission( [ 'meta' => [ 'elementor_submission_id' => $id ] ] ) );
