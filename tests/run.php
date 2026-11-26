@@ -41,10 +41,15 @@ if ( ! defined( 'FNFE_VERSION' ) ) {
 		}
 	}
 
+	// Expected texts are English: the test site may run in another language that has a translation of the plugin.
+	$switched = switch_to_locale( 'en_US' );
 	AmirhpCom\FormsNotifier\Tests\Db::isolate();
 	AmirhpCom\FormsNotifier\Tests\HttpMock::install();
 	$code = ( new AmirhpCom\FormsNotifier\Tests\Runner( $filter, $verbose, false ) )->run();
 	AmirhpCom\FormsNotifier\Tests\Db::restore();
+	if ( $switched ) {
+		restore_previous_locale();
+	}
 	if ( $code ) {
 		WP_CLI::halt( $code );
 	}
