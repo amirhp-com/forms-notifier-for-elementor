@@ -267,9 +267,20 @@
 			options.headers[ 'Content-Type' ] = 'application/json';
 			options.body = JSON.stringify( body );
 		}
-		return window.fetch( buildUrl( path, params ), options ).catch( () => {
+		return window.fetch( buildUrl( path, localized( params ) ), options ).catch( () => {
 			throw networkError();
 		} ).then( parse );
+	}
+
+	/**
+	 * Answers in the language of the logged-in user: without _locale=user WordPress answers REST requests in the site
+	 * language. The mini app (token) sends its own language.
+	 *
+	 * @param {Object} params Query parameters.
+	 * @return {Object} Parameters.
+	 */
+	function localized( params ) {
+		return token ? params : Object.assign( { _locale: 'user' }, params || {} );
 	}
 
 	const api = {
@@ -282,7 +293,7 @@
 			token = value ? String( value ) : '';
 		},
 		download( path, params, filename ) {
-			return window.fetch( buildUrl( path, params ), { credentials: 'same-origin', headers: headers( { Accept: '*/*' } ) } ).catch( () => {
+			return window.fetch( buildUrl( path, localized( params ) ), { credentials: 'same-origin', headers: headers( { Accept: '*/*' } ) } ).catch( () => {
 				throw networkError();
 			} ).then( ( response ) => {
 				if ( ! response.ok ) {
